@@ -41,19 +41,31 @@ A sophisticated cutting configurator e-shop application built with **Vite**, **R
 ```
 src/
 ├── components/
-│   ├── CustomerForm.tsx              # Customer information form
-│   ├── EnhancedPartForm.tsx          # Advanced part creation form
-│   ├── EnhancedPartsList.tsx         # Parts management table
-│   ├── EnhancedPriceDisplay.tsx      # Price calculation display
-│   ├── PartVisualization.tsx         # Visual part representation
-│   └── CuttingConfigurator.tsx       # Main configurator component
+│   ├── SimpleCuttingApp.tsx          # Main application component
+│   ├── SimplePartForm.tsx            # Part creation form
+│   ├── SimplePartsList.tsx           # Parts management list
+│   ├── TabbedEditor.tsx              # Tabbed part editor
+│   ├── PartEditor.tsx                # Corner and edge configuration
+│   ├── LShapeEditor.tsx              # L-shape configuration
+│   ├── PartPreviewCanvas.tsx         # SVG part preview
+│   ├── SheetVisualization.tsx        # Cutting layout visualization
+│   ├── CornerConfigurator.tsx        # Corner modification controls
+│   └── EdgeSelector.tsx              # Edge treatment selector
 ├── hooks/
-│   └── useEnhancedConfigurator.ts    # Main business logic hook
+│   └── useSimpleConfigurator.ts      # Main business logic hook
 ├── types/
-│   ├── index.ts                      # Basic type definitions
-│   └── enhanced.ts                   # Advanced type definitions
+│   └── simple.ts                     # Type definitions
 ├── utils/
-│   └── calculations.ts               # Price and optimization calculations
+│   ├── cuttingOptimizer.ts           # Cutting layout optimization
+│   ├── svgRendering.ts               # SVG shape rendering
+│   ├── cornerCalculations.ts         # Corner logic utilities
+│   ├── partUpdates.ts                # Part update handlers
+│   ├── partConfigurationStatus.ts    # Configuration status tracking
+│   ├── partFormatting.ts             # Part formatting utilities
+│   ├── lShapeHelpers.ts              # L-shape calculation helpers
+│   ├── edgeConstants.ts              # Edge treatment constants
+│   ├── appConstants.ts               # Application constants
+│   └── sheetVisualizationHelpers.ts  # Sheet visualization utilities
 └── App.tsx                           # Application entry point
 ```
 

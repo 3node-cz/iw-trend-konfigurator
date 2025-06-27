@@ -1,7 +1,7 @@
-import type { Part, CornerModification } from '../types/simple';
-import type { EdgeValue } from './edgeConstants';
-import { DEFAULT_EDGES } from './edgeConstants';
-import { resolveCornerConflicts } from './cornerCalculations';
+import type { Part, CornerModification } from '../types/simple'
+import type { EdgeValue } from './edgeConstants'
+import { DEFAULT_EDGES } from './edgeConstants'
+import { resolveCornerConflicts } from './cornerCalculations'
 
 /**
  * Utility functions for handling part updates
@@ -13,15 +13,15 @@ import { resolveCornerConflicts } from './cornerCalculations';
 export function updatePartEdge(
   part: Part,
   edge: string,
-  value: EdgeValue
+  value: EdgeValue,
 ): Partial<Part> {
   const updatedEdges = {
     ...DEFAULT_EDGES,
     ...(part.edges || {}),
-    [edge]: value
-  };
-  
-  return { edges: updatedEdges };
+    [edge]: value,
+  }
+
+  return { edges: updatedEdges }
 }
 
 /**
@@ -30,28 +30,28 @@ export function updatePartEdge(
 export function updatePartCorner(
   part: Part,
   corner: string,
-  updates: Partial<CornerModification>
+  updates: Partial<CornerModification>,
 ): Partial<Part> {
-  const corners = part.corners as Record<string, CornerModification> || {};
-  const currentCorner = corners[corner] || { type: 'none' };
-  
+  const corners = (part.corners as Record<string, CornerModification>) || {}
+  const currentCorner = corners[corner] || { type: 'none' }
+
   // Apply updates to current corner
-  const updatedCorner = { ...currentCorner, ...updates };
-  
+  const updatedCorner = { ...currentCorner, ...updates }
+
   // Handle conflict resolution for corners on the same edge
-  const updatedCorners = { ...corners, [corner]: updatedCorner };
-  
+  const updatedCorners = { ...corners, [corner]: updatedCorner }
+
   // Apply automatic adjustments if needed
-  const finalCorners = resolveCornerConflicts(part, updatedCorners, corner);
-  
+  const finalCorners = resolveCornerConflicts(part, updatedCorners, corner)
+
   return {
     corners: {
       topLeft: finalCorners['topLeft'] || { type: 'none' },
       topRight: finalCorners['topRight'] || { type: 'none' },
       bottomRight: finalCorners['bottomRight'] || { type: 'none' },
-      bottomLeft: finalCorners['bottomLeft'] || { type: 'none' }
-    }
-  };
+      bottomLeft: finalCorners['bottomLeft'] || { type: 'none' },
+    },
+  }
 }
 
 /**
@@ -59,20 +59,23 @@ export function updatePartCorner(
  */
 export function createPartUpdateHandlers(
   part: Part,
-  onPartUpdate: (id: string, updates: Partial<Part>) => void
+  onPartUpdate: (id: string, updates: Partial<Part>) => void,
 ) {
   const handleEdgeUpdate = (edge: string, value: EdgeValue) => {
-    const updates = updatePartEdge(part, edge, value);
-    onPartUpdate(part.id, updates);
-  };
+    const updates = updatePartEdge(part, edge, value)
+    onPartUpdate(part.id, updates)
+  }
 
-  const handleCornerUpdate = (corner: string, updates: Partial<CornerModification>) => {
-    const partUpdates = updatePartCorner(part, corner, updates);
-    onPartUpdate(part.id, partUpdates);
-  };
+  const handleCornerUpdate = (
+    corner: string,
+    updates: Partial<CornerModification>,
+  ) => {
+    const partUpdates = updatePartCorner(part, corner, updates)
+    onPartUpdate(part.id, partUpdates)
+  }
 
   return {
     handleEdgeUpdate,
-    handleCornerUpdate
-  };
+    handleCornerUpdate,
+  }
 }
