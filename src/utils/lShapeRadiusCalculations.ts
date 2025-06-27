@@ -37,26 +37,33 @@ export function calculateLShapeMaxRadius(
     }
 
     case 'innerCutout': {
-      // Inner cutout corner is limited by:
-      // - Horizontal: cutout width (part.width - leftWidth)
-      // - Vertical: cutout height (part.height - rightHeight)
-      // - Adjacent corners: topLeftCutout and rightBottomCutout
-      const cutoutWidth = part.width - leftWidth
-      const cutoutHeight = part.height - rightHeight
-      const availableHorizontal = cutoutWidth - topLeftCutoutRadius
-      const availableVertical = cutoutHeight - rightBottomCutoutRadius
-
+      // Inner cutout corner calculation based on remaining space after adjacent corners
+      const cutoutWidth = part.width - leftWidth  // Available horizontal space in cutout
+      const cutoutHeight = part.height - rightHeight  // Available vertical space in cutout
+      
+      // Calculate remaining space after adjacent corners
+      const horizontalRemaining = Math.max(0, cutoutWidth - rightBottomCutoutRadius)
+      const verticalRemaining = Math.max(0, cutoutHeight - topLeftCutoutRadius)
+      
+      // Inner corner radius is limited by the smaller of the two remaining spaces
+      const result = Math.max(0, Math.min(horizontalRemaining, verticalRemaining))
+      
       // Debug logging
       console.log('Inner cutout calculation:', {
+        partWidth: part.width,
+        partHeight: part.height,
+        leftWidth,
+        rightHeight,
         cutoutWidth,
         cutoutHeight,
         topLeftCutoutRadius,
         rightBottomCutoutRadius,
-        availableHorizontal,
-        availableVertical,
+        horizontalRemaining,
+        verticalRemaining,
+        result
       })
 
-      return Math.max(0, Math.min(availableHorizontal, availableVertical))
+      return result
     }
 
     case 'rightBottomCutout': {

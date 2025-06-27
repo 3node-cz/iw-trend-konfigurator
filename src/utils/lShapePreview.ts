@@ -53,7 +53,7 @@ const generateLShapePathWithRadii = (params: LShapePathParams): string => {
   if (maxTopLeftCutoutRadius > 0) {
     // Go to where the arc should start on the top edge
     path += ` L ${cutoutStartX - maxTopLeftCutoutRadius},0`
-    // Create proper circular arc that curves down into the cutout
+    // Top-left cutout corner - proper circular arc
     path += ` A ${maxTopLeftCutoutRadius},${maxTopLeftCutoutRadius} 0 0,1 ${cutoutStartX},${maxTopLeftCutoutRadius}`
   } else {
     path += ` L ${cutoutStartX},0`
@@ -62,8 +62,8 @@ const generateLShapePathWithRadii = (params: LShapePathParams): string => {
   // Cutout vertical edge down to inner corner
   if (maxInnerCutoutRadius > 0) {
     path += ` L ${cutoutStartX},${cutoutStartY - maxInnerCutoutRadius}`
-    // Inner cutout corner - proper circular arc
-    path += ` A ${maxInnerCutoutRadius},${maxInnerCutoutRadius} 0 0,1 ${
+    // Inner cutout corner - counter-clockwise for concave inner corner
+    path += ` A ${maxInnerCutoutRadius},${maxInnerCutoutRadius} 0 0,0 ${
       cutoutStartX + maxInnerCutoutRadius
     },${cutoutStartY}`
   } else {
