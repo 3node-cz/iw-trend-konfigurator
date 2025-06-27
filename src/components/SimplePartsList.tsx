@@ -9,7 +9,6 @@ import {
   SelectableItem,
   EmptyStateContainer,
   DangerButton,
-  SmallButton,
   InfoText,
 } from './common/CommonStyles'
 
@@ -258,15 +257,6 @@ export const SimplePartsList: React.FC<SimplePartsListProps> = React.memo(
               <InfoText>
                 {((part.width * part.height) / 1000000).toFixed(3)} m²/ks
               </InfoText>
-
-              <SmallButton
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onPartSelect(part.id)
-                }}
-              >
-                Upraviť
-              </SmallButton>
 
               <DangerButton
                 onClick={(e) => {

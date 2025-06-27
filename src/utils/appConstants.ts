@@ -98,8 +98,8 @@ export const SHEET_VISUALIZATION = {
     '#e67e22',
   ],
   fontSize: {
-    partLabel: 10,
-    dimensions: 12,
+    partLabel: 24,  // Increased from 16 to make it more readable
+    dimensions: 14,
   },
   spacing: {
     dimensionOffset: 20,

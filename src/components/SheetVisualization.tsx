@@ -105,7 +105,7 @@ const PartRect = styled.rect<{ $index: number }>`
 
 const PartText = styled.text`
   fill: ${SHEET_VISUALIZATION.colors.partText};
-  font-size: ${SHEET_VISUALIZATION.fontSize.partLabel}px;
+  font-size: 48px;  /* Much larger fixed size for SVG coordinates */
   font-weight: bold;
   text-anchor: middle;
   pointer-events: none;
@@ -291,14 +291,17 @@ export const SheetVisualization: React.FC<SheetVisualizationProps> = ({
                   height={partHeight}
                   $index={colorIndex}
                 />
-                <PartText
-                  x={placedPart.x + partWidth / 2}
-                  y={placedPart.y + partHeight / 2}
-                  dominantBaseline="central"
-                >
-                  {partWidth}×{partHeight}
-                  {placedPart.rotation === 90 && ' ↻'}
-                </PartText>
+                {/* Only show text for parts that are large enough to display it clearly */}
+                {Math.min(partWidth, partHeight) > 200 && (
+                  <PartText
+                    x={placedPart.x + partWidth / 2}
+                    y={placedPart.y + partHeight / 2}
+                    dominantBaseline="central"
+                  >
+                    {partWidth}×{partHeight}
+                    {placedPart.rotation === 90 && ' ↻'}
+                  </PartText>
+                )}
               </g>
             )
           })}
