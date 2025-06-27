@@ -1,57 +1,58 @@
 import styled from 'styled-components'
+import { COLORS, SPACING, BORDER_RADIUS, BOX_SHADOW, TYPOGRAPHY, INPUT_DIMENSIONS, COMPONENT_DIMENSIONS } from '../../utils/uiConstants'
 
 // Common container styles
 export const Card = styled.div`
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e1e8ed;
-  margin-bottom: 20px;
+  background: ${COLORS.cardBackground};
+  border-radius: ${COMPONENT_DIMENSIONS.card.borderRadius}px;
+  padding: ${COMPONENT_DIMENSIONS.card.padding}px;
+  box-shadow: ${BOX_SHADOW.light};
+  border: 1px solid ${COLORS.border};
+  margin-bottom: ${COMPONENT_DIMENSIONS.card.marginBottom}px;
 `
 
 export const CardTitle = styled.h2`
-  color: #2c3e50;
-  margin-bottom: 16px;
-  font-size: 1.3rem;
+  color: ${COLORS.textPrimary};
+  margin-bottom: ${SPACING.xl}px;
+  font-size: ${TYPOGRAPHY.fontSize.xl};
 `
 
 export const SectionHeader = styled.h3`
-  color: #2c3e50;
-  font-size: 1.1rem;
-  margin: 20px 0 16px 0;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #e1e8ed;
+  color: ${COLORS.textPrimary};
+  font-size: ${TYPOGRAPHY.fontSize.lg};
+  margin: ${SPACING.xxl}px 0 ${SPACING.xl}px 0;
+  padding-bottom: ${SPACING.md}px;
+  border-bottom: 2px solid ${COLORS.border};
 `
 
 // Common input styles
 export const InputsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-top: 20px;
+  gap: ${SPACING.xl}px;
+  margin-top: ${SPACING.xxl}px;
 `
 
 export const InputGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: ${SPACING.md}px;
 
   label {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #2c3e50;
+    font-size: ${TYPOGRAPHY.fontSize.sm};
+    font-weight: ${TYPOGRAPHY.fontWeight.semibold};
+    color: ${COLORS.textPrimary};
   }
 
   input {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 0.9rem;
+    padding: ${INPUT_DIMENSIONS.padding.md};
+    border: 1px solid ${COLORS.borderLight};
+    border-radius: ${BORDER_RADIUS.sm}px;
+    font-size: ${TYPOGRAPHY.fontSize.sm};
 
     &:focus {
       outline: none;
-      border-color: #3498db;
+      border-color: ${COLORS.primary};
       box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
     }
   }
@@ -59,54 +60,54 @@ export const InputGroup = styled.div`
 
 // Common button styles
 export const PrimaryButton = styled.button`
-  background-color: #3498db;
+  background-color: ${COLORS.primary};
   color: white;
   border: none;
-  border-radius: 4px;
-  padding: 8px 16px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  border-radius: ${BORDER_RADIUS.sm}px;
+  padding: ${INPUT_DIMENSIONS.padding.md};
+  font-size: ${TYPOGRAPHY.fontSize.sm};
+  font-weight: ${TYPOGRAPHY.fontWeight.semibold};
   cursor: pointer;
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: #2980b9;
+    background-color: ${COLORS.hoverPrimary};
   }
 
   &:disabled {
-    background-color: #bdc3c7;
+    background-color: ${COLORS.textMuted};
     cursor: not-allowed;
   }
 `
 
 export const SecondaryButton = styled.button`
-  background-color: #95a5a6;
+  background-color: ${COLORS.textMuted};
   color: white;
   border: none;
-  border-radius: 4px;
-  padding: 8px 16px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  border-radius: ${BORDER_RADIUS.sm}px;
+  padding: ${INPUT_DIMENSIONS.padding.md};
+  font-size: ${TYPOGRAPHY.fontSize.sm};
+  font-weight: ${TYPOGRAPHY.fontWeight.semibold};
   cursor: pointer;
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: #7f8c8d;
+    background-color: ${COLORS.textSecondary};
   }
 
   &:disabled {
-    background-color: #bdc3c7;
+    background-color: ${COLORS.textMuted};
     cursor: not-allowed;
   }
 `
 
 export const DangerButton = styled.button`
-  background-color: #e74c3c;
+  background-color: ${COLORS.danger};
   color: white;
   border: none;
-  border-radius: 4px;
-  padding: 6px 10px;
-  font-size: 0.8rem;
+  border-radius: ${BORDER_RADIUS.sm}px;
+  padding: ${COMPONENT_DIMENSIONS.button.padding};
+  font-size: ${TYPOGRAPHY.fontSize.xs};
   cursor: pointer;
   transition: background-color 0.2s;
 
@@ -116,103 +117,103 @@ export const DangerButton = styled.button`
 `
 
 export const SmallButton = styled.button`
-  background-color: #3498db;
+  background-color: ${COLORS.primary};
   color: white;
   border: none;
-  border-radius: 4px;
-  padding: 6px 10px;
-  font-size: 0.8rem;
+  border-radius: ${BORDER_RADIUS.sm}px;
+  padding: ${COMPONENT_DIMENSIONS.button.padding};
+  font-size: ${TYPOGRAPHY.fontSize.xs};
   cursor: pointer;
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: #2980b9;
+    background-color: ${COLORS.hoverPrimary};
   }
 `
 
 // Common list/grid styles
 export const GridContainer = styled.div`
   display: grid;
-  gap: 12px;
+  gap: ${SPACING.lg}px;
 `
 
 export const SelectableItem = styled.div<{ $selected?: boolean }>`
-  padding: 12px;
+  padding: ${SPACING.lg}px;
   background: ${(props) => (props.$selected ? '#e8f4fd' : '#f8f9fa')};
-  border-radius: 6px;
-  border: 1px solid ${(props) => (props.$selected ? '#3498db' : '#e1e8ed')};
+  border-radius: ${BORDER_RADIUS.md}px;
+  border: 1px solid ${(props) => (props.$selected ? COLORS.primary : COLORS.border)};
   cursor: pointer;
   transition: all 0.2s;
 
   &:hover {
-    background: ${(props) => (props.$selected ? '#d6eaf8' : '#ecf0f1')};
-    border-color: #3498db;
+    background: ${(props) => (props.$selected ? '#d6eaf8' : COLORS.hoverLight)};
+    border-color: ${COLORS.primary};
   }
 `
 
 export const EmptyStateContainer = styled.div`
   text-align: center;
-  padding: 40px 20px;
-  color: #7f8c8d;
+  padding: ${SPACING.xxxl}px ${SPACING.xxl}px;
+  color: ${COLORS.textSecondary};
 
   p {
     margin: 0;
-    font-size: 1rem;
+    font-size: ${TYPOGRAPHY.fontSize.base};
   }
 `
 
 // Common header patterns
 export const DimensionsHeader = styled.div`
   background: #e8f4fd;
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 20px;
+  padding: ${SPACING.lg}px;
+  border-radius: ${BORDER_RADIUS.md}px;
+  margin-bottom: ${SPACING.xxl}px;
   text-align: center;
 
   .total-dimensions {
-    font-weight: 600;
-    color: #2c3e50;
-    font-size: 1rem;
+    font-weight: ${TYPOGRAPHY.fontWeight.semibold};
+    color: ${COLORS.textPrimary};
+    font-size: ${TYPOGRAPHY.fontSize.base};
   }
 
   .dimensions-label {
-    font-size: 0.8rem;
-    color: #7f8c8d;
-    margin-top: 2px;
+    font-size: ${TYPOGRAPHY.fontSize.xs};
+    color: ${COLORS.textSecondary};
+    margin-top: ${SPACING.xs}px;
   }
 `
 
 export const ToggleGroup = styled.div`
-  margin-bottom: 20px;
+  margin-bottom: ${SPACING.xxl}px;
 
   label {
     display: flex;
     align-items: center;
-    font-weight: 600;
-    color: #2c3e50;
-    font-size: 0.9rem;
+    font-weight: ${TYPOGRAPHY.fontWeight.semibold};
+    color: ${COLORS.textPrimary};
+    font-size: ${TYPOGRAPHY.fontSize.sm};
     cursor: pointer;
 
     input {
-      margin-right: 8px;
+      margin-right: ${SPACING.md}px;
     }
   }
 `
 
 // Common text styles
 export const InfoText = styled.div`
-  font-size: 0.9rem;
-  color: #2c3e50;
+  font-size: ${TYPOGRAPHY.fontSize.sm};
+  color: ${COLORS.textPrimary};
   text-align: center;
 `
 
 export const DetailText = styled.div`
-  font-size: 0.8rem;
-  color: #7f8c8d;
+  font-size: ${TYPOGRAPHY.fontSize.xs};
+  color: ${COLORS.textSecondary};
 `
 
 export const LabelText = styled.div`
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 2px;
+  font-weight: ${TYPOGRAPHY.fontWeight.semibold};
+  color: ${COLORS.textPrimary};
+  margin-bottom: ${SPACING.xs}px;
 `

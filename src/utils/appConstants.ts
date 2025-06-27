@@ -1,5 +1,6 @@
 /**
- * Application-wide constants and configuration values
+ * Application-specific constants and configuration values
+ * For UI/styling constants, see uiConstants.ts
  */
 
 /**
@@ -13,74 +14,13 @@ export const FORM_DEFAULTS = {
 } as const
 
 /**
- * UI dimension constants
+ * UI dimension constants for specific components
  */
 export const UI_DIMENSIONS = {
   maxPreviewWidth: 400,
   maxPreviewHeight: 300,
   borderRadius: 8,
   padding: 20,
-} as const
-
-/**
- * Color constants
- */
-export const COLORS = {
-  primary: '#3498db',
-  secondary: '#2c3e50',
-  text: '#2c3e50',
-  textMuted: '#7f8c8d',
-  background: '#f5f6fa',
-  cardBackground: 'white',
-  border: '#e1e8ed',
-  inputBorder: '#ddd',
-  selected: '#e8f4fd',
-  selectedBorder: '#3498db',
-  hover: '#ecf0f1',
-  success: '#27ae60',
-  warning: '#f39c12',
-  error: '#e74c3c',
-} as const
-
-/**
- * Typography constants
- */
-export const TYPOGRAPHY = {
-  fontFamily:
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
-  fontSize: {
-    small: '0.75rem',
-    normal: '0.9rem',
-    medium: '1rem',
-    large: '1.1rem',
-    heading: '1.3rem',
-    title: '2.2rem',
-  },
-  fontWeight: {
-    normal: 400,
-    medium: 500,
-    semibold: 600,
-    bold: 700,
-  },
-} as const
-
-/**
- * Grid and layout constants
- */
-export const LAYOUT = {
-  maxWidth: '1200px',
-  breakpoints: {
-    mobile: '768px',
-    tablet: '1024px',
-  },
-  spacing: {
-    xs: '4px',
-    sm: '8px',
-    md: '12px',
-    lg: '16px',
-    xl: '20px',
-    xxl: '30px',
-  },
 } as const
 
 /**

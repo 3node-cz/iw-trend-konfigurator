@@ -5,30 +5,30 @@ import { SimplePartForm } from './SimplePartForm'
 import { SimplePartsList } from './SimplePartsList'
 import { TabbedEditor } from './TabbedEditor'
 import { SheetVisualization } from './SheetVisualization'
+import { COLORS, TYPOGRAPHY, LAYOUT, SPACING, BREAKPOINTS } from '../utils/uiConstants'
 
 const AppContainer = styled.div`
-  max-width: 1200px;
+  max-width: ${LAYOUT.maxWidth};
   margin: 0 auto;
-  padding: 20px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
-    sans-serif;
-  background: #f5f6fa;
+  padding: ${SPACING.xxl}px;
+  font-family: ${TYPOGRAPHY.fontFamily.system};
+  background: ${COLORS.background};
   min-height: 100vh;
 `
 
 const Header = styled.header`
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: ${SPACING.xxxl * 1.5}px;
 
   h1 {
-    color: #2c3e50;
-    font-size: 2.2rem;
-    margin-bottom: 8px;
+    color: ${COLORS.textPrimary};
+    font-size: ${TYPOGRAPHY.fontSize['3xl']};
+    margin-bottom: ${SPACING.md}px;
   }
 
   p {
-    color: #7f8c8d;
-    font-size: 1rem;
+    color: ${COLORS.textSecondary};
+    font-size: ${TYPOGRAPHY.fontSize.base};
     margin: 0;
   }
 `
@@ -36,9 +36,9 @@ const Header = styled.header`
 const MainGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: ${SPACING.xxl}px;
 
-  @media (max-width: 768px) {
+  @media (max-width: ${BREAKPOINTS.tablet}) {
     grid-template-columns: 1fr;
   }
 `
@@ -46,7 +46,7 @@ const MainGrid = styled.div`
 const LeftColumn = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: ${SPACING.xxl}px;
 `
 
 const RightColumn = styled.div`

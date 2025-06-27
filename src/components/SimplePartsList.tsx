@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import type { Part } from '../types/simple'
+import { SPACING } from '../utils/uiConstants'
 import {
   Card,
   CardTitle,
@@ -281,7 +282,7 @@ export const SimplePartsList: React.FC<SimplePartsListProps> = React.memo(
           ))}
         </GridContainer>
 
-        <DangerButton onClick={onClearAll} style={{ marginTop: '12px' }}>
+        <DangerButton onClick={onClearAll} style={{ marginTop: `${SPACING.lg}px` }}>
           Vymazať všetko
         </DangerButton>
       </Card>

@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { PartEditor } from './PartEditor'
 import { LShapeEditor } from './LShapeEditor'
 import type { Part } from '../types/simple'
+import { SPACING } from '../utils/uiConstants'
 
 const TabContainer = styled.div`
   background: white;
@@ -129,7 +130,7 @@ export const TabbedEditor: React.FC<TabbedEditorProps> = ({
             <p
               style={{
                 fontSize: '0.8rem',
-                marginTop: '8px',
+                marginTop: `${SPACING.md}px`,
                 fontStyle: 'italic',
               }}
             >

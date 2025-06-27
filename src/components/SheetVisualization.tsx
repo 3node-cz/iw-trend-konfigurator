@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 import type { SheetLayout } from '../types/simple'
 import { SHEET_VISUALIZATION } from '../utils/appConstants'
+import { SPACING } from '../utils/uiConstants'
 import {
   calculateSheetScale,
   groupPartsByBaseId,
@@ -184,7 +185,7 @@ export const SheetVisualization: React.FC<SheetVisualizationProps> = ({
           style={{
             textAlign: 'center',
             color: '#7f8c8d',
-            padding: '40px 20px',
+            padding: `${SPACING.xxxl}px ${SPACING.xxl}px`,
           }}
         >
           <p>Pridajte dielce pre zobrazenie rozloženia na doskách</p>
@@ -375,7 +376,7 @@ export const SheetVisualization: React.FC<SheetVisualizationProps> = ({
         {sheetLayout.unplacedParts.length > 0 && (
           <div
             style={{
-              marginTop: '16px',
+              marginTop: `${SPACING.xl}px`,
               padding: '12px',
               backgroundColor: '#fff3cd',
               borderRadius: '6px',

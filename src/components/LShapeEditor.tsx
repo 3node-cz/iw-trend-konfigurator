@@ -1,5 +1,6 @@
 import React from 'react'
 import type { Part, LShapeConfig } from '../types/simple'
+import { SPACING } from '../utils/uiConstants'
 import {
   calculateLShapePreview,
   createLShapeDefault,
@@ -35,7 +36,7 @@ export const LShapeEditor: React.FC<LShapeEditorProps> = React.memo(
           <div
             style={{
               textAlign: 'center',
-              padding: '40px 20px',
+              padding: `${SPACING.xxxl}px ${SPACING.xxl}px`,
               color: '#7f8c8d',
             }}
           >

@@ -1,8 +1,7 @@
-import { SimpleCuttingApp } from './components/SimpleCuttingApp'
-import './App.css'
+import { SimpleCuttingApp } from './components/SimpleCuttingApp';
 
 function App() {
-  return <SimpleCuttingApp />
+  return <SimpleCuttingApp />;
 }
 
-export default App
+export default App;
