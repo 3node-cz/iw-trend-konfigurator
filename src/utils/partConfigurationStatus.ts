@@ -54,6 +54,13 @@ export const isLShapeConfigured = (lShape?: LShapeConfig): boolean => {
 
   // Check if any L-shape dimensions or corner radii are set
   return !!(
+    lShape.leftWidth ||
+    lShape.rightWidth ||
+    lShape.bottomLeftRadius ||
+    lShape.topLeftCutoutRadius ||
+    lShape.innerCutoutRadius ||
+    lShape.rightBottomCutoutRadius ||
+    // Legacy support
     lShape.topLeftWidth ||
     lShape.topLeftHeight ||
     lShape.bottomRightWidth ||

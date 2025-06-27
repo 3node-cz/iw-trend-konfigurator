@@ -21,7 +21,10 @@ body {
 }
 
 /* Form elements styling */
-input, select, textarea, button {
+input,
+select,
+textarea,
+button {
   font-family: inherit;
 }
 
@@ -31,7 +34,7 @@ input::-webkit-inner-spin-button {
   margin: 0;
 }
 
-input[type=number] {
+input[type='number'] {
   appearance: textfield;
   -moz-appearance: textfield;
 }

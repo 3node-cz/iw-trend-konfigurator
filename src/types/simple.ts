@@ -16,18 +16,22 @@ export interface EdgeTreatment {
 
 export interface LShapeConfig {
   enabled: boolean
-  // Width of material to preserve in top-left corner (from left edge)
-  topLeftWidth?: number
-  // Height of material to preserve in top-left corner (from top edge)
-  topLeftHeight?: number
-  // Width of material to preserve in bottom-right corner (from right edge)
-  bottomRightWidth?: number
-  // Height of material to preserve in bottom-right corner (from bottom edge)
-  bottomRightHeight?: number
-  // Individual corner radii for each inner corner
-  topInnerCornerRadius?: number // Top inner corner radius
-  bottomInnerCornerRadius?: number // Bottom inner corner radius
+  // Width from left edge to cutout
+  leftWidth?: number
+  // Width from right edge to cutout
+  rightWidth?: number
+  // Corner radii
+  bottomLeftRadius?: number // Bottom left outer corner
+  topLeftCutoutRadius?: number // Top left cutout corner
+  innerCutoutRadius?: number // Inner cutout corner
+  rightBottomCutoutRadius?: number // Right bottom cutout corner
   // Legacy support - will be removed
+  topLeftWidth?: number
+  topLeftHeight?: number
+  bottomRightWidth?: number
+  bottomRightHeight?: number
+  topInnerCornerRadius?: number
+  bottomInnerCornerRadius?: number
   innerCornerRadius?: number
 }
 

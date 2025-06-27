@@ -13,6 +13,13 @@ export function createDefaultLShapeConfig(
 ): LShapeConfig {
   return {
     enabled: true,
+    leftWidth: Math.round(width * 0.6),
+    rightWidth: Math.round(width * 0.4),
+    bottomLeftRadius: 0,
+    topLeftCutoutRadius: 0,
+    innerCutoutRadius: 0,
+    rightBottomCutoutRadius: 0,
+    // Legacy support
     topLeftWidth: Math.round(width * 0.6),
     topLeftHeight: Math.round(height * 0.6),
     innerCornerRadius: 0,

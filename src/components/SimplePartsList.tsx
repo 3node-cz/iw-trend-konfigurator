@@ -1,43 +1,23 @@
 import React from 'react'
 import styled from 'styled-components'
 import type { Part } from '../types/simple'
+import {
+  Card,
+  CardTitle,
+  GridContainer,
+  SelectableItem,
+  EmptyStateContainer,
+  DangerButton,
+  SmallButton,
+  InfoText,
+} from './common/CommonStyles'
 
-const ListContainer = styled.div`
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e1e8ed;
-  margin-bottom: 20px;
-`
-
-const ListTitle = styled.h2`
-  color: #2c3e50;
-  margin-bottom: 16px;
-  font-size: 1.3rem;
-`
-
-const PartsGrid = styled.div`
-  display: grid;
-  gap: 12px;
-`
-
-const PartItem = styled.div<{ $selected?: boolean }>`
+// Specific styled components for parts list
+const PartItem = styled(SelectableItem)`
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr auto auto auto;
   gap: 12px;
   align-items: center;
-  padding: 12px;
-  background: ${(props) => (props.$selected ? '#e8f4fd' : '#f8f9fa')};
-  border-radius: 6px;
-  border: 1px solid ${(props) => (props.$selected ? '#3498db' : '#e1e8ed')};
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    background: ${(props) => (props.$selected ? '#d6eaf8' : '#ecf0f1')};
-    border-color: #3498db;
-  }
 `
 
 const PartInfo = styled.div`
@@ -50,53 +30,6 @@ const PartInfo = styled.div`
   .dimensions {
     font-size: 0.8rem;
     color: #7f8c8d;
-  }
-`
-
-const PartDetail = styled.div`
-  text-align: center;
-  font-size: 0.9rem;
-  color: #2c3e50;
-`
-
-const RemoveButton = styled.button`
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 6px 10px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: #c0392b;
-  }
-`
-
-const PreviewButton = styled.button`
-  background-color: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 6px 10px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: #2980b9;
-  }
-`
-
-const EmptyState = styled.div`
-  text-align: center;
-  padding: 30px 20px;
-  color: #7f8c8d;
-
-  p {
-    margin: 0;
-    font-size: 1rem;
   }
 `
 
@@ -125,22 +58,6 @@ const Stat = styled.div`
     color: #7f8c8d;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-  }
-`
-
-const ClearButton = styled.button`
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 16px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  margin-top: 12px;
-
-  &:hover {
-    background-color: #c0392b;
   }
 `
 
@@ -282,18 +199,18 @@ export const SimplePartsList: React.FC<SimplePartsListProps> = React.memo(
   }) => {
     if (parts.length === 0) {
       return (
-        <ListContainer>
-          <ListTitle>Zoznam dielcov</ListTitle>
-          <EmptyState>
+        <Card>
+          <CardTitle>Zoznam dielcov</CardTitle>
+          <EmptyStateContainer>
             <p>Zatiaľ nie sú pridané žiadne dielce</p>
-          </EmptyState>
-        </ListContainer>
+          </EmptyStateContainer>
+        </Card>
       )
     }
 
     return (
-      <ListContainer>
-        <ListTitle>Zoznam dielcov</ListTitle>
+      <Card>
+        <CardTitle>Zoznam dielcov</CardTitle>
 
         <StatsRow>
           <Stat>
@@ -310,7 +227,7 @@ export const SimplePartsList: React.FC<SimplePartsListProps> = React.memo(
           </Stat>
         </StatsRow>
 
-        <PartsGrid>
+        <GridContainer>
           {parts.map((part) => (
             <PartItem
               key={part.id}
@@ -326,46 +243,48 @@ export const SimplePartsList: React.FC<SimplePartsListProps> = React.memo(
                 </div>
               </PartInfo>
 
-              <PartDetail>
+              <InfoText>
                 <strong>{part.quantity}</strong> ks
-              </PartDetail>
+              </InfoText>
 
-              <PartDetail>
+              <InfoText>
                 {((part.width * part.height * part.quantity) / 1000000).toFixed(
                   3,
                 )}{' '}
                 m²
-              </PartDetail>
+              </InfoText>
 
-              <PartDetail>
+              <InfoText>
                 {((part.width * part.height) / 1000000).toFixed(3)} m²/ks
-              </PartDetail>
+              </InfoText>
 
-              <PreviewButton
+              <SmallButton
                 onClick={(e) => {
                   e.stopPropagation()
                   onPartSelect(part.id)
                 }}
               >
                 Upraviť
-              </PreviewButton>
+              </SmallButton>
 
-              <RemoveButton
+              <DangerButton
                 onClick={(e) => {
                   e.stopPropagation()
                   onRemovePart(part.id)
                 }}
               >
                 Odstrániť
-              </RemoveButton>
+              </DangerButton>
 
               <PartConfigIndicators part={part} />
             </PartItem>
           ))}
-        </PartsGrid>
+        </GridContainer>
 
-        <ClearButton onClick={onClearAll}>Vymazať všetko</ClearButton>
-      </ListContainer>
+        <DangerButton onClick={onClearAll} style={{ marginTop: '12px' }}>
+          Vymazať všetko
+        </DangerButton>
+      </Card>
     )
   },
 )

@@ -3,22 +3,14 @@ import { useForm } from 'react-hook-form'
 import styled from 'styled-components'
 import type { Part } from '../types/simple'
 import { FORM_DEFAULTS, PART_CONSTRAINTS } from '../utils/appConstants'
+import {
+  Card,
+  CardTitle,
+  InputGroup,
+  PrimaryButton,
+} from './common/CommonStyles'
 
-const FormContainer = styled.div`
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e1e8ed;
-  margin-bottom: 20px;
-`
-
-const FormTitle = styled.h2`
-  color: #2c3e50;
-  margin-bottom: 16px;
-  font-size: 1.3rem;
-`
-
+// Form-specific styled components
 const FormGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -30,53 +22,9 @@ const FormGrid = styled.div`
   }
 `
 
-const FormField = styled.div`
-  display: flex;
-  flex-direction: column;
-
+const FormField = styled(InputGroup)`
   &.full-width {
     grid-column: 1 / -1;
-  }
-`
-
-const Label = styled.label`
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: #2c3e50;
-  font-size: 0.9rem;
-`
-
-const Input = styled.input`
-  padding: 8px 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 0.9rem;
-
-  &:focus {
-    outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
-  }
-`
-
-const SubmitButton = styled.button`
-  background-color: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 10px 20px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: #2980b9;
-  }
-
-  &:disabled {
-    background-color: #bdc3c7;
-    cursor: not-allowed;
   }
 `
 
@@ -123,14 +71,14 @@ export const SimplePartForm: React.FC<SimplePartFormProps> = ({
   }
 
   return (
-    <FormContainer>
-      <FormTitle>Pridať nový diel</FormTitle>
+    <Card>
+      <CardTitle>Pridať nový diel</CardTitle>
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <FormGrid>
           <FormField>
-            <Label htmlFor="width">Šírka (mm)</Label>
-            <Input
+            <label htmlFor="width">Šírka (mm)</label>
+            <input
               id="width"
               type="number"
               min={PART_CONSTRAINTS.minWidth}
@@ -153,8 +101,8 @@ export const SimplePartForm: React.FC<SimplePartFormProps> = ({
           </FormField>
 
           <FormField>
-            <Label htmlFor="height">Výška (mm)</Label>
-            <Input
+            <label htmlFor="height">Výška (mm)</label>
+            <input
               id="height"
               type="number"
               min={PART_CONSTRAINTS.minHeight}
@@ -177,8 +125,8 @@ export const SimplePartForm: React.FC<SimplePartFormProps> = ({
           </FormField>
 
           <FormField>
-            <Label htmlFor="quantity">Počet kusov</Label>
-            <Input
+            <label htmlFor="quantity">Počet kusov</label>
+            <input
               id="quantity"
               type="number"
               min={PART_CONSTRAINTS.minQuantity}
@@ -201,8 +149,8 @@ export const SimplePartForm: React.FC<SimplePartFormProps> = ({
           </FormField>
 
           <FormField className="full-width">
-            <Label htmlFor="label">Názov dielu (voliteľné)</Label>
-            <Input
+            <label htmlFor="label">Názov dielu (voliteľné)</label>
+            <input
               id="label"
               type="text"
               placeholder="napr. Polička, Dvierka..."
@@ -211,13 +159,13 @@ export const SimplePartForm: React.FC<SimplePartFormProps> = ({
           </FormField>
         </FormGrid>
 
-        <SubmitButton
+        <PrimaryButton
           type="submit"
           disabled={!isValid}
         >
           Pridať diel
-        </SubmitButton>
+        </PrimaryButton>
       </form>
-    </FormContainer>
+    </Card>
   )
 }
