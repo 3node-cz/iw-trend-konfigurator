@@ -72,14 +72,14 @@ export const CORNER_LABELS = {
 /**
  * Get edge label by key
  */
-export function getEdgeLabel(edge: keyof typeof EDGE_LABELS): string {
+export const getEdgeLabel = (edge: keyof typeof EDGE_LABELS): string => {
   return EDGE_LABELS[edge]
 }
 
 /**
  * Get edge option label by value
  */
-export function getEdgeOptionLabel(value: EdgeValue): string {
+export const getEdgeOptionLabel = (value: EdgeValue): string => {
   const option = EDGE_OPTIONS.find((opt) => opt.value === value)
   return option?.label || 'Neznámy'
 }
@@ -87,6 +87,6 @@ export function getEdgeOptionLabel(value: EdgeValue): string {
 /**
  * Get corner label by position
  */
-export function getCornerLabel(corner: CornerPosition): string {
+export const getCornerLabel = (corner: CornerPosition): string => {
   return CORNER_LABELS[corner]
 }

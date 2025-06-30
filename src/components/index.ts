@@ -1,11 +1,13 @@
-// Current active components (Simple* series)
-export { SimplePartForm } from './SimplePartForm'
-export { SimplePartsList } from './SimplePartsList'
-export { SimpleCuttingApp } from './SimpleCuttingApp'
-export { TabbedEditor } from './TabbedEditor'
-export { PartEditor } from './PartEditor'
-export { LShapeEditor } from './LShapeEditor'
-export { PartPreviewCanvas } from './PartPreviewCanvas'
-export { SheetVisualization } from './SheetVisualization'
-export { EdgeSelector } from './EdgeSelector'
-export { CornerConfigurator } from './CornerConfigurator'
+// Three-Layer Architecture Components
+export { LayeredCuttingApp } from './LayeredCuttingApp'
+export { LoadingIndicator } from './LoadingIndicator'
+
+// Layer Components
+export { DimensionalPartForm } from './three-layer/dimensional/DimensionalPartForm'
+export { OptimizedLayoutVisualization } from './three-layer/layout/OptimizedLayoutVisualization'
+export { VisualEnhancementEditor } from './three-layer/visual/VisualEnhancementEditor'
+export { EnhancedPartsList } from './three-layer/EnhancedPartsList'
+
+// Note: Additional visual components available but not exported due to missing dependencies:
+// - PartVisualEditor, LShapeVisualEditor, CornerVisualConfigurator, EdgeVisualSelector, PartVisualPreview
+// - These can be completed and exported once utility imports are properly configured

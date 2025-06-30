@@ -1,7 +1,7 @@
-import { SimpleCuttingApp } from './components/SimpleCuttingApp';
+import { LayeredCuttingApp } from './components/LayeredCuttingApp'
 
-function App() {
-  return <SimpleCuttingApp />;
+const App = () => {
+  return <LayeredCuttingApp />
 }
 
-export default App;
+export default App

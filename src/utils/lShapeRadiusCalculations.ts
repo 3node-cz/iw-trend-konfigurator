@@ -3,11 +3,11 @@ import type { Part, LShapeConfig } from '../types/simple'
 /**
  * Calculate maximum allowed radius for L-shape corners considering adjacent corners and available space
  */
-export function calculateLShapeMaxRadius(
+export const calculateLShapeMaxRadius = (
   part: Part,
   lShape: LShapeConfig,
   corner: 'bottomLeft' | 'topLeftCutout' | 'innerCutout' | 'rightBottomCutout',
-): number {
+): number => {
   const leftWidth = lShape.leftWidth || 0
   const rightHeight = lShape.rightWidth || 0 // This is actually height from bottom going up
 
@@ -38,30 +38,21 @@ export function calculateLShapeMaxRadius(
 
     case 'innerCutout': {
       // Inner cutout corner calculation based on remaining space after adjacent corners
-      const cutoutWidth = part.width - leftWidth  // Available horizontal space in cutout
-      const cutoutHeight = part.height - rightHeight  // Available vertical space in cutout
-      
+      const cutoutWidth = part.width - leftWidth // Available horizontal space in cutout
+      const cutoutHeight = part.height - rightHeight // Available vertical space in cutout
+
       // Calculate remaining space after adjacent corners
-      const horizontalRemaining = Math.max(0, cutoutWidth - rightBottomCutoutRadius)
+      const horizontalRemaining = Math.max(
+        0,
+        cutoutWidth - rightBottomCutoutRadius,
+      )
       const verticalRemaining = Math.max(0, cutoutHeight - topLeftCutoutRadius)
-      
+
       // Inner corner radius is limited by the smaller of the two remaining spaces
-      const result = Math.max(0, Math.min(horizontalRemaining, verticalRemaining))
-      
-      // Debug logging
-      console.log('Inner cutout calculation:', {
-        partWidth: part.width,
-        partHeight: part.height,
-        leftWidth,
-        rightHeight,
-        cutoutWidth,
-        cutoutHeight,
-        topLeftCutoutRadius,
-        rightBottomCutoutRadius,
-        horizontalRemaining,
-        verticalRemaining,
-        result
-      })
+      const result = Math.max(
+        0,
+        Math.min(horizontalRemaining, verticalRemaining),
+      )
 
       return result
     }
@@ -86,12 +77,12 @@ export function calculateLShapeMaxRadius(
 /**
  * Validate and constrain L-shape radius value
  */
-export function validateLShapeRadius(
+export const validateLShapeRadius = (
   part: Part,
   lShape: LShapeConfig,
   corner: 'bottomLeft' | 'topLeftCutout' | 'innerCutout' | 'rightBottomCutout',
   value: number,
-): number {
+): number => {
   const maxRadius = calculateLShapeMaxRadius(part, lShape, corner)
   return Math.min(Math.max(0, value || 0), maxRadius)
 }
@@ -99,7 +90,10 @@ export function validateLShapeRadius(
 /**
  * Get all L-shape radius constraints
  */
-export function getLShapeRadiusConstraints(part: Part, lShape: LShapeConfig) {
+export const getLShapeRadiusConstraints = (
+  part: Part,
+  lShape: LShapeConfig,
+) => {
   return {
     bottomLeft: calculateLShapeMaxRadius(part, lShape, 'bottomLeft'),
     topLeftCutout: calculateLShapeMaxRadius(part, lShape, 'topLeftCutout'),

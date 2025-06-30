@@ -44,18 +44,28 @@ A sophisticated cutting configurator e-shop application built with **Vite**, **R
 ```
 src/
 ├── components/
-│   ├── SimpleCuttingApp.tsx          # Main application component
-│   ├── SimplePartForm.tsx            # Part creation form
-│   ├── SimplePartsList.tsx           # Parts management list
-│   ├── TabbedEditor.tsx              # Tabbed part editor
-│   ├── PartEditor.tsx                # Corner and edge configuration
-│   ├── LShapeEditor.tsx              # L-shape configuration
-│   ├── PartPreviewCanvas.tsx         # SVG part preview
-│   ├── SheetVisualization.tsx        # Cutting layout visualization
-│   ├── CornerConfigurator.tsx        # Corner modification controls
-│   └── EdgeSelector.tsx              # Edge treatment selector
+│   ├── LayeredCuttingApp.tsx         # Main application component
+│   ├── LoadingIndicator.tsx          # Loading state indicators
+│   ├── three-layer/                  # Three-layer architecture components
+│   │   ├── dimensional/              # Layer 1: Core cutting dimensions
+│   │   │   └── DimensionalPartForm.tsx
+│   │   ├── layout/                   # Layer 2: Optimized cutting layout
+│   │   │   └── OptimizedLayoutVisualization.tsx
+│   │   ├── visual/                   # Layer 3: Visual enhancements
+│   │   │   ├── VisualEnhancementEditor.tsx
+│   │   │   ├── PartVisualEditor.tsx
+│   │   │   ├── LShapeVisualEditor.tsx
+│   │   │   ├── CornerVisualConfigurator.tsx
+│   │   │   ├── EdgeVisualSelector.tsx
+│   │   │   └── PartVisualPreview.tsx
+│   │   └── EnhancedPartsList.tsx     # Enhanced parts management
+│   └── optimization/                 # Performance optimization HOCs
+│       └── withThreeLayerOptimization.tsx
 ├── hooks/
-│   └── useSimpleConfigurator.ts      # Main business logic hook
+│   └── three-layer/                  # Three-layer state management
+│       ├── useLayeredCuttingState.ts # Main business logic hook
+│       ├── useDebounceValue.ts       # Value debouncing utility
+│       └── index.ts                  # Hook exports
 ├── types/
 │   └── simple.ts                     # Type definitions
 ├── utils/
@@ -71,6 +81,31 @@ src/
 │   └── sheetVisualizationHelpers.ts  # Sheet visualization utilities
 └── App.tsx                           # Application entry point
 ```
+
+## 🏗️ Architecture Overview
+
+The application uses a **three-layer state architecture** for optimal performance and maintainability:
+
+### Layer 1: Dimensional State
+
+- **Purpose**: Core cutting dimensions only
+- **Data**: Width, height, quantity, orientation, label
+- **Triggers**: Layout optimization when changed
+- **Component**: `DimensionalPartForm`
+
+### Layer 2: Layout Optimization
+
+- **Purpose**: Auto-calculated cutting layouts
+- **Features**: Debounced calculations, loading states, caching
+- **Data**: Optimized sheet layouts and cutting configurations
+- **Component**: `OptimizedLayoutVisualization`
+
+### Layer 3: Visual Enhancements
+
+- **Purpose**: UI-only visual properties
+- **Data**: Corners, edges, L-shapes, styling
+- **Independence**: Does not affect cutting calculations
+- **Components**: `VisualEnhancementEditor` and related visual components
 
 ## 🚀 Getting Started
 

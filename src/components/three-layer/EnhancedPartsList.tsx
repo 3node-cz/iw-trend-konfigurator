@@ -1,126 +1,26 @@
 import React from 'react'
-import styled from 'styled-components'
-import type { Part } from '../types/simple'
-import { SPACING } from '../utils/uiConstants'
+import type { Part } from '../../types/simple'
+import { SPACING } from '../../utils/uiConstants'
 import {
   Card,
   CardTitle,
   GridContainer,
-  SelectableItem,
   EmptyStateContainer,
   DangerButton,
   InfoText,
-} from './common/CommonStyles'
-
-// Specific styled components for parts list
-const PartItem = styled(SelectableItem)`
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto auto auto;
-  gap: 12px;
-  align-items: center;
-`
-
-const PartInfo = styled.div`
-  .label {
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 2px;
-  }
-
-  .dimensions {
-    font-size: 0.8rem;
-    color: #7f8c8d;
-  }
-`
-
-const StatsRow = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 12px;
-  background: #e8f4fd;
-  border-radius: 6px;
-`
-
-const Stat = styled.div`
-  text-align: center;
-
-  .value {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #2c3e50;
-    display: block;
-  }
-
-  .label {
-    font-size: 0.8rem;
-    color: #7f8c8d;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-`
-
-const ConfigIndicators = styled.div`
-  display: flex;
-  gap: 4px;
-  align-items: center;
-`
-
-const ConfigBadge = styled.span<{ $type: 'corners' | 'edges' | 'lshape' }>`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: white;
-  background-color: ${(props) => {
-    switch (props.$type) {
-      case 'corners':
-        return '#9b59b6'
-      case 'edges':
-        return '#e67e22'
-      case 'lshape':
-        return '#27ae60'
-      default:
-        return '#95a5a6'
-    }
-  }};
-
-  &:hover {
-    transform: scale(1.1);
-    transition: transform 0.1s;
-  }
-`
-
-const ConfigTooltip = styled.div<{ $visible: boolean }>`
-  position: absolute;
-  background: #2c3e50;
-  color: white;
-  padding: 6px 8px;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  white-space: nowrap;
-  z-index: 1000;
-  opacity: ${(props) => (props.$visible ? 1 : 0)};
-  visibility: ${(props) => (props.$visible ? 'visible' : 'hidden')};
-  transition: opacity 0.2s, visibility 0.2s;
-  transform: translateY(-100%);
-  margin-top: -8px;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 4px solid transparent;
-    border-top-color: #2c3e50;
-  }
-`
+} from '../common/CommonStyles'
+import {
+  PartItem,
+  PartInfo,
+  StatsRow,
+  Stat,
+  ConfigIndicators,
+  ConfigBadge,
+  ConfigTooltip,
+  RelativeContainer,
+  NoDataSpan,
+  SpacedContainer,
+} from './EnhancedPartsList.styles'
 
 interface ConfigIndicatorsProps {
   part: Part
@@ -132,8 +32,7 @@ const PartConfigIndicators: React.FC<ConfigIndicatorsProps> = ({ part }) => {
   return (
     <ConfigIndicators>
       {part.hasCornerModifications && (
-        <div
-          style={{ position: 'relative' }}
+        <RelativeContainer
           onMouseEnter={() => setHoveredBadge('corners')}
           onMouseLeave={() => setHoveredBadge(null)}
         >
@@ -141,12 +40,11 @@ const PartConfigIndicators: React.FC<ConfigIndicatorsProps> = ({ part }) => {
           <ConfigTooltip $visible={hoveredBadge === 'corners'}>
             Upravené rohy
           </ConfigTooltip>
-        </div>
+        </RelativeContainer>
       )}
 
       {part.hasEdgeTreatments && (
-        <div
-          style={{ position: 'relative' }}
+        <RelativeContainer
           onMouseEnter={() => setHoveredBadge('edges')}
           onMouseLeave={() => setHoveredBadge(null)}
         >
@@ -154,12 +52,11 @@ const PartConfigIndicators: React.FC<ConfigIndicatorsProps> = ({ part }) => {
           <ConfigTooltip $visible={hoveredBadge === 'edges'}>
             Hrany s oblepovaním
           </ConfigTooltip>
-        </div>
+        </RelativeContainer>
       )}
 
       {part.isLShape && (
-        <div
-          style={{ position: 'relative' }}
+        <RelativeContainer
           onMouseEnter={() => setHoveredBadge('lshape')}
           onMouseLeave={() => setHoveredBadge(null)}
         >
@@ -167,18 +64,16 @@ const PartConfigIndicators: React.FC<ConfigIndicatorsProps> = ({ part }) => {
           <ConfigTooltip $visible={hoveredBadge === 'lshape'}>
             L-tvar
           </ConfigTooltip>
-        </div>
+        </RelativeContainer>
       )}
 
-      {!part.hasAdvancedConfig && (
-        <span style={{ fontSize: '0.7rem', color: '#bdc3c7' }}>—</span>
-      )}
+      {!part.hasAdvancedConfig && <NoDataSpan>—</NoDataSpan>}
     </ConfigIndicators>
   )
 }
 
-interface SimplePartsListProps {
-  parts: Part[]
+interface EnhancedPartsListProps {
+  enhancedParts: Part[]
   totalArea: number
   totalParts: number
   selectedPartId?: string
@@ -187,9 +82,9 @@ interface SimplePartsListProps {
   onClearAll: () => void
 }
 
-export const SimplePartsList: React.FC<SimplePartsListProps> = React.memo(
+export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
   ({
-    parts,
+    enhancedParts,
     totalArea,
     totalParts,
     selectedPartId,
@@ -197,7 +92,7 @@ export const SimplePartsList: React.FC<SimplePartsListProps> = React.memo(
     onRemovePart,
     onClearAll,
   }) => {
-    if (parts.length === 0) {
+    if (enhancedParts.length === 0) {
       return (
         <Card>
           <CardTitle>Zoznam dielcov</CardTitle>
@@ -214,7 +109,7 @@ export const SimplePartsList: React.FC<SimplePartsListProps> = React.memo(
 
         <StatsRow>
           <Stat>
-            <span className="value">{parts.length}</span>
+            <span className="value">{enhancedParts.length}</span>
             <div className="label">Typov dielcov</div>
           </Stat>
           <Stat>
@@ -228,7 +123,7 @@ export const SimplePartsList: React.FC<SimplePartsListProps> = React.memo(
         </StatsRow>
 
         <GridContainer>
-          {parts.map((part) => (
+          {enhancedParts.map((part) => (
             <PartItem
               key={part.id}
               $selected={selectedPartId === part.id}
@@ -272,9 +167,9 @@ export const SimplePartsList: React.FC<SimplePartsListProps> = React.memo(
           ))}
         </GridContainer>
 
-        <DangerButton onClick={onClearAll} style={{ marginTop: `${SPACING.lg}px` }}>
-          Vymazať všetko
-        </DangerButton>
+        <SpacedContainer $marginTop={SPACING.lg}>
+          <DangerButton onClick={onClearAll}>Vymazať všetko</DangerButton>
+        </SpacedContainer>
       </Card>
     )
   },

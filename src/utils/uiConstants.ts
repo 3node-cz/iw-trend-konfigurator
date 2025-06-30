@@ -33,26 +33,26 @@ export const COLORS = {
   // Brand colors
   primary: '#3498db',
   secondary: '#2c3e50',
-  
+
   // Background colors
   background: '#f5f6fa',
   cardBackground: '#ffffff',
-  
+
   // Text colors
   textPrimary: '#2c3e50',
   textSecondary: '#7f8c8d',
   textMuted: '#95a5a6',
-  
+
   // Border colors
   border: '#e1e8ed',
   borderLight: '#ddd',
-  
+
   // Status colors
   success: '#27ae60',
   warning: '#f39c12',
   danger: '#e74c3c',
   info: '#3498db',
-  
+
   // Hover states
   hoverLight: '#ecf0f1',
   hoverPrimary: '#2980b9',
@@ -61,15 +61,16 @@ export const COLORS = {
 // Typography
 export const TYPOGRAPHY = {
   fontFamily: {
-    system: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
+    system:
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
     mono: 'Consolas, "Liberation Mono", Menlo, Courier, monospace',
   },
   fontSize: {
-    xs: '0.75rem',   // 12px
-    sm: '0.875rem',  // 14px
-    base: '1rem',    // 16px
-    lg: '1.125rem',  // 18px
-    xl: '1.25rem',   // 20px
+    xs: '0.75rem', // 12px
+    sm: '0.875rem', // 14px
+    base: '1rem', // 16px
+    lg: '1.125rem', // 18px
+    xl: '1.25rem', // 20px
     '2xl': '1.5rem', // 24px
     '3xl': '1.875rem', // 30px
   },

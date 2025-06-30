@@ -1,5 +1,6 @@
 import type { SheetLayout, PlacedPart } from '../types/simple'
 import { SHEET_VISUALIZATION } from './appConstants'
+import { getConsistentPartColor } from './colorManagement'
 
 /**
  * Utility functions for sheet visualization
@@ -8,12 +9,12 @@ import { SHEET_VISUALIZATION } from './appConstants'
 /**
  * Calculate optimal scale for sheet preview
  */
-export function calculateSheetScale(
+export const calculateSheetScale = (
   sheetWidth: number,
   sheetHeight: number,
   maxWidth: number = SHEET_VISUALIZATION.maxPreviewWidth,
   maxHeight: number = SHEET_VISUALIZATION.maxPreviewHeight,
-): { scale: number; scaledWidth: number; scaledHeight: number } {
+): { scale: number; scaledWidth: number; scaledHeight: number } => {
   const scale = Math.min(maxWidth / sheetWidth, maxHeight / sheetHeight)
   return {
     scale,
@@ -25,14 +26,16 @@ export function calculateSheetScale(
 /**
  * Group placed parts by their base ID for legend generation
  */
-export function groupPartsByBaseId(placedParts: PlacedPart[]): Record<
+export const groupPartsByBaseId = (
+  placedParts: PlacedPart[],
+): Record<
   string,
   {
     label: string
     color: string
     count: number
   }
-> {
+> => {
   return placedParts.reduce((groups, placedPart) => {
     // Extract base ID by removing the last "-X" suffix (where X is the instance number)
     const baseId = placedPart.part.id.replace(/-\d+$/, '')
@@ -41,10 +44,7 @@ export function groupPartsByBaseId(placedParts: PlacedPart[]): Record<
         label:
           placedPart.part.label ||
           `${placedPart.part.width}×${placedPart.part.height}`,
-        color:
-          SHEET_VISUALIZATION.partColors[
-            Object.keys(groups).length % SHEET_VISUALIZATION.partColors.length
-          ],
+        color: getConsistentPartColor(placedPart.part.id),
         count: 0,
       }
     }
@@ -56,11 +56,11 @@ export function groupPartsByBaseId(placedParts: PlacedPart[]): Record<
 /**
  * Calculate wasted area for a sheet
  */
-export function calculateWastedArea(
+export const calculateWastedArea = (
   sheetWidth: number,
   sheetHeight: number,
   placedParts: PlacedPart[],
-): number {
+): number => {
   const usedArea = placedParts.reduce((sum, p) => {
     return sum + p.part.width * p.part.height
   }, 0)
@@ -70,11 +70,13 @@ export function calculateWastedArea(
 /**
  * Calculate total statistics for sheet layout
  */
-export function calculateLayoutStats(sheetLayout: SheetLayout): {
+export const calculateLayoutStats = (
+  sheetLayout: SheetLayout,
+): {
   totalPlacedParts: number
   totalRequestedParts: number
   placementRatio: number
-} {
+} => {
   const totalPlacedParts = sheetLayout.sheets.reduce(
     (sum, sheet) => sum + sheet.placedParts.length,
     0,
@@ -94,10 +96,12 @@ export function calculateLayoutStats(sheetLayout: SheetLayout): {
 /**
  * Get part dimensions considering rotation
  */
-export function getPartDimensions(placedPart: PlacedPart): {
+export const getPartDimensions = (
+  placedPart: PlacedPart,
+): {
   width: number
   height: number
-} {
+} => {
   const isRotated = placedPart.rotation === 90
   return {
     width: isRotated ? placedPart.part.height : placedPart.part.width,
@@ -108,9 +112,9 @@ export function getPartDimensions(placedPart: PlacedPart): {
 /**
  * Format area in square meters
  */
-export function formatAreaInSquareMeters(
+export const formatAreaInSquareMeters = (
   areaInSquareMillimeters: number,
-): string {
+): string => {
   return (
     Math.round((areaInSquareMillimeters / 1000000) * 100) / 100
   ).toString()

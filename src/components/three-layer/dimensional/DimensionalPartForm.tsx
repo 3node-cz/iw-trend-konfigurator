@@ -1,51 +1,21 @@
 import React from 'react'
 import { useForm } from 'react-hook-form'
-import styled from 'styled-components'
-import type { Part } from '../types/simple'
-import { FORM_DEFAULTS, PART_CONSTRAINTS } from '../utils/appConstants'
+import type { Part } from '../../../types/simple'
+import { FORM_DEFAULTS, PART_CONSTRAINTS } from '../../../utils/appConstants'
+import type { PartFormData } from '../../../utils/formValidation'
 import {
-  Card,
-  CardTitle,
-  InputGroup,
-  PrimaryButton,
-} from './common/CommonStyles'
-
-// Form-specific styled components
-const FormGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`
-
-const FormField = styled(InputGroup)`
-  &.full-width {
-    grid-column: 1 / -1;
-  }
-`
-
-const ErrorMessage = styled.span`
-  color: #e74c3c;
-  font-size: 0.8rem;
-  margin-top: 2px;
-`
-
-interface PartFormData {
-  width: number
-  height: number
-  quantity: number
-  label?: string
-}
-
-interface SimplePartFormProps {
+  getWidthValidationRules,
+  getHeightValidationRules,
+  getQuantityValidationRules,
+  transformFormDataToPart,
+} from '../../../utils/formValidation'
+import { Card, CardTitle, PrimaryButton } from '../../common/CommonStyles'
+import { FormGrid, FormField, ErrorMessage } from './DimensionalPartForm.styles'
+interface DimensionalPartFormProps {
   onAddPart: (part: Omit<Part, 'id'>) => void
 }
 
-export const SimplePartForm: React.FC<SimplePartFormProps> = ({
+export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
   onAddPart,
 }) => {
   const {
@@ -61,12 +31,7 @@ export const SimplePartForm: React.FC<SimplePartFormProps> = ({
   })
 
   const onSubmit = (data: PartFormData) => {
-    onAddPart({
-      width: data.width,
-      height: data.height,
-      quantity: data.quantity,
-      label: data.label || undefined,
-    })
+    onAddPart(transformFormDataToPart(data))
     reset({ quantity: FORM_DEFAULTS.quantity })
   }
 
@@ -83,17 +48,7 @@ export const SimplePartForm: React.FC<SimplePartFormProps> = ({
               type="number"
               min={PART_CONSTRAINTS.minWidth}
               max={PART_CONSTRAINTS.maxWidth}
-              {...register('width', {
-                required: 'Šírka je povinná',
-                min: {
-                  value: PART_CONSTRAINTS.minWidth,
-                  message: `Min ${PART_CONSTRAINTS.minWidth}mm`,
-                },
-                max: {
-                  value: PART_CONSTRAINTS.maxWidth,
-                  message: `Max ${PART_CONSTRAINTS.maxWidth}mm`,
-                },
-              })}
+              {...register('width', getWidthValidationRules())}
             />
             {errors.width && (
               <ErrorMessage>{errors.width.message}</ErrorMessage>
@@ -107,17 +62,7 @@ export const SimplePartForm: React.FC<SimplePartFormProps> = ({
               type="number"
               min={PART_CONSTRAINTS.minHeight}
               max={PART_CONSTRAINTS.maxHeight}
-              {...register('height', {
-                required: 'Výška je povinná',
-                min: {
-                  value: PART_CONSTRAINTS.minHeight,
-                  message: `Min ${PART_CONSTRAINTS.minHeight}mm`,
-                },
-                max: {
-                  value: PART_CONSTRAINTS.maxHeight,
-                  message: `Max ${PART_CONSTRAINTS.maxHeight}mm`,
-                },
-              })}
+              {...register('height', getHeightValidationRules())}
             />
             {errors.height && (
               <ErrorMessage>{errors.height.message}</ErrorMessage>
@@ -131,17 +76,7 @@ export const SimplePartForm: React.FC<SimplePartFormProps> = ({
               type="number"
               min={PART_CONSTRAINTS.minQuantity}
               max={PART_CONSTRAINTS.maxQuantity}
-              {...register('quantity', {
-                required: 'Počet je povinný',
-                min: {
-                  value: PART_CONSTRAINTS.minQuantity,
-                  message: `Min ${PART_CONSTRAINTS.minQuantity}`,
-                },
-                max: {
-                  value: PART_CONSTRAINTS.maxQuantity,
-                  message: `Max ${PART_CONSTRAINTS.maxQuantity}`,
-                },
-              })}
+              {...register('quantity', getQuantityValidationRules())}
             />
             {errors.quantity && (
               <ErrorMessage>{errors.quantity.message}</ErrorMessage>

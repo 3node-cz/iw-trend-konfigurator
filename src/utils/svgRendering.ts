@@ -32,7 +32,7 @@ export interface SVGRenderResult {
 /**
  * Create an SVG path for a rectangle with corner modifications
  */
-export function createRectangleWithCorners(
+export const createRectangleWithCorners = (
   x: number,
   y: number,
   width: number,
@@ -41,7 +41,7 @@ export function createRectangleWithCorners(
   scale: number,
   strokeColor: string,
   fillColor: string,
-): SVGPathData {
+): SVGPathData => {
   // Determine starting point based on top-left corner modification
   const topLeftCorner = corners['topLeft'] || { type: 'none' }
   let startX = x
@@ -144,12 +144,12 @@ export function createRectangleWithCorners(
 /**
  * Create corner modification indicator circles
  */
-export function createCornerIndicators(
+export const createCornerIndicators = (
   part: Part,
   padding: number,
   width: number,
   height: number,
-): SVGCircleData[] {
+): SVGCircleData[] => {
   return Object.entries(part.corners || {})
     .map(([corner, modification]) => {
       if (modification.type === 'none') return null
@@ -185,11 +185,11 @@ export function createCornerIndicators(
 /**
  * Calculate optimal scale and dimensions for part preview
  */
-export function calculatePreviewDimensions(
+export const calculatePreviewDimensions = (
   part: Part,
   maxDimension: number = SVG_RENDERING.maxPreviewDimension,
   padding: number = SVG_RENDERING.defaultPadding,
-) {
+) => {
   const scale = Math.min(maxDimension / part.width, maxDimension / part.height)
   const width = part.width * scale
   const height = part.height * scale
@@ -209,7 +209,7 @@ export function calculatePreviewDimensions(
 /**
  * Render complete part shape with original and modified outlines
  */
-export function renderPartShape(part: Part): SVGRenderResult {
+export const renderPartShape = (part: Part): SVGRenderResult => {
   const { scale, width, height, previewWidth, previewHeight, padding } =
     calculatePreviewDimensions(part)
 

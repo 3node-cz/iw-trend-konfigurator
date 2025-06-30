@@ -20,28 +20,28 @@ export interface ValidationResult {
  */
 export const validateNumericInput = (
   input: string | number,
-  constraints: ValidationConstraints = {}
+  constraints: ValidationConstraints = {},
 ): ValidationResult => {
   const { min = 0, max = Infinity, required = false } = constraints
-  
+
   const value = typeof input === 'string' ? Number(input) : input
-  
+
   if (required && (isNaN(value) || value === null || value === undefined)) {
     return { value: 0, isValid: false, error: 'This field is required' }
   }
-  
+
   if (isNaN(value)) {
     return { value: 0, isValid: false, error: 'Please enter a valid number' }
   }
-  
+
   if (value < min) {
     return { value: min, isValid: false, error: `Minimum value is ${min}` }
   }
-  
+
   if (value > max) {
     return { value: max, isValid: false, error: `Maximum value is ${max}` }
   }
-  
+
   return { value, isValid: true }
 }
 
@@ -51,11 +51,11 @@ export const validateNumericInput = (
 export const createNumericInputHandler = (
   onValidValue: (value: number) => void,
   constraints: ValidationConstraints = {},
-  onError?: (error: string) => void
+  onError?: (error: string) => void,
 ) => {
   return (inputValue: string) => {
     const result = validateNumericInput(inputValue, constraints)
-    
+
     if (result.isValid) {
       onValidValue(result.value)
     } else {

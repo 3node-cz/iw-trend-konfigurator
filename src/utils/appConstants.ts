@@ -98,7 +98,7 @@ export const SHEET_VISUALIZATION = {
     '#e67e22',
   ],
   fontSize: {
-    partLabel: 24,  // Increased from 16 to make it more readable
+    partLabel: 24, // Increased from 16 to make it more readable
     dimensions: 14,
   },
   spacing: {

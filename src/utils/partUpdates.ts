@@ -10,11 +10,11 @@ import { resolveCornerConflicts } from './cornerCalculations'
 /**
  * Update edge treatment for a specific edge of a part
  */
-export function updatePartEdge(
+export const updatePartEdge = (
   part: Part,
   edge: string,
   value: EdgeValue,
-): Partial<Part> {
+): Partial<Part> => {
   const updatedEdges = {
     ...DEFAULT_EDGES,
     ...(part.edges || {}),
@@ -27,11 +27,11 @@ export function updatePartEdge(
 /**
  * Update corner modification with automatic conflict resolution
  */
-export function updatePartCorner(
+export const updatePartCorner = (
   part: Part,
   corner: string,
   updates: Partial<CornerModification>,
-): Partial<Part> {
+): Partial<Part> => {
   const corners = (part.corners as Record<string, CornerModification>) || {}
   const currentCorner = corners[corner] || { type: 'none' }
 
@@ -57,10 +57,10 @@ export function updatePartCorner(
 /**
  * Create update handlers for a part editor component
  */
-export function createPartUpdateHandlers(
+export const createPartUpdateHandlers = (
   part: Part,
   onPartUpdate: (id: string, updates: Partial<Part>) => void,
-) {
+) => {
   const handleEdgeUpdate = (edge: string, value: EdgeValue) => {
     const updates = updatePartEdge(part, edge, value)
     onPartUpdate(part.id, updates)

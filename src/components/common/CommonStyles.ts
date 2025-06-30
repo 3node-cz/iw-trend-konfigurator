@@ -1,5 +1,13 @@
 import styled from 'styled-components'
-import { COLORS, SPACING, BORDER_RADIUS, BOX_SHADOW, TYPOGRAPHY, INPUT_DIMENSIONS, COMPONENT_DIMENSIONS } from '../../utils/uiConstants'
+import {
+  COLORS,
+  SPACING,
+  BORDER_RADIUS,
+  BOX_SHADOW,
+  TYPOGRAPHY,
+  INPUT_DIMENSIONS,
+  COMPONENT_DIMENSIONS,
+} from '../../utils/uiConstants'
 
 // Common container styles
 export const Card = styled.div`
@@ -141,7 +149,8 @@ export const SelectableItem = styled.div<{ $selected?: boolean }>`
   padding: ${SPACING.lg}px;
   background: ${(props) => (props.$selected ? '#e8f4fd' : '#f8f9fa')};
   border-radius: ${BORDER_RADIUS.md}px;
-  border: 1px solid ${(props) => (props.$selected ? COLORS.primary : COLORS.border)};
+  border: 1px solid
+    ${(props) => (props.$selected ? COLORS.primary : COLORS.border)};
   cursor: pointer;
   transition: all 0.2s;
 

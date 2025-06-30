@@ -7,7 +7,10 @@ import type { Part, CornerModification } from '../types/simple'
 /**
  * Calculate the maximum allowed radius for a corner, considering adjacent corners
  */
-export function calculateMaxCornerRadius(part: Part, corner: string): number {
+export const calculateMaxCornerRadius = (
+  part: Part,
+  corner: string,
+): number => {
   const corners = (part.corners as Record<string, CornerModification>) || {}
 
   // Calculate radius for adjacent corners
@@ -48,11 +51,11 @@ export function calculateMaxCornerRadius(part: Part, corner: string): number {
 /**
  * Calculate the maximum allowed dimension (x or y) for a corner bevel, considering adjacent corners
  */
-export function calculateMaxCornerDimension(
+export const calculateMaxCornerDimension = (
   part: Part,
   corner: string,
   dimension: 'x' | 'y',
-): number {
+): number => {
   const corners = (part.corners as Record<string, CornerModification>) || {}
   const isWidth = dimension === 'x'
   const maxDimension = isWidth ? part.width : part.height
@@ -108,11 +111,11 @@ export function calculateMaxCornerDimension(
 /**
  * Resolve conflicts between corners on the same edge by adjusting conflicting corners
  */
-export function resolveCornerConflicts(
+export const resolveCornerConflicts = (
   part: Part,
   corners: Record<string, CornerModification>,
   updatedCorner: string,
-): Record<string, CornerModification> {
+): Record<string, CornerModification> => {
   const result = { ...corners }
 
   // Helper to get effective dimension for a corner
@@ -181,13 +184,13 @@ export function resolveCornerConflicts(
 /**
  * Clamp a value to be within the allowed range for a corner modification
  */
-export function clampCornerValue(
+export const clampCornerValue = (
   part: Part,
   corner: string,
   type: 'bevel' | 'round',
   dimension: 'x' | 'y',
   value: number,
-): number {
+): number => {
   if (type === 'round') {
     const maxRadius = calculateMaxCornerRadius(part, corner)
     return Math.min(Math.max(0, value), maxRadius)

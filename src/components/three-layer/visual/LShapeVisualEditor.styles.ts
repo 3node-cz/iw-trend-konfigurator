@@ -103,3 +103,14 @@ export const SectionHeader = styled.h3`
   padding-bottom: 8px;
   border-bottom: 2px solid #e1e8ed;
 `
+
+export const EmptyStateMessage = styled.div`
+  text-align: center;
+  padding: 40px 20px;
+  color: #7f8c8d;
+
+  p {
+    margin: 0;
+    font-size: 1rem;
+  }
+`
