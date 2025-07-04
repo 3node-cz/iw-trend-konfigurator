@@ -127,18 +127,25 @@ export const SpacedContainer = styled.div<{ $marginTop?: number }>`
   margin-top: ${(props) => props.$marginTop || 0}px;
 `
 
-export const BlockSelector = styled.select`
-  padding: 4px 6px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  background: white;
-  min-width: 60px;
+export const BlockSelector = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  select {
+    padding: 4px 6px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    background: white;
+    min-width: 90px;
+    cursor: pointer;
 
-  &:focus {
-    outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    &:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    }
   }
 `
 

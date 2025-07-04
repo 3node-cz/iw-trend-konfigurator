@@ -21,7 +21,6 @@ import {
   RelativeContainer,
   NoDataSpan,
   SpacedContainer,
-  BlockSelector,
   BlockIndicator,
 } from './EnhancedPartsList.styles'
 
@@ -98,9 +97,14 @@ export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
     onPartBlockUpdate,
   }) => {
     const availableBlocks = getAvailableBlockNumbers(enhancedParts)
+    
+    // Debug logging
+    console.log('Available blocks:', availableBlocks)
+    console.log('Enhanced parts:', enhancedParts.map(p => ({ id: p.id, blockId: p.blockId })))
 
     const handleBlockChange = (partId: string, blockId: string) => {
       const numericBlockId = blockId === '' ? undefined : parseInt(blockId, 10)
+      console.log('Block change:', { partId, blockId, numericBlockId })
       onPartBlockUpdate(partId, numericBlockId)
     }
 
@@ -165,12 +169,21 @@ export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
                 {((part.width * part.height) / 1000000).toFixed(3)} m²/ks
               </InfoText>
 
-              <BlockSelector>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <select
                   value={part.blockId || ''}
                   onChange={(e) => handleBlockChange(part.id, e.target.value)}
                   onClick={(e) => e.stopPropagation()}
                   title="Priradiť k bloku pre zachovanie textúry dreva"
+                  style={{
+                    padding: '4px 6px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '0.8rem',
+                    background: 'white',
+                    minWidth: '90px',
+                    cursor: 'pointer'
+                  }}
                 >
                   <option value="">Bez bloku</option>
                   {availableBlocks.map((blockNum) => (
@@ -180,11 +193,11 @@ export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
                   ))}
                 </select>
                 {part.blockId && (
-                  <BlockIndicator>
-                    Blok {part.blockId}
+                  <BlockIndicator $blockId={part.blockId}>
+                    {part.blockId}
                   </BlockIndicator>
                 )}
-              </BlockSelector>
+              </div>
 
               <DangerButton
                 onClick={(e) => {

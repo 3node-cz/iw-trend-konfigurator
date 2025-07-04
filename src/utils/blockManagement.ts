@@ -163,11 +163,12 @@ export const getAvailableBlockNumbers = (parts: Part[]): number[] => {
     }
   })
 
-  // Return numbers 1 through existing max + 3 (for new blocks)
+  // Always provide at least 5 block options, plus any additional ones needed
   const maxBlock = existingBlocks.size > 0 ? Math.max(...existingBlocks) : 0
+  const maxOptions = Math.max(5, maxBlock + 3)
   const availableNumbers: number[] = []
   
-  for (let i = 1; i <= maxBlock + 3; i++) {
+  for (let i = 1; i <= maxOptions; i++) {
     availableNumbers.push(i)
   }
   
