@@ -5,7 +5,7 @@ import {
   calculateLShapePreview,
   createLShapeDefault,
 } from '../../../utils/lShapePreview'
-import { renderLShapeSvg } from '../../../utils/lShapeSvgRenderer'
+import { renderLShapeSvg } from '../../../utils/lShapeSvgRenderer.tsx'
 import {
   getLShapeConstraints,
   createLShapeUpdateHandlers,

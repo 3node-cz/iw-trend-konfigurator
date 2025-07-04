@@ -1,6 +1,7 @@
 import React from 'react'
 import type { Part } from '../../types/simple'
 import { SPACING } from '../../utils/uiConstants'
+import { getAvailableBlockNumbers } from '../../utils/blockManagement'
 import {
   Card,
   CardTitle,
@@ -20,6 +21,8 @@ import {
   RelativeContainer,
   NoDataSpan,
   SpacedContainer,
+  BlockSelector,
+  BlockIndicator,
 } from './EnhancedPartsList.styles'
 
 interface ConfigIndicatorsProps {
@@ -80,6 +83,7 @@ interface EnhancedPartsListProps {
   onPartSelect: (id: string) => void
   onRemovePart: (id: string) => void
   onClearAll: () => void
+  onPartBlockUpdate: (partId: string, blockId: number | undefined) => void
 }
 
 export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
@@ -91,7 +95,15 @@ export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
     onPartSelect,
     onRemovePart,
     onClearAll,
+    onPartBlockUpdate,
   }) => {
+    const availableBlocks = getAvailableBlockNumbers(enhancedParts)
+
+    const handleBlockChange = (partId: string, blockId: string) => {
+      const numericBlockId = blockId === '' ? undefined : parseInt(blockId, 10)
+      onPartBlockUpdate(partId, numericBlockId)
+    }
+
     if (enhancedParts.length === 0) {
       return (
         <Card>
@@ -152,6 +164,27 @@ export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
               <InfoText>
                 {((part.width * part.height) / 1000000).toFixed(3)} m²/ks
               </InfoText>
+
+              <BlockSelector>
+                <select
+                  value={part.blockId || ''}
+                  onChange={(e) => handleBlockChange(part.id, e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  title="Priradiť k bloku pre zachovanie textúry dreva"
+                >
+                  <option value="">Bez bloku</option>
+                  {availableBlocks.map((blockNum) => (
+                    <option key={blockNum} value={blockNum}>
+                      Blok {blockNum}
+                    </option>
+                  ))}
+                </select>
+                {part.blockId && (
+                  <BlockIndicator>
+                    Blok {part.blockId}
+                  </BlockIndicator>
+                )}
+              </BlockSelector>
 
               <DangerButton
                 onClick={(e) => {

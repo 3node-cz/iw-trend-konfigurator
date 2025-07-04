@@ -1,4 +1,5 @@
-import type { Part, SheetLayout, Sheet, PlacedPart } from '../types/simple'
+import type { Part, SheetLayout, Sheet, PlacedPart, PartBlock, BlockLayout } from '../types/simple'
+import { createPartBlocks } from './blockManagement'
 
 /**
  * Pure function to expand parts by quantity
@@ -442,4 +443,110 @@ export const optimizeCuttingBLF = (
     overallEfficiency,
     unplacedParts,
   }
+}
+
+/**
+ * Optimizes cutting layout with block support for texture continuity
+ * Blocks are groups of parts that must be placed together to maintain wood texture continuity
+ */
+export const optimizeCuttingWithBlocks = (
+  parts: Part[],
+  config: CuttingConfig = defaultCuttingConfig,
+  logger: Logger = consoleLogger,
+): BlockLayout => {
+  const { sheetWidth, sheetHeight, enableLogging } = config
+  const log = enableLogging ? logger.log : () => {}
+
+  log('🔧 Advanced BLF Algorithm with Block Support')
+  log(`📦 Processing ${parts.length} parts with potential blocks`)
+  log(`📋 Sheet size: ${sheetWidth}×${sheetHeight}mm`)
+
+  // Step 1: Create blocks from parts
+  const blocks = createPartBlocks(parts, sheetWidth, sheetHeight)
+  log(`📦 Created ${blocks.length} blocks (including individual parts)`)
+
+  // Step 2: Convert blocks to individual parts for optimization
+  // For blocks that can fit on a single board, treat them as single units
+  // For blocks that need to be split, process each sub-block separately
+  const optimizationParts: Part[] = []
+  const blockMap = new Map<string, PartBlock>()
+
+  blocks.forEach((block, index) => {
+    if (block.canFitOnSingleBoard && block.parts.length > 1) {
+      // Create a composite part representing the entire block
+      const compositePartId = `block-${block.blockId}-${index}`
+      const compositePart: Part = {
+        id: compositePartId,
+        width: block.totalWidth,
+        height: block.totalHeight,
+        quantity: 1,
+        label: `Block ${block.blockId} (${block.parts.length} parts)`,
+        blockId: block.blockId,
+        // Mark as fixed orientation to preserve block layout
+        orientation: 'fixed',
+      }
+      optimizationParts.push(compositePart)
+      blockMap.set(compositePartId, block)
+    } else {
+      // For individual parts or blocks that need splitting, add parts directly
+      if (block.subBlocks && block.subBlocks.length > 0) {
+        // Process sub-blocks
+        block.subBlocks.forEach((subBlock, subIndex) => {
+          if (subBlock.parts.length > 1) {
+            // Create composite part for sub-block
+            const subBlockPartId = `subblock-${block.blockId}-${subIndex}`
+            const subBlockPart: Part = {
+              id: subBlockPartId,
+              width: subBlock.totalWidth,
+              height: subBlock.totalHeight,
+              quantity: 1,
+              label: `Block ${block.blockId} Part ${subIndex + 1} (${subBlock.parts.length} parts)`,
+              blockId: block.blockId,
+              orientation: 'fixed',
+            }
+            optimizationParts.push(subBlockPart)
+            blockMap.set(subBlockPartId, subBlock)
+          } else {
+            // Single part in sub-block
+            optimizationParts.push(...subBlock.parts)
+          }
+        })
+      } else {
+        // Individual parts
+        optimizationParts.push(...block.parts)
+      }
+    }
+  })
+
+  // Step 3: Optimize using the existing BLF algorithm
+  const basicLayout = optimizeCuttingBLF(optimizationParts, config, logger)
+
+  // Step 4: Create BlockLayout result
+  const blockLayout: BlockLayout = {
+    ...basicLayout,
+    blocks: blocks,
+    unplacedBlocks: blocks.filter((block) =>
+      block.parts.some((part) =>
+        basicLayout.unplacedParts.some((unplaced) => unplaced.id === part.id),
+      ),
+    ),
+  }
+
+  log(`\n🎯 === BLOCK CUTTING SUMMARY ===`)
+  log(`📄 Total sheets used: ${blockLayout.sheets.length}`)
+  log(`📦 Total blocks created: ${blocks.length}`)
+  log(
+    `📦 Blocks that fit on single board: ${blocks.filter(
+      (b) => b.canFitOnSingleBoard,
+    ).length}`,
+  )
+  log(
+    `📦 Blocks requiring splitting: ${blocks.filter(
+      (b) => !b.canFitOnSingleBoard,
+    ).length}`,
+  )
+  log(`❌ Unplaced blocks: ${blockLayout.unplacedBlocks.length}`)
+  log(`⚡ Overall efficiency: ${(blockLayout.overallEfficiency * 100).toFixed(1)}%`)
+
+  return blockLayout
 }

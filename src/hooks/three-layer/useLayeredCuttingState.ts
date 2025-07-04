@@ -26,7 +26,7 @@ import type {
 } from '../../types/simple'
 import type { EdgeValue } from '../../utils/edgeConstants'
 import {
-  optimizeCuttingBLF,
+  optimizeCuttingWithBlocks,
   defaultCuttingConfig,
   silentLogger,
   type CuttingConfig,
@@ -41,6 +41,7 @@ export interface BasicDimensionalPart {
   quantity: number
   label?: string
   orientation?: 'fixed' | 'rotatable'
+  blockId?: number // block number for texture continuity (1, 2, 3...). If undefined, part is individual
 }
 
 // Layer 2: Optimized layout calculation results
@@ -158,9 +159,10 @@ export const useLayeredCuttingState = (): LayeredCuttingStateAPI => {
         quantity: part.quantity,
         orientation: part.orientation || 'rotatable',
         label: part.label,
+        blockId: part.blockId, // Include block ID for texture continuity
       })) as Part[]
 
-      const result = optimizeCuttingBLF(
+      const result = optimizeCuttingWithBlocks(
         partsForOptimization,
         cuttingConfig,
         logger,

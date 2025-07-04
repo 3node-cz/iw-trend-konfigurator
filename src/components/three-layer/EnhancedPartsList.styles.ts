@@ -6,7 +6,7 @@ import { SelectableItem } from '../common/CommonStyles'
 
 export const PartItem = styled(SelectableItem)`
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto auto auto;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto auto auto auto;
   gap: 12px;
   align-items: center;
 `
@@ -125,4 +125,41 @@ export const NoDataSpan = styled.span`
 
 export const SpacedContainer = styled.div<{ $marginTop?: number }>`
   margin-top: ${(props) => props.$marginTop || 0}px;
+`
+
+export const BlockSelector = styled.select`
+  padding: 4px 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  background: white;
+  min-width: 60px;
+
+  &:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  }
+`
+
+export const BlockIndicator = styled.span<{ $blockId?: number }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: white;
+  background: ${(props) => 
+    props.$blockId 
+      ? `hsl(${(props.$blockId * 137.5) % 360}, 60%, 50%)` 
+      : '#bdc3c7'
+  };
+  border: 1px solid ${(props) => 
+    props.$blockId 
+      ? `hsl(${(props.$blockId * 137.5) % 360}, 60%, 40%)` 
+      : '#95a5a6'
+  };
 `

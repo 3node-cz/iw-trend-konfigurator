@@ -50,6 +50,7 @@ export interface Part {
   edges?: EdgeTreatment
   lShape?: LShapeConfig
   orientation?: 'fixed' | 'rotatable' // whether part can be rotated for better packing
+  blockId?: number // block number for texture continuity (1, 2, 3...). If undefined, part is individual
 
   // Configuration status metadata (computed properties)
   hasCornerModifications?: boolean // true if any corner has bevel/round modifications
@@ -78,4 +79,18 @@ export interface PlacedPart {
   x: number
   y: number
   rotation: 0 | 90 // 0 = normal, 90 = rotated
+}
+
+export interface PartBlock {
+  blockId: number
+  parts: Part[]
+  totalWidth: number
+  totalHeight: number
+  canFitOnSingleBoard: boolean
+  subBlocks?: PartBlock[] // if block needs to be split across boards
+}
+
+export interface BlockLayout extends SheetLayout {
+  blocks: PartBlock[]
+  unplacedBlocks: PartBlock[]
 }

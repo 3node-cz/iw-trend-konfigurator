@@ -54,6 +54,14 @@ export const LayeredCuttingApp: React.FC = () => {
   // Extract optimized layout properties for easier usage
   const { sheetLayout, isCalculating: isLayoutCalculating } = optimizedLayout
 
+  // Block update handler for managing part grouping
+  const handlePartBlockUpdate = useCallback(
+    (partId: string, blockId: number | undefined) => {
+      updateDimensionalPart(partId, { blockId })
+    },
+    [updateDimensionalPart],
+  )
+
   // Optimized: Memoize selected part to avoid recalculation on every render
   const selectedPart = useMemo(() => {
     return selectedPartId ? getEnhancedPartById(selectedPartId) : null
@@ -155,6 +163,7 @@ export const LayeredCuttingApp: React.FC = () => {
             onPartSelect={setSelectedPartId}
             onRemovePart={removeDimensionalPart}
             onClearAll={clearAllParts}
+            onPartBlockUpdate={handlePartBlockUpdate}
           />
 
           <MemoizedVisualEnhancementEditor
