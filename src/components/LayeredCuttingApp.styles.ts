@@ -58,3 +58,22 @@ export const RightColumn = styled.div`
 export const LayoutContainer = styled.div`
   position: relative;
 `
+
+export const ValidationErrorContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  color: #666;
+  font-size: 16px;
+  text-align: center;
+`
+
+export const ValidationErrorText = styled.p`
+  margin: 0;
+
+  &.secondary {
+    font-size: 14px;
+    margin-top: 8px;
+  }
+`

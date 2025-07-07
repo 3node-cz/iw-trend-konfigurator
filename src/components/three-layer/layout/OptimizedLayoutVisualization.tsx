@@ -1,14 +1,16 @@
 import React, { useState, useMemo } from 'react'
-import type { SheetLayout } from '../../../types/simple'
+import type { SheetLayout, Part } from '../../../types/simple'
 import { SHEET_VISUALIZATION } from '../../../utils/appConstants'
-import { getConsistentPartColor } from '../../../utils/colorManagement'
+import {
+  getConsistentPartColor,
+  getBasePartId,
+} from '../../../utils/colorManagement'
 import {
   calculateSheetScale,
   groupPartsByBaseId,
   calculateWastedArea,
   calculateLayoutStats,
   getPartDimensions,
-  formatAreaInSquareMeters,
 } from '../../../utils/sheetVisualizationHelpers'
 import {
   VisualizationContainer,
@@ -19,7 +21,6 @@ import {
   BoardDimensions,
   SheetSVG,
   PartRect,
-  PartText,
   InfoGrid,
   InfoCard,
   Legend,
@@ -33,10 +34,11 @@ import {
 
 interface SheetVisualizationProps {
   sheetLayout: SheetLayout | null
+  enhancedParts?: Part[] // For calculating accurate block borders
 }
 
 export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
-  React.memo(({ sheetLayout }) => {
+  React.memo(({ sheetLayout, enhancedParts = [] }) => {
     const [selectedSheetIndex, setSelectedSheetIndex] = useState(0)
 
     // Memoize expensive calculations for the current sheet
@@ -53,7 +55,9 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
         placedParts,
         efficiency,
         scaledDimensions: calculateSheetScale(sheetWidth, sheetHeight),
-        partGroups: groupPartsByBaseId(placedParts),
+        partGroups: (() => {
+          return groupPartsByBaseId(placedParts)
+        })(),
         wastedArea: calculateWastedArea(sheetWidth, sheetHeight, placedParts),
         layoutStats: calculateLayoutStats(sheetLayout),
       }
@@ -77,7 +81,6 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
       efficiency,
       scaledDimensions: { scaledWidth, scaledHeight },
       partGroups,
-      wastedArea,
       layoutStats: { totalPlacedParts, totalRequestedParts },
     } = currentSheetData!
 
@@ -146,14 +149,19 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
               fill="url(#grid)"
             />
 
-            {/* Placed parts */}
+            {/* Placed parts - render as blocks with internal borders */}
             {placedParts.map((placedPart) => {
-              const partColor = getConsistentPartColor(placedPart.part.id)
+              const basePartId = getBasePartId(placedPart.part.id)
+              const partColor = getConsistentPartColor(
+                basePartId,
+                placedPart.part,
+              )
               const { width: partWidth, height: partHeight } =
                 getPartDimensions(placedPart)
 
               return (
                 <g key={placedPart.part.id}>
+                  {/* Main block rectangle */}
                   <PartRect
                     x={placedPart.x}
                     y={placedPart.y}
@@ -161,19 +169,164 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
                     height={partHeight}
                     $color={partColor}
                   />
-                  {/* Only show text for parts that are large enough to display it clearly */}
-                  {Math.min(partWidth, partHeight) > 200 && (
-                    <PartText
-                      x={placedPart.x + partWidth / 2}
-                      y={placedPart.y + partHeight / 2}
-                      dominantBaseline="central"
-                    >
-                      {partWidth}×{partHeight}
-                      {placedPart.rotation === 90 && ' ↻'}
-                    </PartText>
-                  )}
+
+                  {/* Text labels removed - they were too small and redundant */}
                 </g>
               )
+            })}
+
+            {/* Internal borders for blocks - render borders to show individual pieces within blocks */}
+            {placedParts.map((placedPart) => {
+              // Only render internal borders for composite block parts
+              const isCompositeBlock =
+                placedPart.part.id.startsWith('block-') ||
+                placedPart.part.id.startsWith('subblock-')
+
+              console.log(
+                `Checking part ${placedPart.part.id}: isCompositeBlock=${isCompositeBlock}, blockId=${placedPart.part.blockId}`,
+              )
+
+              if (!isCompositeBlock || !placedPart.part.blockId) return null
+
+              // Find all enhanced parts that belong to this block
+              // For composite blocks, we need to find original parts that have the same blockId
+              const blockParts = enhancedParts.filter(
+                (part) => part.blockId === placedPart.part.blockId,
+              )
+
+              console.log(
+                `Block ${placedPart.part.blockId}: found ${blockParts.length} enhanced parts`,
+              )
+              console.log(
+                `Available enhanced parts:`,
+                enhancedParts.map((p) => ({
+                  id: p.id,
+                  blockId: p.blockId,
+                  width: p.width,
+                  quantity: p.quantity,
+                })),
+              )
+              console.log(`Looking for blockId:`, placedPart.part.blockId)
+              console.log(
+                `Matching parts:`,
+                blockParts.map((p) => ({
+                  id: p.id,
+                  blockId: p.blockId,
+                  width: p.width,
+                  quantity: p.quantity,
+                })),
+              )
+
+              if (blockParts.length === 0) return null
+
+              // Create array of individual pieces with their actual placed dimensions
+              const individualPieces: { width: number; height: number }[] = []
+
+              // Get the total placed dimensions of the composite block
+              const { width: totalBlockWidth, height: totalBlockHeight } =
+                getPartDimensions(placedPart)
+
+              // Calculate total original width of all pieces in the block
+              const totalOriginalWidth = blockParts.reduce(
+                (sum, part) => sum + part.width * part.quantity,
+                0,
+              )
+
+              // For each part, calculate its placed width proportionally
+              blockParts.forEach((part) => {
+                for (let i = 0; i < part.quantity; i++) {
+                  const proportionalWidth =
+                    (part.width / totalOriginalWidth) * totalBlockWidth
+                  individualPieces.push({
+                    width: proportionalWidth,
+                    height: totalBlockHeight,
+                  })
+                }
+              })
+
+              console.log(
+                `Block ${placedPart.part.blockId}: ${
+                  individualPieces.length
+                } pieces, widths: ${individualPieces
+                  .map((p) => p.width)
+                  .join(', ')}`,
+              )
+
+              // For blocks with multiple pieces, render internal borders
+              if (individualPieces.length > 1) {
+                const borders = []
+
+                // Check if the block is rotated using the rotation property
+                const isRotated = placedPart.rotation === 90
+
+                if (isRotated) {
+                  // Block is rotated - render horizontal borders (pieces stacked vertically)
+                  let currentY = Number(placedPart.y)
+
+                  // When rotated, pieces are stacked vertically, so we need to calculate heights
+                  const totalOriginalHeight = blockParts.reduce(
+                    (sum, part) => sum + part.height * part.quantity,
+                    0,
+                  )
+
+                  blockParts.forEach((part) => {
+                    for (let i = 0; i < part.quantity; i++) {
+                      if (currentY > Number(placedPart.y)) {
+                        // Don't render border before first piece
+                        console.log(
+                          `Rendering horizontal border at y=${currentY}, x=${
+                            placedPart.x
+                          } to x=${placedPart.x + totalBlockWidth}`,
+                        )
+                        borders.push(
+                          <line
+                            key={`border-${placedPart.part.id}-${borders.length}`}
+                            x1={placedPart.x}
+                            y1={currentY}
+                            x2={placedPart.x + totalBlockWidth}
+                            y2={currentY}
+                            stroke="#FF0000"
+                            strokeWidth="6"
+                            opacity="1.0"
+                          />,
+                        )
+                      }
+                      // Calculate proportional height for this piece
+                      const proportionalHeight =
+                        (part.height / totalOriginalHeight) * totalBlockHeight
+                      currentY += proportionalHeight
+                    }
+                  })
+                } else {
+                  // Block is not rotated - render vertical borders (pieces side by side)
+                  let currentX = Number(placedPart.x)
+
+                  for (let i = 0; i < individualPieces.length - 1; i++) {
+                    currentX += Number(individualPieces[i].width)
+                    console.log(
+                      `Rendering vertical border at x=${currentX}, y=${
+                        placedPart.y
+                      } to y=${placedPart.y + totalBlockHeight}`,
+                    )
+                    borders.push(
+                      <line
+                        key={`border-${placedPart.part.id}-${i}`}
+                        x1={currentX}
+                        y1={placedPart.y}
+                        x2={currentX}
+                        y2={placedPart.y + totalBlockHeight}
+                        stroke="#FF0000"
+                        strokeWidth="6"
+                        opacity="1.0"
+                      />,
+                    )
+                  }
+                }
+
+                return borders
+              }
+
+              return null
             })}
 
             {/* Sheet dimensions */}
@@ -223,13 +376,6 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
             <InfoCard>
               <span className="value">{(efficiency * 100).toFixed(1)}%</span>
               <div className="label">Efektivita tejto dosky</div>
-            </InfoCard>
-
-            <InfoCard>
-              <span className="value">
-                {formatAreaInSquareMeters(wastedArea)} m²
-              </span>
-              <div className="label">Odpad tejto dosky</div>
             </InfoCard>
           </InfoGrid>
 

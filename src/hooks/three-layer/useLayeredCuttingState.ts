@@ -1,37 +1,44 @@
 /**
- * Three-Layer Cutting State Architecture
+ * Four-Layer Cutting State Architecture
  *
  * Layer 1: Dimensional Data (BasicDimensionalPart)
- * - Core cutting dimensions: width, height, quantity, orientation, label
- * - Changes trigger layout optimization
+ * - Core cutting dimensions: width, height, quantity, orientation, label, blockId
+ * - Changes trigger block preparation and layout optimization
  *
- * Layer 2: Layout Optimization (OptimizedLayout)
- * - Auto-calculated cutting layout from Layer 1
- * - Debounced and cached for performance
- * - Includes loading states for expensive calculations
+ * Layer 2: Block Preparation (PreparedPiece)
+ * - Converts dimensional parts into pieces ready for board placement
+ * - Handles block grouping and composite block creation
+ * - Creates individual pieces for non-blocked parts
+ * - Creates composite blocks for blocked parts (horizontal arrangement)
  *
- * Layer 3: Visual Enhancements (VisualEnhancements)
+ * Layer 3: Board Placement (BoardPlacementState)
+ * - Takes prepared pieces and places them on boards using BLF algorithm
+ * - Handles both individual pieces and composite block pieces
+ * - Provides board layout optimization and efficiency calculations
+ *
+ * Layer 4: Visual Enhancements (VisualEnhancements)
  * - UI-only properties: corners, edges, L-shapes
  * - Independent of cutting calculations
  * - Immediate visual feedback
  */
 
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import type {
-  Part,
   SheetLayout,
   CornerModification,
   LShapeConfig,
   EdgeTreatment,
 } from '../../types/simple'
 import type { EdgeValue } from '../../utils/edgeConstants'
-import {
-  optimizeCuttingWithBlocks,
-  defaultCuttingConfig,
-  silentLogger,
-  type CuttingConfig,
-} from '../../utils/cuttingOptimizer'
+import { useBlockPreparation, type PreparedPiece } from './useBlockPreparation'
+import { useBoardPlacement } from './useBoardPlacement'
 import { useDebounceValue } from './useDebounceValue'
+import {
+  hasCornerModifications,
+  hasEdgeTreatmentsInterface,
+  isLShape,
+  hasAdvancedConfigInterface,
+} from '../../utils/partEnhancements'
 
 // Layer 1: Core dimensional data for cutting optimization
 export interface BasicDimensionalPart {
@@ -44,14 +51,23 @@ export interface BasicDimensionalPart {
   blockId?: number // block number for texture continuity (1, 2, 3...). If undefined, part is individual
 }
 
-// Layer 2: Optimized layout calculation results
-export interface OptimizedLayout {
-  sheetLayout: SheetLayout | null
-  cuttingConfig: CuttingConfig
-  isCalculating: boolean
+// Layer 2: Block preparation properties
+export interface BlockPreparationLayer {
+  preparedPieces: PreparedPiece[]
+  blockCount: number
+  individualPieceCount: number
+  compositeBlockCount: number
 }
 
-// Layer 3: Visual enhancement properties
+// Layer 3: Board placement properties
+export interface BoardPlacementLayer {
+  boardLayout: SheetLayout | null
+  isCalculating: boolean
+  totalBoards: number
+  overallEfficiency: number
+}
+
+// Layer 4: Visual enhancement properties
 export interface VisualEnhancements {
   corners?: {
     topLeft: CornerModification
@@ -84,10 +100,13 @@ export interface LayeredCuttingStateAPI {
   removeDimensionalPart: (id: string) => void
   clearAllParts: () => void
 
-  // Layer 2: Layout optimization (read-only, auto-calculated)
-  optimizedLayout: OptimizedLayout
+  // Layer 2: Block preparation (read-only, auto-calculated)
+  blockPreparation: BlockPreparationLayer
 
-  // Layer 3: Visual enhancement operations
+  // Layer 3: Board placement (read-only, auto-calculated)
+  boardPlacement: BoardPlacementLayer
+
+  // Layer 4: Visual enhancement operations
   updateVisualEnhancements: (
     id: string,
     updates: Partial<VisualEnhancements>,
@@ -106,112 +125,69 @@ export interface LayeredCuttingStateAPI {
 
   // Optimized selectors for performance
   getDimensionalPartsOnly: () => BasicDimensionalPart[]
-  getLayoutDataOnly: () => OptimizedLayout
+  getBlockPreparationOnly: () => BlockPreparationLayer
+  getBoardPlacementOnly: () => BoardPlacementLayer
   getVisualEnhancementsOnly: () => Record<string, VisualEnhancements>
 
   // Summary calculations
   totalCuttingArea: number
   totalPartCount: number
+
+  // Backward compatibility (deprecated, will be removed)
+  /** @deprecated Use boardPlacement.boardLayout instead */
+  optimizedLayout: {
+    sheetLayout: SheetLayout | null
+    isCalculating: boolean
+  }
 }
 
 export const useLayeredCuttingState = (): LayeredCuttingStateAPI => {
-  // Layer 1: Core dimensional parts (triggers layout recalculation)
+  // Layer 1: Core dimensional parts
   const [dimensionalParts, setDimensionalParts] = useState<
     BasicDimensionalPart[]
   >([])
 
-  // Layer 3: Visual enhancements (independent of layout)
+  // Layer 4: Visual enhancements (independent of layout)
   const [visualEnhancements, setVisualEnhancements] = useState<
     Record<string, VisualEnhancements>
   >({})
 
-  // Loading state for expensive layout calculations
-  const [isLayoutCalculating, setIsLayoutCalculating] = useState(false)
-
   // Debounce dimensional changes to avoid excessive recalculations
   const debouncedDimensionalParts = useDebounceValue(dimensionalParts, 300)
 
-  const logger = useMemo(() => silentLogger, [])
-  const cuttingConfig = useMemo(
+  // Layer 2: Block preparation from dimensional parts
+  const blockPreparation = useBlockPreparation(debouncedDimensionalParts)
+
+  // Layer 3: Board placement from prepared pieces
+  const boardPlacement = useBoardPlacement(blockPreparation.preparedPieces)
+
+  // Backward compatibility for existing UI components
+  const optimizedLayout = useMemo(
     () => ({
-      ...defaultCuttingConfig,
-      sheetWidth: 2800,
-      sheetHeight: 2070,
+      sheetLayout: boardPlacement.boardLayout,
+      isCalculating: boardPlacement.isCalculating,
     }),
-    [],
+    [boardPlacement.boardLayout, boardPlacement.isCalculating],
   )
-
-  // Layer 2: Auto-calculated layout optimization from Layer 1
-  const sheetLayout = useMemo((): SheetLayout | null => {
-    if (debouncedDimensionalParts.length === 0) {
-      setIsLayoutCalculating(false)
-      return null
-    }
-
-    setIsLayoutCalculating(true)
-
-    try {
-      // Convert dimensional parts to optimizer format
-      const partsForOptimization = debouncedDimensionalParts.map((part) => ({
-        id: part.id,
-        width: part.width,
-        height: part.height,
-        quantity: part.quantity,
-        orientation: part.orientation || 'rotatable',
-        label: part.label,
-        blockId: part.blockId, // Include block ID for texture continuity
-      })) as Part[]
-
-      const result = optimizeCuttingWithBlocks(
-        partsForOptimization,
-        cuttingConfig,
-        logger,
-      )
-      setIsLayoutCalculating(false)
-      return result
-    } catch (error) {
-      console.error('Layout optimization failed:', error)
-      setIsLayoutCalculating(false)
-      return null
-    }
-  }, [debouncedDimensionalParts, cuttingConfig, logger])
-
-  // Track when dimensional parts change vs debounced parts for loading state
-  useEffect(() => {
-    if (
-      dimensionalParts !== debouncedDimensionalParts &&
-      dimensionalParts.length > 0
-    ) {
-      setIsLayoutCalculating(true)
-    }
-  }, [dimensionalParts, debouncedDimensionalParts])
 
   // Combined enhanced parts for UI display
   const enhancedParts = useMemo((): EnhancedCuttingPart[] => {
     return dimensionalParts.map((dimensionalPart) => {
       const enhancements = visualEnhancements[dimensionalPart.id] || {}
 
-      // Compute indicator flags
-      const hasCornerModifications =
-        enhancements.corners &&
-        Object.values(enhancements.corners).some((corner) => corner !== null)
-
-      const hasEdgeTreatments =
-        enhancements.edges &&
-        Object.values(enhancements.edges).some((edge) => edge !== 'none')
-
-      const isLShape = enhancements.lShape?.enabled === true
-
-      const hasAdvancedConfig =
-        hasCornerModifications || hasEdgeTreatments || isLShape
+      // Compute indicator flags using utility functions
+      const cornerModifications = hasCornerModifications(enhancements.corners)
+      const edgeTreatments = hasEdgeTreatmentsInterface(enhancements.edges)
+      const lShapeEnabled = isLShape(enhancements.lShape)
+      const advancedConfig = hasAdvancedConfigInterface(enhancements.corners, enhancements.edges, enhancements.lShape)
 
       return {
         ...dimensionalPart,
         ...enhancements,
-        hasCornerModifications,
-        hasEdgeTreatments,
-        isLShape,
-        hasAdvancedConfig,
+        hasCornerModifications: cornerModifications,
+        hasEdgeTreatments: edgeTreatments,
+        isLShape: lShapeEnabled,
+        hasAdvancedConfig: advancedConfig,
       } as EnhancedCuttingPart
     })
   }, [dimensionalParts, visualEnhancements])
@@ -347,15 +323,6 @@ export const useLayeredCuttingState = (): LayeredCuttingStateAPI => {
     [dimensionalParts],
   )
 
-  const getLayoutDataOnly = useCallback(
-    (): OptimizedLayout => ({
-      sheetLayout,
-      cuttingConfig,
-      isCalculating: isLayoutCalculating,
-    }),
-    [sheetLayout, cuttingConfig, isLayoutCalculating],
-  )
-
   const getVisualEnhancementsOnly = useCallback(
     () => visualEnhancements,
     [visualEnhancements],
@@ -403,7 +370,12 @@ export const useLayeredCuttingState = (): LayeredCuttingStateAPI => {
   }, [dimensionalParts])
 
   const totalPartCount = useMemo(() => {
-    return dimensionalParts.reduce((sum, part) => sum + part.quantity, 0)
+    const total = dimensionalParts.reduce((sum, part) => {
+      console.log(`Part ${part.id}: quantity=${part.quantity} (type: ${typeof part.quantity})`)
+      return sum + Number(part.quantity)
+    }, 0)
+    console.log(`Total part count: ${total}`)
+    return total
   }, [dimensionalParts])
 
   return {
@@ -414,14 +386,13 @@ export const useLayeredCuttingState = (): LayeredCuttingStateAPI => {
     removeDimensionalPart,
     clearAllParts,
 
-    // Layer 2: Layout optimization
-    optimizedLayout: {
-      sheetLayout,
-      cuttingConfig,
-      isCalculating: isLayoutCalculating,
-    },
+    // Layer 2: Block preparation
+    blockPreparation,
 
-    // Layer 3: Visual enhancements
+    // Layer 3: Board placement
+    boardPlacement,
+
+    // Layer 4: Visual enhancements
     updateVisualEnhancements,
     updatePartEdge,
     updatePartCorner,
@@ -433,11 +404,15 @@ export const useLayeredCuttingState = (): LayeredCuttingStateAPI => {
 
     // Optimized selectors
     getDimensionalPartsOnly,
-    getLayoutDataOnly,
+    getBlockPreparationOnly: () => blockPreparation,
+    getBoardPlacementOnly: () => boardPlacement,
     getVisualEnhancementsOnly,
 
     // Summary calculations
     totalCuttingArea,
     totalPartCount,
+
+    // Backward compatibility (deprecated)
+    optimizedLayout,
   }
 }

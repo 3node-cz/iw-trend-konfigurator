@@ -2,42 +2,53 @@
  * Form validation utilities for part configuration
  */
 
-import { PART_CONSTRAINTS } from './appConstants'
+import { PART_CONSTRAINTS, SHEET_CONSTRAINTS } from './appConstants'
 
 export interface PartFormData {
   width: number
   height: number
   quantity: number
   label?: string
+  rotatable?: boolean
 }
 
 /**
  * Generate validation rules for width field
  */
-export const getWidthValidationRules = () => ({
+export const getWidthValidationRules = (
+  boardWidth: number = SHEET_CONSTRAINTS.standardWidth,
+) => ({
   required: 'Šírka je povinná',
   min: {
     value: PART_CONSTRAINTS.minWidth,
     message: `Min ${PART_CONSTRAINTS.minWidth}mm`,
   },
   max: {
-    value: PART_CONSTRAINTS.maxWidth,
-    message: `Max ${PART_CONSTRAINTS.maxWidth}mm`,
+    value: Math.min(PART_CONSTRAINTS.maxWidth, boardWidth),
+    message: `Max ${Math.min(
+      PART_CONSTRAINTS.maxWidth,
+      boardWidth,
+    )}mm (veľkosť dosky)`,
   },
 })
 
 /**
  * Generate validation rules for height field
  */
-export const getHeightValidationRules = () => ({
+export const getHeightValidationRules = (
+  boardHeight: number = SHEET_CONSTRAINTS.standardHeight,
+) => ({
   required: 'Výška je povinná',
   min: {
     value: PART_CONSTRAINTS.minHeight,
     message: `Min ${PART_CONSTRAINTS.minHeight}mm`,
   },
   max: {
-    value: PART_CONSTRAINTS.maxHeight,
-    message: `Max ${PART_CONSTRAINTS.maxHeight}mm`,
+    value: Math.min(PART_CONSTRAINTS.maxHeight, boardHeight),
+    message: `Max ${Math.min(
+      PART_CONSTRAINTS.maxHeight,
+      boardHeight,
+    )}mm (veľkosť dosky)`,
   },
 })
 
@@ -62,10 +73,11 @@ export const getQuantityValidationRules = () => ({
 export const transformFormDataToPart = (
   data: PartFormData,
 ): Omit<import('../types/simple').Part, 'id'> => ({
-  width: data.width,
-  height: data.height,
-  quantity: data.quantity,
+  width: Number(data.width),
+  height: Number(data.height),
+  quantity: Number(data.quantity),
   label: data.label || undefined,
+  orientation: data.rotatable ? 'rotatable' : 'fixed',
 })
 
 /**
@@ -111,4 +123,52 @@ export const validatePartQuantity = (quantity: number): string[] => {
   }
 
   return errors
+}
+
+/**
+ * Validate block width against board constraints
+ */
+export const validateBlockWidth = (
+  blockParts: Array<{ width: number; quantity: number }>,
+  boardWidth: number = SHEET_CONSTRAINTS.standardWidth,
+): { isValid: boolean; totalWidth: number; errorMessage?: string } => {
+  const totalWidth = blockParts.reduce(
+    (sum, part) => sum + part.width * part.quantity,
+    0,
+  )
+
+  if (totalWidth > boardWidth) {
+    return {
+      isValid: false,
+      totalWidth,
+      errorMessage: `Blok je príliš široký (${totalWidth}mm). Maximálna šírka dosky je ${boardWidth}mm.`,
+    }
+  }
+
+  return {
+    isValid: true,
+    totalWidth,
+  }
+}
+
+/**
+ * Get block validation error message for a specific block
+ */
+export const getBlockValidationError = (
+  parts: Array<{
+    width: number
+    height: number
+    quantity: number
+    blockId?: number
+  }>,
+  blockId: number,
+  boardWidth: number = SHEET_CONSTRAINTS.standardWidth,
+): string | null => {
+  const blockParts = parts.filter((part) => part.blockId === blockId)
+
+  if (blockParts.length === 0) return null
+
+  const validation = validateBlockWidth(blockParts, boardWidth)
+
+  return validation.isValid ? null : validation.errorMessage || null
 }

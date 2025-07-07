@@ -11,7 +11,7 @@ export const groupPartsByBlock = (parts: Part[]): Map<number, Part[]> => {
   const blockMap = new Map<number, Part[]>()
   const individualParts: Part[] = []
 
-  parts.forEach(part => {
+  parts.forEach((part) => {
     if (part.blockId && part.blockId > 0) {
       if (!blockMap.has(part.blockId)) {
         blockMap.set(part.blockId, [])
@@ -34,14 +34,16 @@ export const groupPartsByBlock = (parts: Part[]): Map<number, Part[]> => {
 /**
  * Calculate dimensions for a block of parts arranged horizontally
  */
-export const calculateBlockDimensions = (parts: Part[]): { width: number; height: number } => {
+export const calculateBlockDimensions = (
+  parts: Part[],
+): { width: number; height: number } => {
   if (parts.length === 0) {
     return { width: 0, height: 0 }
   }
 
   // For texture continuity, parts are typically arranged horizontally
   const totalWidth = parts.reduce((sum, part) => sum + part.width, 0)
-  const maxHeight = Math.max(...parts.map(part => part.height))
+  const maxHeight = Math.max(...parts.map((part) => part.height))
 
   return { width: totalWidth, height: maxHeight }
 }
@@ -50,9 +52,9 @@ export const calculateBlockDimensions = (parts: Part[]): { width: number; height
  * Check if a block can fit on a single board
  */
 export const canBlockFitOnBoard = (
-  parts: Part[], 
-  boardWidth: number, 
-  boardHeight: number
+  parts: Part[],
+  boardWidth: number,
+  boardHeight: number,
 ): boolean => {
   const { width, height } = calculateBlockDimensions(parts)
   return width <= boardWidth && height <= boardHeight
@@ -62,10 +64,10 @@ export const canBlockFitOnBoard = (
  * Split a block into sub-blocks that can fit on boards
  */
 export const splitBlockForBoards = (
-  parts: Part[], 
-  boardWidth: number, 
+  parts: Part[],
+  boardWidth: number,
   boardHeight: number,
-  blockId: number
+  blockId: number,
 ): PartBlock[] => {
   if (parts.length === 0) return []
 
@@ -83,9 +85,13 @@ export const splitBlockForBoards = (
         parts: [...currentSubBlock],
         totalWidth: width,
         totalHeight: height,
-        canFitOnSingleBoard: canBlockFitOnBoard(currentSubBlock, boardWidth, boardHeight)
+        canFitOnSingleBoard: canBlockFitOnBoard(
+          currentSubBlock,
+          boardWidth,
+          boardHeight,
+        ),
       })
-      
+
       // Start new sub-block
       currentSubBlock = [part]
       currentWidth = part.width
@@ -103,7 +109,11 @@ export const splitBlockForBoards = (
       parts: currentSubBlock,
       totalWidth: width,
       totalHeight: height,
-      canFitOnSingleBoard: canBlockFitOnBoard(currentSubBlock, boardWidth, boardHeight)
+      canFitOnSingleBoard: canBlockFitOnBoard(
+        currentSubBlock,
+        boardWidth,
+        boardHeight,
+      ),
     })
   }
 
@@ -116,7 +126,7 @@ export const splitBlockForBoards = (
 export const createPartBlocks = (
   parts: Part[],
   boardWidth: number,
-  boardHeight: number
+  boardHeight: number,
 ): PartBlock[] => {
   const groupedParts = groupPartsByBlock(parts)
   const blocks: PartBlock[] = []
@@ -132,18 +142,23 @@ export const createPartBlocks = (
         parts: blockParts,
         totalWidth: width,
         totalHeight: height,
-        canFitOnSingleBoard: canFit
+        canFitOnSingleBoard: canFit,
       })
     } else {
       // Split into sub-blocks
-      const subBlocks = splitBlockForBoards(blockParts, boardWidth, boardHeight, blockId)
+      const subBlocks = splitBlockForBoards(
+        blockParts,
+        boardWidth,
+        boardHeight,
+        blockId,
+      )
       blocks.push({
         blockId: blockId,
         parts: blockParts,
         totalWidth: width,
         totalHeight: height,
         canFitOnSingleBoard: false,
-        subBlocks: subBlocks
+        subBlocks: subBlocks,
       })
     }
   })
@@ -156,8 +171,8 @@ export const createPartBlocks = (
  */
 export const getAvailableBlockNumbers = (parts: Part[]): number[] => {
   const existingBlocks = new Set<number>()
-  
-  parts.forEach(part => {
+
+  parts.forEach((part) => {
     if (part.blockId && part.blockId > 0) {
       existingBlocks.add(part.blockId)
     }
@@ -167,32 +182,37 @@ export const getAvailableBlockNumbers = (parts: Part[]): number[] => {
   const maxBlock = existingBlocks.size > 0 ? Math.max(...existingBlocks) : 0
   const maxOptions = Math.max(5, maxBlock + 3)
   const availableNumbers: number[] = []
-  
+
   for (let i = 1; i <= maxOptions; i++) {
     availableNumbers.push(i)
   }
-  
+
   return availableNumbers
 }
 
 /**
  * Update part block assignment
  */
-export const updatePartBlock = (part: Part, blockId: number | undefined): Part => {
+export const updatePartBlock = (
+  part: Part,
+  blockId: number | undefined,
+): Part => {
   return {
     ...part,
-    blockId: blockId
+    blockId: blockId,
   }
 }
 
 /**
  * Get block summary for display
  */
-export const getBlockSummary = (parts: Part[]): { blockCount: number; individualCount: number } => {
+export const getBlockSummary = (
+  parts: Part[],
+): { blockCount: number; individualCount: number } => {
   const blocks = new Set<number>()
   let individualCount = 0
 
-  parts.forEach(part => {
+  parts.forEach((part) => {
     if (part.blockId && part.blockId > 0) {
       blocks.add(part.blockId)
     } else {
@@ -202,6 +222,6 @@ export const getBlockSummary = (parts: Part[]): { blockCount: number; individual
 
   return {
     blockCount: blocks.size,
-    individualCount
+    individualCount,
   }
 }

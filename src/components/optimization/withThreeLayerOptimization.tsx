@@ -1,5 +1,10 @@
 import React, { useMemo } from 'react'
 import type { SheetLayout, CornerModification } from '../../types/simple'
+import {
+  generateBasicPartsKey,
+  generateVisualKey,
+  generateEnhancedPartsKey,
+} from '../../utils/keyGeneration'
 
 interface BasicPart {
   id: string
@@ -28,11 +33,7 @@ export function withBasicPartsOptimization<
 >(Component: React.ComponentType<T>) {
   return React.memo((props: T) => {
     const basicPartsKey = useMemo(() => {
-      return props.basicParts
-        .map(
-          (part) => `${part.id}-${part.width}-${part.height}-${part.quantity}`,
-        )
-        .join('|')
+      return generateBasicPartsKey(props.basicParts)
     }, [props.basicParts])
 
     return (
@@ -74,25 +75,7 @@ export function withVisualOptimization<
 >(Component: React.ComponentType<T>) {
   return React.memo((props: T) => {
     const visualKey = useMemo(() => {
-      if (!props.selectedPartId) return 'no-selection'
-      const enhancements = props.visualEnhancements[props.selectedPartId]
-      if (!enhancements) return `${props.selectedPartId}-no-enhancements`
-
-      const cornerKey = enhancements.corners
-        ? Object.values(enhancements.corners)
-            .map((c: CornerModification) => `${c.type}-${c.x || 0}-${c.y || 0}`)
-            .join(',')
-        : 'no-corners'
-      const edgeKey = enhancements.edges
-        ? Object.values(enhancements.edges).join(',')
-        : 'no-edges'
-      const lShapeKey = enhancements.lShape?.enabled
-        ? `lshape-${enhancements.lShape.leftWidth || 0}-${
-            enhancements.lShape.topHeight || 0
-          }`
-        : 'no-lshape'
-
-      return `${props.selectedPartId}-${cornerKey}-${edgeKey}-${lShapeKey}`
+      return generateVisualKey(props.selectedPartId, props.visualEnhancements)
     }, [props.selectedPartId, props.visualEnhancements])
 
     return (
@@ -111,13 +94,7 @@ export function withEnhancedPartsOptimization<
 >(Component: React.ComponentType<T>) {
   return React.memo((props: T) => {
     const enhancedPartsKey = useMemo(() => {
-      return props.enhancedParts
-        .map((part) => {
-          const basicKey = `${part.id}-${part.width}-${part.height}-${part.quantity}`
-          const hasVisuals = part.corners || part.edges || part.lShape?.enabled
-          return `${basicKey}-${hasVisuals ? 'visual' : 'basic'}`
-        })
-        .join('|')
+      return generateEnhancedPartsKey(props.enhancedParts)
     }, [props.enhancedParts])
 
     return (

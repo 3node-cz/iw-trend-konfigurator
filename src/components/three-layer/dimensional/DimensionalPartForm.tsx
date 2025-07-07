@@ -1,7 +1,11 @@
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import type { Part } from '../../../types/simple'
-import { FORM_DEFAULTS, PART_CONSTRAINTS } from '../../../utils/appConstants'
+import {
+  FORM_DEFAULTS,
+  PART_CONSTRAINTS,
+  SHEET_CONSTRAINTS,
+} from '../../../utils/appConstants'
 import type { PartFormData } from '../../../utils/formValidation'
 import {
   getWidthValidationRules,
@@ -31,7 +35,29 @@ export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
   })
 
   const onSubmit = (data: PartFormData) => {
-    onAddPart(transformFormDataToPart(data))
+    console.log('Form data received:', data)
+    console.log('Data types:', {
+      width: typeof data.width,
+      height: typeof data.height,
+      quantity: typeof data.quantity,
+    })
+
+    // Ensure all values are numbers, not strings
+    const partData = transformFormDataToPart({
+      ...data,
+      width: Number(data.width),
+      height: Number(data.height),
+      quantity: Number(data.quantity),
+    })
+
+    console.log('Transformed part data:', partData)
+    console.log('Part data types:', {
+      width: typeof partData.width,
+      height: typeof partData.height,
+      quantity: typeof partData.quantity,
+    })
+
+    onAddPart(partData)
     reset({ quantity: FORM_DEFAULTS.quantity })
   }
 
@@ -47,8 +73,14 @@ export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
               id="width"
               type="number"
               min={PART_CONSTRAINTS.minWidth}
-              max={PART_CONSTRAINTS.maxWidth}
-              {...register('width', getWidthValidationRules())}
+              max={Math.min(
+                PART_CONSTRAINTS.maxWidth,
+                SHEET_CONSTRAINTS.standardWidth,
+              )}
+              {...register('width', {
+                ...getWidthValidationRules(SHEET_CONSTRAINTS.standardWidth),
+                valueAsNumber: true,
+              })}
             />
             {errors.width && (
               <ErrorMessage>{errors.width.message}</ErrorMessage>
@@ -61,8 +93,14 @@ export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
               id="height"
               type="number"
               min={PART_CONSTRAINTS.minHeight}
-              max={PART_CONSTRAINTS.maxHeight}
-              {...register('height', getHeightValidationRules())}
+              max={Math.min(
+                PART_CONSTRAINTS.maxHeight,
+                SHEET_CONSTRAINTS.standardHeight,
+              )}
+              {...register('height', {
+                ...getHeightValidationRules(SHEET_CONSTRAINTS.standardHeight),
+                valueAsNumber: true,
+              })}
             />
             {errors.height && (
               <ErrorMessage>{errors.height.message}</ErrorMessage>
@@ -76,7 +114,10 @@ export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
               type="number"
               min={PART_CONSTRAINTS.minQuantity}
               max={PART_CONSTRAINTS.maxQuantity}
-              {...register('quantity', getQuantityValidationRules())}
+              {...register('quantity', {
+                ...getQuantityValidationRules(),
+                valueAsNumber: true,
+              })}
             />
             {errors.quantity && (
               <ErrorMessage>{errors.quantity.message}</ErrorMessage>

@@ -1,6 +1,6 @@
 import type { SheetLayout, PlacedPart } from '../types/simple'
 import { SHEET_VISUALIZATION } from './appConstants'
-import { getConsistentPartColor } from './colorManagement'
+import { getConsistentPartColor, getBasePartId } from './colorManagement'
 
 /**
  * Utility functions for sheet visualization
@@ -36,21 +36,49 @@ export const groupPartsByBaseId = (
     count: number
   }
 > => {
-  return placedParts.reduce((groups, placedPart) => {
-    // Extract base ID by removing the last "-X" suffix (where X is the instance number)
-    const baseId = placedPart.part.id.replace(/-\d+$/, '')
+  const groups: Record<
+    string,
+    { label: string; color: string; count: number }
+  > = {}
+
+  placedParts.forEach((placedPart) => {
+    const baseId = getBasePartId(placedPart.part.id)
+
+    let label = baseId
+    // For block parts, use the block info for the label
+    if (
+      placedPart.part.id.startsWith('block-') ||
+      placedPart.part.id.startsWith('subblock-')
+    ) {
+      if (placedPart.part.label) {
+        label = placedPart.part.label
+      } else {
+        label = baseId
+      }
+    } else {
+      // For regular parts, use dimensions or custom label
+      if (placedPart.part.label) {
+        label = placedPart.part.label
+      } else {
+        if (placedPart.part.width && placedPart.part.height) {
+          label = `${placedPart.part.width}×${placedPart.part.height}`
+        } else {
+          label = baseId
+        }
+      }
+    }
+
     if (!groups[baseId]) {
       groups[baseId] = {
-        label:
-          placedPart.part.label ||
-          `${placedPart.part.width}×${placedPart.part.height}`,
-        color: getConsistentPartColor(placedPart.part.id),
+        label: label,
+        color: getConsistentPartColor(baseId, placedPart.part),
         count: 0,
       }
     }
     groups[baseId].count++
-    return groups
-  }, {} as Record<string, { label: string; color: string; count: number }>)
+  })
+
+  return groups
 }
 
 /**

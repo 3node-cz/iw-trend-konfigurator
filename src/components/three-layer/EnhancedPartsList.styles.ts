@@ -6,22 +6,87 @@ import { SelectableItem } from '../common/CommonStyles'
 
 export const PartItem = styled(SelectableItem)`
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto auto auto auto;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto auto auto auto auto;
   gap: 12px;
   align-items: center;
 `
 
-export const PartInfo = styled.div`
-  .label {
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 2px;
+export const PartCard = styled(SelectableItem)`
+  padding: 16px;
+  border-radius: 8px;
+  background: white;
+  border: 2px solid #e1e8ed;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #3498db;
   }
 
-  .dimensions {
+  ${({ $selected }) =>
+    $selected &&
+    `
+    border-color: #3498db;
+    background: #f8fbff;
+  `}
+`
+
+export const PartHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`
+
+export const PartTitle = styled.div`
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 4px;
+`
+
+export const PartDimensions = styled.div`
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin-bottom: 8px;
+`
+
+export const PartMetrics = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+`
+
+export const PartMetric = styled.div`
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+
+  .value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+
+  .label {
     font-size: 0.8rem;
     color: #7f8c8d;
   }
+`
+
+export const PartControls = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+`
+
+export const PartActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
 `
 
 export const StatsRow = styled.div`
@@ -127,46 +192,82 @@ export const SpacedContainer = styled.div<{ $marginTop?: number }>`
   margin-top: ${(props) => props.$marginTop || 0}px;
 `
 
-export const BlockSelector = styled.div`
+export const BlockSelectorContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  
-  select {
-    padding: 4px 6px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    background: white;
-    min-width: 90px;
-    cursor: pointer;
+`
 
-    &:focus {
-      outline: none;
-      border-color: #3498db;
-      box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
-    }
+export const BlockValidationError = styled.div`
+  background: #fee;
+  color: #c33;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  margin-top: 4px;
+  border: 1px solid #fcc;
+`
+
+export const BlockControlsContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`
+
+export const BlockSelector = styled.select`
+  padding: 4px 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  background: white;
+  min-width: 90px;
+  cursor: pointer;
+
+  &:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
   }
 `
 
-export const BlockIndicator = styled.span<{ $blockId?: number }>`
-  display: inline-flex;
+export const RotationLabel = styled.label`
+  display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+
+  input {
+    margin: 0;
+  }
+`
+
+export const BlockIndicator = styled.div<{ $blockId: number }>`
+  position: absolute;
+  top: -8px;
+  right: -8px;
   width: 20px;
   height: 20px;
-  border-radius: 3px;
-  font-size: 0.7rem;
-  font-weight: bold;
+  border-radius: 50%;
+  background: ${({ $blockId }) => {
+    const colors = [
+      '#3498db',
+      '#e74c3c',
+      '#2ecc71',
+      '#f39c12',
+      '#9b59b6',
+      '#1abc9c',
+      '#34495e',
+      '#e67e22',
+    ]
+    return colors[$blockId % colors.length]
+  }};
   color: white;
-  background: ${(props) => 
-    props.$blockId 
-      ? `hsl(${(props.$blockId * 137.5) % 360}, 60%, 50%)` 
-      : '#bdc3c7'
-  };
-  border: 1px solid ${(props) => 
-    props.$blockId 
-      ? `hsl(${(props.$blockId * 137.5) % 360}, 60%, 40%)` 
-      : '#95a5a6'
-  };
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `

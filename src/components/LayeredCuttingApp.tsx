@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react'
 import type { Part, CornerModification } from '../types/simple'
 import type { EdgeValue } from '../utils/edgeConstants'
 import { useLayeredCuttingState } from '../hooks/three-layer'
+import { SHEET_CONSTRAINTS } from '../utils/appConstants'
 import { LoadingIndicator, LoadingDots } from './LoadingIndicator'
 import { DimensionalPartForm } from './three-layer/dimensional/DimensionalPartForm'
 import { EnhancedPartsList } from './three-layer/EnhancedPartsList'
@@ -14,6 +15,8 @@ import {
   LeftColumn,
   RightColumn,
   LayoutContainer,
+  ValidationErrorContainer,
+  ValidationErrorText,
 } from './LayeredCuttingApp.styles'
 
 // Simple memoized components for performance
@@ -58,6 +61,16 @@ export const LayeredCuttingApp: React.FC = () => {
   const handlePartBlockUpdate = useCallback(
     (partId: string, blockId: number | undefined) => {
       updateDimensionalPart(partId, { blockId })
+    },
+    [updateDimensionalPart],
+  )
+
+  // Rotation update handler for managing part rotation
+  const handlePartRotationUpdate = useCallback(
+    (partId: string, rotatable: boolean) => {
+      updateDimensionalPart(partId, {
+        orientation: rotatable ? 'rotatable' : 'fixed',
+      })
     },
     [updateDimensionalPart],
   )
@@ -143,6 +156,50 @@ export const LayeredCuttingApp: React.FC = () => {
     ],
   )
 
+  /**
+   * Check if there are any block validation errors
+   */
+  const hasBlockValidationErrors = (parts: Part[]): boolean => {
+    const blockGroups = new Map<number, Part[]>()
+
+    // Group parts by block ID
+    parts.forEach((part) => {
+      if (part.blockId && part.blockId > 0) {
+        if (!blockGroups.has(part.blockId)) {
+          blockGroups.set(part.blockId, [])
+        }
+        blockGroups.get(part.blockId)!.push(part)
+      }
+    })
+
+    console.log('Block validation check:', blockGroups)
+
+    // Check each block for width validation errors
+    for (const [blockId, blockParts] of blockGroups.entries()) {
+      // Calculate total width including all quantities (each part width * quantity)
+      const totalWidth = blockParts.reduce(
+        (sum, part) => sum + part.width * part.quantity,
+        0,
+      )
+      console.log(
+        `Block ${blockId}: ${blockParts.length} parts, total width: ${totalWidth}mm (including quantities)`,
+      )
+
+      if (totalWidth > SHEET_CONSTRAINTS.standardWidth) {
+        console.log(
+          `Block ${blockId} validation FAILED: ${totalWidth}mm > ${SHEET_CONSTRAINTS.standardWidth}mm`,
+        )
+        return true
+      }
+    }
+
+    console.log('All blocks validation PASSED')
+    return false
+  }
+
+  // Check if there are validation errors to hide visualization
+  const hasValidationErrors = hasBlockValidationErrors(enhancedParts)
+
   return (
     <AppContainer>
       <Header>
@@ -164,6 +221,7 @@ export const LayeredCuttingApp: React.FC = () => {
             onRemovePart={removeDimensionalPart}
             onClearAll={clearAllParts}
             onPartBlockUpdate={handlePartBlockUpdate}
+            onPartRotationUpdate={handlePartRotationUpdate}
           />
 
           <MemoizedVisualEnhancementEditor
@@ -174,12 +232,30 @@ export const LayeredCuttingApp: React.FC = () => {
 
         <RightColumn>
           <LayoutContainer>
-            <MemoizedOptimizedLayoutVisualization sheetLayout={sheetLayout} />
-            <LoadingIndicator
-              isLoading={isLayoutCalculating}
-              message="Calculating optimal layout..."
-              overlay={true}
-            />
+            {!hasValidationErrors ? (
+              <>
+                <MemoizedOptimizedLayoutVisualization
+                  sheetLayout={sheetLayout}
+                  enhancedParts={enhancedParts}
+                />
+                <LoadingIndicator
+                  isLoading={isLayoutCalculating}
+                  message="Calculating optimal layout..."
+                  overlay={true}
+                />
+              </>
+            ) : (
+              <ValidationErrorContainer>
+                <div>
+                  <ValidationErrorText>
+                    ⚠️ Opravte chyby validácie pred zobrazením náhľadu
+                  </ValidationErrorText>
+                  <ValidationErrorText className="secondary">
+                    Skontrolujte šírku blokov v zozname dielcov
+                  </ValidationErrorText>
+                </div>
+              </ValidationErrorContainer>
+            )}
           </LayoutContainer>
         </RightColumn>
       </MainGrid>

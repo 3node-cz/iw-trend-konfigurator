@@ -10,7 +10,6 @@ export { useDebounceValue } from './useDebounceValue'
 // Re-export types for convenience
 export type {
   BasicDimensionalPart,
-  OptimizedLayout,
   VisualEnhancements,
   EnhancedCuttingPart,
   LayeredCuttingStateAPI,

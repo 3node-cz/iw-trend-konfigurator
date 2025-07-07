@@ -1,6 +1,14 @@
 import React from 'react'
+import styled from 'styled-components'
 import type { Part } from '../types/simple'
 import type { LShapePreviewData } from './lShapePreview'
+
+const LShapeSvg = styled.svg`
+  width: 100%;
+  height: 100%;
+  max-width: 600px;
+  max-height: 450px;
+`
 
 interface LShapeSvgProps {
   part: Part
@@ -26,15 +34,7 @@ export const renderLShapeSvg = ({
   } = previewData
 
   return (
-    <svg
-      viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
-      style={{
-        width: '100%',
-        height: '100%',
-        maxWidth: '600px',
-        maxHeight: '450px',
-      }}
-    >
+    <LShapeSvg viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}>
       {/* L-shape outline */}
       <path
         d={path}
@@ -96,6 +96,6 @@ export const renderLShapeSvg = ({
       >
         {rightHeight} mm
       </text>
-    </svg>
+    </LShapeSvg>
   )
 }
