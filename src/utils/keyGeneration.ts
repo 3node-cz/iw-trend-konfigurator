@@ -19,21 +19,25 @@ export const generateBasicPartKey = (part: {
 /**
  * Generate a parts array key for memoization
  */
-export const generateBasicPartsKey = (parts: Array<{
-  id: string
-  width: number
-  height: number
-  quantity: number
-}>): string => {
+export const generateBasicPartsKey = (
+  parts: Array<{
+    id: string
+    width: number
+    height: number
+    quantity: number
+  }>,
+): string => {
   return parts.map(generateBasicPartKey).join('|')
 }
 
 /**
  * Generate a corner key for memoization
  */
-export const generateCornerKey = (corners?: Record<string, CornerModification>): string => {
+export const generateCornerKey = (
+  corners?: Record<string, CornerModification>,
+): string => {
   if (!corners) return 'no-corners'
-  
+
   return Object.values(corners)
     .map((c: CornerModification) => `${c.type}-${c.x || 0}-${c.y || 0}`)
     .join(',')
@@ -44,16 +48,20 @@ export const generateCornerKey = (corners?: Record<string, CornerModification>):
  */
 export const generateEdgeKey = (edges?: Record<string, string>): string => {
   if (!edges) return 'no-edges'
-  
+
   return Object.values(edges).join(',')
 }
 
 /**
  * Generate an L-shape key for memoization
  */
-export const generateLShapeKey = (lShape?: { enabled: boolean; leftWidth?: number; topHeight?: number }): string => {
+export const generateLShapeKey = (lShape?: {
+  enabled: boolean
+  leftWidth?: number
+  topHeight?: number
+}): string => {
   if (!lShape?.enabled) return 'no-lshape'
-  
+
   return `lshape-${lShape.leftWidth || 0}-${lShape.topHeight || 0}`
 }
 
@@ -62,36 +70,41 @@ export const generateLShapeKey = (lShape?: { enabled: boolean; leftWidth?: numbe
  */
 export const generateVisualKey = (
   selectedPartId: string | undefined,
-  visualEnhancements: Record<string, {
-    corners?: Record<string, CornerModification>
-    edges?: Record<string, string>
-    lShape?: { enabled: boolean; leftWidth?: number; topHeight?: number }
-  }>
+  visualEnhancements: Record<
+    string,
+    {
+      corners?: Record<string, CornerModification>
+      edges?: Record<string, string>
+      lShape?: { enabled: boolean; leftWidth?: number; topHeight?: number }
+    }
+  >,
 ): string => {
   if (!selectedPartId) return 'no-selection'
-  
+
   const enhancements = visualEnhancements[selectedPartId]
   if (!enhancements) return `${selectedPartId}-no-enhancements`
-  
+
   const cornerKey = generateCornerKey(enhancements.corners)
   const edgeKey = generateEdgeKey(enhancements.edges)
   const lShapeKey = generateLShapeKey(enhancements.lShape)
-  
+
   return `${selectedPartId}-${cornerKey}-${edgeKey}-${lShapeKey}`
 }
 
 /**
  * Generate enhanced parts key for memoization
  */
-export const generateEnhancedPartsKey = (enhancedParts: Array<{
-  id: string
-  width: number
-  height: number
-  quantity: number
-  corners?: Record<string, CornerModification>
-  edges?: Record<string, string>
-  lShape?: { enabled: boolean }
-}>): string => {
+export const generateEnhancedPartsKey = (
+  enhancedParts: Array<{
+    id: string
+    width: number
+    height: number
+    quantity: number
+    corners?: Record<string, CornerModification>
+    edges?: Record<string, string>
+    lShape?: { enabled: boolean }
+  }>,
+): string => {
   return enhancedParts
     .map((part) => {
       const basicKey = generateBasicPartKey(part)

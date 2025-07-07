@@ -179,7 +179,11 @@ export const useLayeredCuttingState = (): LayeredCuttingStateAPI => {
       const cornerModifications = hasCornerModifications(enhancements.corners)
       const edgeTreatments = hasEdgeTreatmentsInterface(enhancements.edges)
       const lShapeEnabled = isLShape(enhancements.lShape)
-      const advancedConfig = hasAdvancedConfigInterface(enhancements.corners, enhancements.edges, enhancements.lShape)
+      const advancedConfig = hasAdvancedConfigInterface(
+        enhancements.corners,
+        enhancements.edges,
+        enhancements.lShape,
+      )
 
       return {
         ...dimensionalPart,
@@ -371,7 +375,11 @@ export const useLayeredCuttingState = (): LayeredCuttingStateAPI => {
 
   const totalPartCount = useMemo(() => {
     const total = dimensionalParts.reduce((sum, part) => {
-      console.log(`Part ${part.id}: quantity=${part.quantity} (type: ${typeof part.quantity})`)
+      console.log(
+        `Part ${part.id}: quantity=${
+          part.quantity
+        } (type: ${typeof part.quantity})`,
+      )
       return sum + Number(part.quantity)
     }, 0)
     console.log(`Total part count: ${total}`)

@@ -1,4 +1,8 @@
-import type { CornerModification, LShapeConfig, EdgeTreatment } from '../types/simple'
+import type {
+  CornerModification,
+  LShapeConfig,
+  EdgeTreatment,
+} from '../types/simple'
 import type { EdgeValue } from './edgeConstants'
 
 /**
@@ -9,7 +13,7 @@ import type { EdgeValue } from './edgeConstants'
  * Check if a part has corner modifications
  */
 export const hasCornerModifications = (
-  corners?: Record<string, CornerModification>
+  corners?: Record<string, CornerModification>,
 ): boolean => {
   return !!(corners && Object.values(corners).some((corner) => corner !== null))
 }
@@ -18,7 +22,7 @@ export const hasCornerModifications = (
  * Check if a part has edge treatments - Record<string, EdgeValue> version
  */
 export const hasEdgeTreatments = (
-  edges?: Record<string, EdgeValue>
+  edges?: Record<string, EdgeValue>,
 ): boolean => {
   return !!(edges && Object.values(edges).some((edge) => edge !== 'none'))
 }
@@ -26,9 +30,7 @@ export const hasEdgeTreatments = (
 /**
  * Check if a part has edge treatments - EdgeTreatment interface version
  */
-export const hasEdgeTreatmentsInterface = (
-  edges?: EdgeTreatment
-): boolean => {
+export const hasEdgeTreatmentsInterface = (edges?: EdgeTreatment): boolean => {
   return !!(edges && Object.values(edges).some((edge) => edge !== 'none'))
 }
 
@@ -45,9 +47,13 @@ export const isLShape = (lShape?: LShapeConfig): boolean => {
 export const hasAdvancedConfig = (
   corners?: Record<string, CornerModification>,
   edges?: Record<string, EdgeValue>,
-  lShape?: LShapeConfig
+  lShape?: LShapeConfig,
 ): boolean => {
-  return hasCornerModifications(corners) || hasEdgeTreatments(edges) || isLShape(lShape)
+  return (
+    hasCornerModifications(corners) ||
+    hasEdgeTreatments(edges) ||
+    isLShape(lShape)
+  )
 }
 
 /**
@@ -56,9 +62,13 @@ export const hasAdvancedConfig = (
 export const hasAdvancedConfigInterface = (
   corners?: Record<string, CornerModification>,
   edges?: EdgeTreatment,
-  lShape?: LShapeConfig
+  lShape?: LShapeConfig,
 ): boolean => {
-  return hasCornerModifications(corners) || hasEdgeTreatmentsInterface(edges) || isLShape(lShape)
+  return (
+    hasCornerModifications(corners) ||
+    hasEdgeTreatmentsInterface(edges) ||
+    isLShape(lShape)
+  )
 }
 
 /**
@@ -96,4 +106,9 @@ export const EDGE_KEYS = ['top', 'right', 'bottom', 'left'] as const
 /**
  * Corner position mapping
  */
-export const CORNER_KEYS = ['topLeft', 'topRight', 'bottomRight', 'bottomLeft'] as const
+export const CORNER_KEYS = [
+  'topLeft',
+  'topRight',
+  'bottomRight',
+  'bottomLeft',
+] as const
