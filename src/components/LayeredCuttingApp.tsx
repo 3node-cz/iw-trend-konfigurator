@@ -1,13 +1,22 @@
 import React, { useState, useMemo, useCallback } from 'react'
-import type { Part, CornerModification } from '../types/simple'
-import type { EdgeValue } from '../utils/edgeConstants'
+import type { Part } from '../types/simple'
 import { useLayeredCuttingState } from '../hooks/three-layer'
-import { SHEET_CONSTRAINTS } from '../utils/appConstants'
+import { hasBlockValidationErrors } from '../utils/blockValidationUtils'
+import {
+  getConsistentPartColor,
+  clearColorCache,
+} from '../utils/colorManagement'
+import {
+  separatePartUpdates,
+  processEdgeUpdates,
+  processCornerUpdates,
+} from '../utils/partUpdateHelpers'
 import { LoadingIndicator, LoadingDots } from './LoadingIndicator'
 import { DimensionalPartForm } from './three-layer/dimensional/DimensionalPartForm'
 import { EnhancedPartsList } from './three-layer/EnhancedPartsList'
 import { VisualEnhancementEditor } from './three-layer/visual/VisualEnhancementEditor'
 import { OptimizedLayoutVisualization } from './three-layer/layout/OptimizedLayoutVisualization'
+import { SupplierDataOutput } from './three-layer/layout/SupplierDataOutput'
 import {
   AppContainer,
   Header,
@@ -60,9 +69,49 @@ export const LayeredCuttingApp: React.FC = () => {
   // Block update handler for managing part grouping
   const handlePartBlockUpdate = useCallback(
     (partId: string, blockId: number | undefined) => {
-      updateDimensionalPart(partId, { blockId })
+      if (blockId !== undefined) {
+        // Clear color cache to ensure fresh color calculation
+        clearColorCache()
+
+        // Generate the block color using the block ID as the key
+        const blockColor = getConsistentPartColor(`block-${blockId}`, {
+          blockId: blockId,
+          width: 100,
+          height: 100,
+        })
+
+        // Find all parts that are currently in this block (before the update)
+        const currentPartsInBlock = enhancedParts.filter(
+          (p) => p.blockId === blockId,
+        )
+
+        // Update the current part to join the block
+        updateDimensionalPart(partId, {
+          blockId: blockId,
+          color: blockColor,
+        })
+
+        // Update all existing parts in the block to have the same color
+        currentPartsInBlock.forEach((part) => {
+          updateDimensionalPart(part.id, {
+            blockId: part.blockId, // Keep existing blockId
+            color: blockColor,
+          })
+        })
+      } else {
+        // If removing from block, recalculate color for individual part
+        const individualColor = getConsistentPartColor(partId, {
+          blockId: undefined,
+          width: enhancedParts.find((p) => p.id === partId)?.width,
+          height: enhancedParts.find((p) => p.id === partId)?.height,
+        })
+        updateDimensionalPart(partId, {
+          blockId: blockId,
+          color: individualColor,
+        })
+      }
     },
-    [updateDimensionalPart],
+    [updateDimensionalPart, enhancedParts],
   )
 
   // Rotation update handler for managing part rotation
@@ -83,26 +132,10 @@ export const LayeredCuttingApp: React.FC = () => {
   // Optimized: Memoize unified update handler to prevent unnecessary re-renders
   const updatePart = useCallback(
     (id: string, updates: Partial<Part>) => {
-      const { width, height, quantity, orientation, label, ...visualUpdates } =
-        updates
+      const { cuttingUpdates, visualUpdates } = separatePartUpdates(updates)
 
       // Update cutting properties if any cutting-relevant properties changed
-      if (
-        width !== undefined ||
-        height !== undefined ||
-        quantity !== undefined ||
-        orientation !== undefined ||
-        label !== undefined
-      ) {
-        const cuttingUpdates: Partial<
-          Omit<Part, 'id' | 'corners' | 'edges' | 'lShape'>
-        > = {}
-        if (width !== undefined) cuttingUpdates.width = width
-        if (height !== undefined) cuttingUpdates.height = height
-        if (quantity !== undefined) cuttingUpdates.quantity = quantity
-        if (orientation !== undefined) cuttingUpdates.orientation = orientation
-        if (label !== undefined) cuttingUpdates.label = label
-
+      if (Object.keys(cuttingUpdates).length > 0) {
         updateDimensionalPart(id, cuttingUpdates)
       }
 
@@ -113,34 +146,17 @@ export const LayeredCuttingApp: React.FC = () => {
 
       // Handle specific visual updates with direct methods
       if (visualUpdates.edges) {
-        const edgeMap = { top: 0, right: 1, bottom: 2, left: 3 } as const
-        Object.entries(visualUpdates.edges).forEach(([edge, value]) => {
-          const edgeIndex = edgeMap[edge as keyof typeof edgeMap]
-          if (edgeIndex !== undefined) {
-            updatePartEdge(id, edgeIndex, value as EdgeValue)
-          }
+        const edgeOperations = processEdgeUpdates(visualUpdates.edges)
+        edgeOperations.forEach(({ edgeIndex, value }) => {
+          updatePartEdge(id, edgeIndex, value)
         })
       }
 
       if (visualUpdates.corners) {
-        const cornerMap = {
-          topLeft: 0,
-          topRight: 1,
-          bottomRight: 2,
-          bottomLeft: 3,
-        } as const
-        Object.entries(visualUpdates.corners).forEach(
-          ([corner, cornerData]) => {
-            const cornerIndex = cornerMap[corner as keyof typeof cornerMap]
-            if (cornerIndex !== undefined) {
-              updatePartCorner(
-                id,
-                cornerIndex,
-                cornerData as CornerModification,
-              )
-            }
-          },
-        )
+        const cornerOperations = processCornerUpdates(visualUpdates.corners)
+        cornerOperations.forEach(({ cornerIndex, cornerData }) => {
+          updatePartCorner(id, cornerIndex, cornerData)
+        })
       }
 
       if (visualUpdates.lShape) {
@@ -155,47 +171,6 @@ export const LayeredCuttingApp: React.FC = () => {
       updatePartLShape,
     ],
   )
-
-  /**
-   * Check if there are any block validation errors
-   */
-  const hasBlockValidationErrors = (parts: Part[]): boolean => {
-    const blockGroups = new Map<number, Part[]>()
-
-    // Group parts by block ID
-    parts.forEach((part) => {
-      if (part.blockId && part.blockId > 0) {
-        if (!blockGroups.has(part.blockId)) {
-          blockGroups.set(part.blockId, [])
-        }
-        blockGroups.get(part.blockId)!.push(part)
-      }
-    })
-
-    console.log('Block validation check:', blockGroups)
-
-    // Check each block for width validation errors
-    for (const [blockId, blockParts] of blockGroups.entries()) {
-      // Calculate total width including all quantities (each part width * quantity)
-      const totalWidth = blockParts.reduce(
-        (sum, part) => sum + part.width * part.quantity,
-        0,
-      )
-      console.log(
-        `Block ${blockId}: ${blockParts.length} parts, total width: ${totalWidth}mm (including quantities)`,
-      )
-
-      if (totalWidth > SHEET_CONSTRAINTS.standardWidth) {
-        console.log(
-          `Block ${blockId} validation FAILED: ${totalWidth}mm > ${SHEET_CONSTRAINTS.standardWidth}mm`,
-        )
-        return true
-      }
-    }
-
-    console.log('All blocks validation PASSED')
-    return false
-  }
 
   // Check if there are validation errors to hide visualization
   const hasValidationErrors = hasBlockValidationErrors(enhancedParts)
@@ -257,6 +232,11 @@ export const LayeredCuttingApp: React.FC = () => {
               </ValidationErrorContainer>
             )}
           </LayoutContainer>
+
+          <SupplierDataOutput
+            sheetLayout={sheetLayout}
+            enhancedParts={enhancedParts}
+          />
         </RightColumn>
       </MainGrid>
     </AppContainer>

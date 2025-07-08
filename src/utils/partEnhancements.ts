@@ -2,6 +2,7 @@ import type {
   CornerModification,
   LShapeConfig,
   EdgeTreatment,
+  FrameConfig,
 } from '../types/simple'
 import type { EdgeValue } from './edgeConstants'
 
@@ -42,17 +43,26 @@ export const isLShape = (lShape?: LShapeConfig): boolean => {
 }
 
 /**
+ * Check if a part is a frame
+ */
+export const isFrame = (frame?: FrameConfig): boolean => {
+  return frame?.enabled === true
+}
+
+/**
  * Check if a part has any advanced configuration - Record<string, EdgeValue> version
  */
 export const hasAdvancedConfig = (
   corners?: Record<string, CornerModification>,
   edges?: Record<string, EdgeValue>,
   lShape?: LShapeConfig,
+  frame?: FrameConfig,
 ): boolean => {
   return (
     hasCornerModifications(corners) ||
     hasEdgeTreatments(edges) ||
-    isLShape(lShape)
+    isLShape(lShape) ||
+    isFrame(frame)
   )
 }
 
@@ -63,11 +73,13 @@ export const hasAdvancedConfigInterface = (
   corners?: Record<string, CornerModification>,
   edges?: EdgeTreatment,
   lShape?: LShapeConfig,
+  frame?: FrameConfig,
 ): boolean => {
   return (
     hasCornerModifications(corners) ||
     hasEdgeTreatmentsInterface(edges) ||
-    isLShape(lShape)
+    isLShape(lShape) ||
+    isFrame(frame)
   )
 }
 
@@ -96,6 +108,16 @@ export const getDefaultCorners = () => ({
   topRight: { type: 'none' as const },
   bottomRight: { type: 'none' as const },
   bottomLeft: { type: 'none' as const },
+})
+
+/**
+ * Default frame configuration
+ */
+export const getDefaultFrame = () => ({
+  enabled: false,
+  type: 'none' as const,
+  width: 70,
+  grainDirection: 'horizontal' as const,
 })
 
 /**

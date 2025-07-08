@@ -1,10 +1,8 @@
 import React, { useState, useMemo } from 'react'
-import type { SheetLayout, Part } from '../../../types/simple'
+import type { SheetLayout, PlacedPart } from '../../../types/simple'
+import type { EnhancedCuttingPart } from '../../../hooks/three-layer/useLayeredCuttingState'
+import { getBasePartId } from '../../../utils/colorManagement'
 import { SHEET_VISUALIZATION } from '../../../utils/appConstants'
-import {
-  getConsistentPartColor,
-  getBasePartId,
-} from '../../../utils/colorManagement'
 import {
   calculateSheetScale,
   groupPartsByBaseId,
@@ -12,6 +10,13 @@ import {
   calculateLayoutStats,
   getPartDimensions,
 } from '../../../utils/sheetVisualizationHelpers'
+import { getVisualizationPartColor } from '../../../utils/visualizationHelpers'
+import {
+  getBlockBorderStyle,
+  getInnerBlockBorderStyle,
+  isPartRotated,
+  formatEfficiencyPercentage,
+} from '../../../utils/layoutVisualizationHelpers'
 import {
   VisualizationContainer,
   VisualizationTitle,
@@ -34,7 +39,7 @@ import {
 
 interface SheetVisualizationProps {
   sheetLayout: SheetLayout | null
-  enhancedParts?: Part[] // For calculating accurate block borders
+  enhancedParts?: EnhancedCuttingPart[] // For calculating accurate block borders and colors
 }
 
 export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
@@ -56,12 +61,12 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
         efficiency,
         scaledDimensions: calculateSheetScale(sheetWidth, sheetHeight),
         partGroups: (() => {
-          return groupPartsByBaseId(placedParts)
+          return groupPartsByBaseId(placedParts, enhancedParts)
         })(),
         wastedArea: calculateWastedArea(sheetWidth, sheetHeight, placedParts),
         layoutStats: calculateLayoutStats(sheetLayout),
       }
-    }, [sheetLayout, selectedSheetIndex])
+    }, [sheetLayout, selectedSheetIndex, enhancedParts])
 
     if (!sheetLayout || sheetLayout.sheets.length === 0) {
       return (
@@ -149,12 +154,11 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
               fill="url(#grid)"
             />
 
-            {/* Placed parts - render as blocks with internal borders */}
+            {/* Placed parts - render with consistent colors */}
             {placedParts.map((placedPart) => {
-              const basePartId = getBasePartId(placedPart.part.id)
-              const partColor = getConsistentPartColor(
-                basePartId,
-                placedPart.part,
+              const partColor = getVisualizationPartColor(
+                placedPart.part.id,
+                enhancedParts,
               )
               const { width: partWidth, height: partHeight } =
                 getPartDimensions(placedPart)
@@ -175,6 +179,120 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
               )
             })}
 
+            {/* Block group indicators - draw red dashed borders around grouped pieces */}
+            {(() => {
+              if (!enhancedParts) return null
+
+              // Group placed parts by blockId based on their original enhanced part
+              const blockGroups = new Map<number, PlacedPart[]>()
+              placedParts.forEach((placedPart) => {
+                // Find the original enhanced part to get block info
+                const baseId = getBasePartId(placedPart.part.id)
+                const enhancedPart = enhancedParts.find((p) => p.id === baseId)
+
+                if (enhancedPart?.blockId) {
+                  if (!blockGroups.has(enhancedPart.blockId)) {
+                    blockGroups.set(enhancedPart.blockId, [])
+                  }
+                  blockGroups.get(enhancedPart.blockId)!.push(placedPart)
+                }
+              })
+
+              // Render block borders for groups with multiple pieces
+              return Array.from(blockGroups.entries()).map(
+                ([blockId, parts]) => {
+                  if (parts.length < 2) return null // No need to show border for single pieces
+
+                  // Calculate bounding box for all parts in the block
+                  const minX = Math.min(...parts.map((p) => p.x))
+                  const minY = Math.min(...parts.map((p) => p.y))
+                  const maxX = Math.max(
+                    ...parts.map((p) => {
+                      const { width } = getPartDimensions(p)
+                      return p.x + width
+                    }),
+                  )
+                  const maxY = Math.max(
+                    ...parts.map((p) => {
+                      const { height } = getPartDimensions(p)
+                      return p.y + height
+                    }),
+                  )
+
+                  return (
+                    <rect
+                      key={`block-border-${blockId}`}
+                      x={minX - 2}
+                      y={minY - 2}
+                      width={maxX - minX + 4}
+                      height={maxY - minY + 4}
+                      fill="none"
+                      stroke={getBlockBorderStyle().color}
+                      strokeWidth="3"
+                      strokeDasharray="8,4"
+                      opacity="0.8"
+                    />
+                  )
+                },
+              )
+            })()}
+
+            {/* Inner borders within blocks - show separations between pieces */}
+            {(() => {
+              if (!enhancedParts) return null
+
+              // Group placed parts by blockId for inner borders
+              const blockGroups = new Map<number, PlacedPart[]>()
+              placedParts.forEach((placedPart) => {
+                const baseId = getBasePartId(placedPart.part.id)
+                const enhancedPart = enhancedParts.find((p) => p.id === baseId)
+
+                if (enhancedPart?.blockId) {
+                  if (!blockGroups.has(enhancedPart.blockId)) {
+                    blockGroups.set(enhancedPart.blockId, [])
+                  }
+                  blockGroups.get(enhancedPart.blockId)!.push(placedPart)
+                }
+              })
+
+              // Render inner borders for blocks with multiple pieces
+              const innerBorders: React.ReactElement[] = []
+              blockGroups.forEach((parts, blockId) => {
+                if (parts.length < 2) return // No borders needed for single pieces
+
+                // Sort parts by X position (assuming horizontal layout within blocks)
+                const sortedParts = [...parts].sort((a, b) => a.x - b.x)
+
+                // Draw vertical borders between adjacent pieces
+                for (let i = 0; i < sortedParts.length - 1; i++) {
+                  const currentPart = sortedParts[i]
+                  const nextPart = sortedParts[i + 1]
+
+                  const { width: currentWidth, height: currentHeight } =
+                    getPartDimensions(currentPart)
+                  const borderX = currentPart.x + currentWidth
+
+                  // Only draw border if pieces are actually adjacent (within 5mm)
+                  if (Math.abs(borderX - nextPart.x) <= 5) {
+                    innerBorders.push(
+                      <line
+                        key={`inner-border-${blockId}-${i}`}
+                        x1={borderX}
+                        y1={currentPart.y}
+                        x2={borderX}
+                        y2={currentPart.y + currentHeight}
+                        stroke="#34495e"
+                        strokeWidth="4"
+                        opacity="0.9"
+                      />,
+                    )
+                  }
+                }
+              })
+
+              return innerBorders
+            })()}
+
             {/* Internal borders for blocks - render borders to show individual pieces within blocks */}
             {placedParts.map((placedPart) => {
               // Only render internal borders for composite block parts
@@ -182,39 +300,12 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
                 placedPart.part.id.startsWith('block-') ||
                 placedPart.part.id.startsWith('subblock-')
 
-              console.log(
-                `Checking part ${placedPart.part.id}: isCompositeBlock=${isCompositeBlock}, blockId=${placedPart.part.blockId}`,
-              )
-
               if (!isCompositeBlock || !placedPart.part.blockId) return null
 
               // Find all enhanced parts that belong to this block
               // For composite blocks, we need to find original parts that have the same blockId
               const blockParts = enhancedParts.filter(
                 (part) => part.blockId === placedPart.part.blockId,
-              )
-
-              console.log(
-                `Block ${placedPart.part.blockId}: found ${blockParts.length} enhanced parts`,
-              )
-              console.log(
-                `Available enhanced parts:`,
-                enhancedParts.map((p) => ({
-                  id: p.id,
-                  blockId: p.blockId,
-                  width: p.width,
-                  quantity: p.quantity,
-                })),
-              )
-              console.log(`Looking for blockId:`, placedPart.part.blockId)
-              console.log(
-                `Matching parts:`,
-                blockParts.map((p) => ({
-                  id: p.id,
-                  blockId: p.blockId,
-                  width: p.width,
-                  quantity: p.quantity,
-                })),
               )
 
               if (blockParts.length === 0) return null
@@ -244,20 +335,12 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
                 }
               })
 
-              console.log(
-                `Block ${placedPart.part.blockId}: ${
-                  individualPieces.length
-                } pieces, widths: ${individualPieces
-                  .map((p) => p.width)
-                  .join(', ')}`,
-              )
-
               // For blocks with multiple pieces, render internal borders
               if (individualPieces.length > 1) {
                 const borders = []
 
                 // Check if the block is rotated using the rotation property
-                const isRotated = placedPart.rotation === 90
+                const isRotated = isPartRotated(placedPart.rotation)
 
                 if (isRotated) {
                   // Block is rotated - render horizontal borders (pieces stacked vertically)
@@ -273,11 +356,6 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
                     for (let i = 0; i < part.quantity; i++) {
                       if (currentY > Number(placedPart.y)) {
                         // Don't render border before first piece
-                        console.log(
-                          `Rendering horizontal border at y=${currentY}, x=${
-                            placedPart.x
-                          } to x=${placedPart.x + totalBlockWidth}`,
-                        )
                         borders.push(
                           <line
                             key={`border-${placedPart.part.id}-${borders.length}`}
@@ -285,9 +363,9 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
                             y1={currentY}
                             x2={placedPart.x + totalBlockWidth}
                             y2={currentY}
-                            stroke="#FF0000"
-                            strokeWidth="6"
-                            opacity="1.0"
+                            stroke={getInnerBlockBorderStyle().color}
+                            strokeWidth={getInnerBlockBorderStyle().width}
+                            opacity={getInnerBlockBorderStyle().opacity}
                           />,
                         )
                       }
@@ -303,11 +381,6 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
 
                   for (let i = 0; i < individualPieces.length - 1; i++) {
                     currentX += Number(individualPieces[i].width)
-                    console.log(
-                      `Rendering vertical border at x=${currentX}, y=${
-                        placedPart.y
-                      } to y=${placedPart.y + totalBlockHeight}`,
-                    )
                     borders.push(
                       <line
                         key={`border-${placedPart.part.id}-${i}`}
@@ -315,9 +388,9 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
                         y1={placedPart.y}
                         x2={currentX}
                         y2={placedPart.y + totalBlockHeight}
-                        stroke="#FF0000"
-                        strokeWidth="6"
-                        opacity="1.0"
+                        stroke={getInnerBlockBorderStyle().color}
+                        strokeWidth={getInnerBlockBorderStyle().width}
+                        opacity={getInnerBlockBorderStyle().opacity}
                       />,
                     )
                   }
@@ -368,13 +441,15 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
 
             <InfoCard>
               <span className="value">
-                {(sheetLayout.overallEfficiency * 100).toFixed(1)}%
+                {formatEfficiencyPercentage(sheetLayout.overallEfficiency)}
               </span>
               <div className="label">Celková efektivita</div>
             </InfoCard>
 
             <InfoCard>
-              <span className="value">{(efficiency * 100).toFixed(1)}%</span>
+              <span className="value">
+                {formatEfficiencyPercentage(efficiency)}
+              </span>
               <div className="label">Efektivita tejto dosky</div>
             </InfoCard>
           </InfoGrid>

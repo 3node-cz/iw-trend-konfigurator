@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import type { Part } from '../../../types/simple'
 import { PartVisualEditor } from './PartVisualEditor'
 import { LShapeVisualEditor } from './LShapeVisualEditor'
+import { FrameVisualEditor } from './FrameVisualEditor'
 import { SPACING } from '../../../utils/uiConstants'
 import {
   analyzePartConfiguration,
@@ -9,6 +10,7 @@ import {
   enableLShapeConfiguration,
   disableBasicConfiguration,
 } from '../../../utils/configurationManagement'
+import { getDefaultFrameConfig } from '../../../utils/frameCalculations'
 import {
   TabContainer,
   TabHeader,
@@ -16,7 +18,6 @@ import {
   TabContent,
   ConfigurationSelector,
   CheckboxContainer,
-  WarningText,
   EmptyState,
   SpacedDiv,
 } from './VisualEnhancementEditor.styles'
@@ -26,7 +27,7 @@ interface TabbedEditorProps {
   onPartUpdate: (id: string, updates: Partial<Part>) => void
 }
 
-type TabType = 'basic' | 'lshape'
+type TabType = 'basic' | 'lshape' | 'frame'
 
 export const VisualEnhancementEditor: React.FC<TabbedEditorProps> = React.memo(
   ({ selectedPart, onPartUpdate }) => {
@@ -41,6 +42,8 @@ export const VisualEnhancementEditor: React.FC<TabbedEditorProps> = React.memo(
       // Auto-switch to the active configuration tab
       if (configState.isLShapeConfigActive) {
         setActiveTab('lshape')
+      } else if (selectedPart.frame?.enabled) {
+        setActiveTab('frame')
       } else if (configState.hasCornerConfig || configState.hasEdgeConfig) {
         setActiveTab('basic')
       } else {
@@ -49,7 +52,7 @@ export const VisualEnhancementEditor: React.FC<TabbedEditorProps> = React.memo(
     }, [selectedPart])
 
     const handleConfigurationToggle = (
-      configType: 'basic' | 'lshape',
+      configType: 'basic' | 'lshape' | 'frame',
       enabled: boolean,
     ) => {
       if (!selectedPart) return
@@ -57,7 +60,12 @@ export const VisualEnhancementEditor: React.FC<TabbedEditorProps> = React.memo(
       if (configType === 'basic') {
         if (enabled) {
           const updates = enableBasicConfiguration(selectedPart)
-          onPartUpdate(selectedPart.id, updates)
+          // Disable other configurations
+          onPartUpdate(selectedPart.id, {
+            ...updates,
+            lShape: undefined,
+            frame: undefined,
+          })
           setActiveTab('basic')
         } else {
           const updates = disableBasicConfiguration(selectedPart)
@@ -66,12 +74,33 @@ export const VisualEnhancementEditor: React.FC<TabbedEditorProps> = React.memo(
       } else if (configType === 'lshape') {
         if (enabled) {
           const updates = enableLShapeConfiguration(selectedPart)
-          onPartUpdate(selectedPart.id, updates)
+          // Disable other configurations
+          onPartUpdate(selectedPart.id, {
+            ...updates,
+            frame: undefined,
+          })
           setActiveTab('lshape')
         } else {
           // Disable L-shape
           onPartUpdate(selectedPart.id, {
             lShape: undefined,
+          })
+        }
+      } else if (configType === 'frame') {
+        if (enabled) {
+          const defaultFrameConfig = getDefaultFrameConfig()
+          // Disable other configurations
+          const updates = disableBasicConfiguration(selectedPart)
+          onPartUpdate(selectedPart.id, {
+            ...updates,
+            lShape: undefined,
+            frame: { ...defaultFrameConfig, enabled: true, type: 'type1' },
+          })
+          setActiveTab('frame')
+        } else {
+          // Disable frame
+          onPartUpdate(selectedPart.id, {
+            frame: undefined,
           })
         }
       }
@@ -87,13 +116,18 @@ export const VisualEnhancementEditor: React.FC<TabbedEditorProps> = React.memo(
     const tabs = [
       {
         id: 'basic' as TabType,
-        label: 'Základné nastavenia',
+        label: 'Rohy',
         hasConfig: configState.hasCornerConfig || configState.hasEdgeConfig,
       },
       {
         id: 'lshape' as TabType,
         label: 'L-tvar',
         hasConfig: configState.hasLShapeConfig,
+      },
+      {
+        id: 'frame' as TabType,
+        label: 'Rámček',
+        hasConfig: selectedPart.frame?.enabled || false,
       },
     ]
 
@@ -135,12 +169,6 @@ export const VisualEnhancementEditor: React.FC<TabbedEditorProps> = React.memo(
                   />
                   Použiť základné nastavenia (rohy a hrany)
                 </CheckboxContainer>
-                {configState.isLShapeConfigActive && (
-                  <WarningText>
-                    Pozor: Aktivácia základných nastavení vymaže aktuálnu L-tvar
-                    konfiguráciu
-                  </WarningText>
-                )}
               </ConfigurationSelector>
 
               {configState.isBasicConfigActive && (
@@ -166,12 +194,6 @@ export const VisualEnhancementEditor: React.FC<TabbedEditorProps> = React.memo(
                   />
                   Použiť L-tvar konfiguráciu
                 </CheckboxContainer>
-                {configState.isBasicConfigActive && (
-                  <WarningText>
-                    Pozor: Aktivácia L-tvaru vymaže aktuálne nastavenia rohov a
-                    hrán
-                  </WarningText>
-                )}
               </ConfigurationSelector>
 
               {configState.isLShapeConfigActive && (
@@ -179,6 +201,35 @@ export const VisualEnhancementEditor: React.FC<TabbedEditorProps> = React.memo(
                   <LShapeVisualEditor
                     selectedPart={selectedPart}
                     onPartUpdate={onPartUpdate}
+                  />
+                </SpacedDiv>
+              )}
+            </div>
+          )}
+          {activeTab === 'frame' && (
+            <div>
+              <ConfigurationSelector>
+                <CheckboxContainer>
+                  <input
+                    type="checkbox"
+                    checked={selectedPart.frame?.enabled || false}
+                    onChange={(e) =>
+                      handleConfigurationToggle('frame', e.target.checked)
+                    }
+                  />
+                  Použiť rámček konfiguráciu
+                </CheckboxContainer>
+              </ConfigurationSelector>
+
+              {selectedPart.frame?.enabled && (
+                <SpacedDiv $marginTop={SPACING.lg}>
+                  <FrameVisualEditor
+                    frameConfig={selectedPart.frame}
+                    onFrameConfigChange={(frameConfig) =>
+                      onPartUpdate(selectedPart.id, { frame: frameConfig })
+                    }
+                    partWidth={selectedPart.width}
+                    partHeight={selectedPart.height}
                   />
                 </SpacedDiv>
               )}

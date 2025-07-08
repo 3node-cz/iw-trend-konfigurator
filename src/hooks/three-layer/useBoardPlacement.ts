@@ -1,19 +1,19 @@
 /**
  * Board Placement Hook
  *
- * This hook takes prepared pieces (from Block Preparation) and places them on boards.
- * It handles both individual pieces and composite block pieces.
+ * This hook takes prepared pieces and places them on boards.
+ * Keeps the original placement logic but ensures proper export translation.
  *
  * Architecture Layer: Board Placement State
  * Input: Prepared pieces from Block Preparation
- * Output: Optimized board layout with placed pieces
+ * Output: Optimized board layout with proper export translation
  */
 
 import { useMemo } from 'react'
 import type { PreparedPiece } from './useBlockPreparation'
 import type { SheetLayout, PlacedPart, Part } from '../../types/simple'
 import {
-  optimizeCuttingBLF,
+  optimizeCuttingWithBlocks,
   defaultCuttingConfig,
   silentLogger,
   type CuttingConfig,
@@ -48,19 +48,20 @@ export const useBoardPlacement = (
     }
 
     try {
-      // Convert prepared pieces to optimizer format
+      // Convert prepared pieces to optimizer format, preserving blockId and grain direction
       const optimizerParts: Part[] = preparedPieces.map((piece) => ({
         id: piece.id,
         width: piece.width,
         height: piece.height,
         quantity: piece.quantity,
         orientation: piece.orientation || 'rotatable',
+        grainDirection: piece.grainDirection, // Preserve grain direction for frame pieces
         label: piece.label,
-        blockId: piece.blockId,
+        blockId: piece.blockId, // Preserve the blockId for block-aware optimization
       }))
 
-      // Use the existing BLF optimizer for board placement
-      const result = optimizeCuttingBLF(
+      // Use the block-aware optimizer (this handles the placement and visualization correctly)
+      const result = optimizeCuttingWithBlocks(
         optimizerParts,
         cuttingConfig,
         silentLogger,
@@ -99,53 +100,4 @@ export const useBoardPlacement = (
   }, [preparedPieces, cuttingConfig])
 
   return boardPlacementState
-}
-
-/**
- * Helper function to expand composite block pieces back to individual parts
- * for visualization purposes
- */
-export const expandPlacedBlockPieces = (
-  placedParts: PlacedPart[],
-  preparedPieces: PreparedPiece[],
-): PlacedPart[] => {
-  const expandedParts: PlacedPart[] = []
-
-  placedParts.forEach((placedPart) => {
-    // Find the corresponding prepared piece
-    const preparedPiece = preparedPieces.find(
-      (p) => p.id === placedPart.part.id,
-    )
-
-    if (
-      preparedPiece &&
-      preparedPiece.isBlockComposite &&
-      preparedPiece.originalParts
-    ) {
-      // Expand composite block back to individual parts
-      let currentX = placedPart.x
-      const baseY = placedPart.y
-
-      preparedPiece.originalParts.forEach((originalPart) => {
-        for (let i = 0; i < originalPart.quantity; i++) {
-          expandedParts.push({
-            part: {
-              ...originalPart,
-              id: `${originalPart.id}-${i}`,
-              quantity: 1,
-            },
-            x: currentX,
-            y: baseY,
-            rotation: placedPart.rotation,
-          })
-          currentX += originalPart.width
-        }
-      })
-    } else {
-      // Regular individual piece
-      expandedParts.push(placedPart)
-    }
-  })
-
-  return expandedParts
 }

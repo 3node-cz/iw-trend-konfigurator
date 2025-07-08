@@ -1,10 +1,7 @@
 import React from 'react'
 import type { Part, LShapeConfig } from '../../../types/simple'
 import { useDebounce } from '../../../hooks/useDebounce'
-import {
-  calculateLShapePreview,
-  createLShapeDefault,
-} from '../../../utils/lShapePreview'
+import { calculateLShapePreview } from '../../../utils/lShapePreview'
 import { renderLShapeSvg } from '../../../utils/lShapeSvgRenderer.tsx'
 import {
   getLShapeConstraints,
@@ -55,8 +52,7 @@ export const LShapeVisualEditor: React.FC<LShapeEditorProps> = React.memo(
 
     const constraints = getLShapeConstraints(
       selectedPart.width,
-      selectedPart,
-      lShape || { enabled: false },
+      selectedPart.height,
     )
 
     // Calculate radius constraints based on current L-shape configuration
@@ -69,13 +65,7 @@ export const LShapeVisualEditor: React.FC<LShapeEditorProps> = React.memo(
           rightBottomCutout: 0,
         }
 
-    const handlers = createLShapeUpdateHandlers(
-      selectedPart,
-      lShape,
-      debouncedHandleLShapeUpdate,
-      constraints,
-      () => createLShapeDefault(selectedPart),
-    )
+    const handlers = createLShapeUpdateHandlers(debouncedHandleLShapeUpdate)
 
     const renderLShapePreview = () => {
       if (!lShape?.enabled) return null

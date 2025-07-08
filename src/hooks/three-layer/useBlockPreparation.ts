@@ -2,16 +2,20 @@
  * Block Preparation Hook
  *
  * This hook takes dimensional parts and prepares them for board placement.
- * It creates individual pieces for non-blocked parts and composite block pieces
- * for blocked parts (placed horizontally next to each other).
+ * It creates individual pieces for both non-blocked and blocked parts.
+ * For blocked parts, pieces maintain block grouping information to ensure
+ * they are placed together while still being represented as individual pieces
+ * for accurate cutting instructions.
  *
  * Architecture Layer: Block Preparation State
  * Input: Dimensional parts with block assignments
- * Output: Prepared pieces ready for board placement
+ * Output: Individual pieces ready for board placement with block grouping info
  */
 
 import { useMemo } from 'react'
 import type { Part } from '../../types/simple'
+import type { EnhancedCuttingPart } from './useLayeredCuttingState'
+import { calculateFramePieces } from '../../utils/frameCalculations'
 
 export interface PreparedPiece {
   id: string
@@ -20,42 +24,77 @@ export interface PreparedPiece {
   quantity: number
   label?: string
   orientation?: 'fixed' | 'rotatable'
+  grainDirection?: 'horizontal' | 'vertical' // Grain direction for frame pieces
   blockId?: number
-  // Block-specific properties
-  isBlockComposite?: boolean
-  originalParts?: Part[] // For composite blocks, track original parts
-  blockLayout?: 'horizontal' | 'vertical' // How parts are arranged in the block
+  // Block-specific properties for grouping
+  blockPosition?: number // Position within the block (0, 1, 2, ...)
+  blockTotalWidth?: number // Total width of the complete block
+  blockTotalHeight?: number // Maximum height of the complete block
+  originalPartId?: string // Reference to original part before quantity expansion
 }
 
 export interface BlockPreparationState {
   preparedPieces: PreparedPiece[]
   blockCount: number
-  individualPieceCount: number
-  compositeBlockCount: number
+  totalIndividualPieces: number
+  blockPieceCount: number
 }
 
 /**
- * Hook for preparing parts into blocks for board placement
+ * Hook for preparing parts into individual pieces for board placement
  */
 export const useBlockPreparation = (
-  dimensionalParts: Part[],
-  boardWidth: number = 2800,
-  boardHeight: number = 2070,
+  enhancedParts: EnhancedCuttingPart[],
 ): BlockPreparationState => {
   const blockPreparationState = useMemo((): BlockPreparationState => {
     const preparedPieces: PreparedPiece[] = []
     const blockGroups = new Map<number, Part[]>()
     const individualParts: Part[] = []
 
-    // Step 1: Group parts by block ID
-    dimensionalParts.forEach((part) => {
-      if (part.blockId && part.blockId > 0) {
-        if (!blockGroups.has(part.blockId)) {
-          blockGroups.set(part.blockId, [])
+    // Step 1: Group parts by block ID and process frame pieces
+    enhancedParts.forEach((part) => {
+      // Check if part is a frame - if so, expand it to frame pieces
+      if (part.frame?.enabled) {
+        try {
+          const framePieces = calculateFramePieces(
+            part.width,
+            part.height,
+            part.frame,
+            part.id,
+            part.label,
+          )
+
+          // Add frame pieces as individual parts (frames don't support blocking)
+          framePieces.forEach((framePiece) => {
+            for (let i = 0; i < part.quantity; i++) {
+              const finalId = `${framePiece.id}-${i}`
+              preparedPieces.push({
+                id: finalId,
+                width: framePiece.width,
+                height: framePiece.height,
+                quantity: 1,
+                label: framePiece.label,
+                orientation: framePiece.orientation, // Use the orientation from frame calculation
+                grainDirection: framePiece.grainDirection, // Include grain direction
+                originalPartId: part.id,
+              })
+            }
+          })
+        } catch (error) {
+          console.error('Error calculating frame pieces:', error)
+          // Fall back to treating as regular part
+          individualParts.push(part)
         }
-        blockGroups.get(part.blockId)!.push(part)
       } else {
-        individualParts.push(part)
+        // Regular part processing
+        if (part.blockId && part.blockId > 0) {
+          if (!blockGroups.has(part.blockId)) {
+            blockGroups.set(part.blockId, [])
+          }
+          blockGroups.get(part.blockId)!.push(part)
+        } else {
+          individualParts.push(part)
+        }
       }
     })
 
@@ -70,139 +109,56 @@ export const useBlockPreparation = (
           quantity: 1,
           label: part.label,
           orientation: part.orientation || 'rotatable',
-          blockId: undefined,
-          isBlockComposite: false,
+          originalPartId: part.id,
         })
       }
     })
 
-    // Step 3: Process block groups
+    // Step 3: Process block groups - create individual pieces with block grouping info
     blockGroups.forEach((parts, blockId) => {
-      // Calculate total dimensions for horizontal arrangement
+      // Calculate block dimensions for reference
       const totalWidth = parts.reduce(
         (sum, part) => sum + part.width * part.quantity,
         0,
       )
       const maxHeight = Math.max(...parts.map((part) => part.height))
 
-      // Check if the block fits on a single board
-      const canFitOnBoard = totalWidth <= boardWidth && maxHeight <= boardHeight
-
-      if (canFitOnBoard) {
-        // Create a single composite block piece
-        const blockLabel = `Block ${blockId} (${parts.length} part types)`
-
-        preparedPieces.push({
-          id: `block-${blockId}`,
-          width: totalWidth,
-          height: maxHeight,
-          quantity: 1,
-          label: blockLabel,
-          orientation: 'fixed', // Blocks have fixed orientation to maintain texture
-          blockId: blockId,
-          isBlockComposite: true,
-          originalParts: parts,
-          blockLayout: 'horizontal',
-        })
-      } else {
-        // Block is too large, split into sub-blocks
-        let currentWidth = 0
-        let currentBlockParts: Part[] = []
-        let subBlockIndex = 0
-
-        // Expand parts by quantity first
-        const expandedParts: Part[] = []
-        parts.forEach((part) => {
-          for (let i = 0; i < part.quantity; i++) {
-            expandedParts.push({
-              ...part,
-              id: `${part.id}-${i}`,
-              quantity: 1,
-            })
-          }
-        })
-
-        // Create sub-blocks
-        expandedParts.forEach((part) => {
-          if (
-            currentWidth + part.width > boardWidth &&
-            currentBlockParts.length > 0
-          ) {
-            // Create current sub-block
-            const subBlockWidth = currentBlockParts.reduce(
-              (sum, p) => sum + p.width,
-              0,
-            )
-            const subBlockHeight = Math.max(
-              ...currentBlockParts.map((p) => p.height),
-            )
-
-            preparedPieces.push({
-              id: `block-${blockId}-${subBlockIndex}`,
-              width: subBlockWidth,
-              height: subBlockHeight,
-              quantity: 1,
-              label: `Block ${blockId} Part ${subBlockIndex + 1}`,
-              orientation: 'fixed',
-              blockId: blockId,
-              isBlockComposite: true,
-              originalParts: currentBlockParts,
-              blockLayout: 'horizontal',
-            })
-
-            // Start new sub-block
-            currentBlockParts = [part]
-            currentWidth = part.width
-            subBlockIndex++
-          } else {
-            currentBlockParts.push(part)
-            currentWidth += part.width
-          }
-        })
-
-        // Add the last sub-block
-        if (currentBlockParts.length > 0) {
-          const subBlockWidth = currentBlockParts.reduce(
-            (sum, p) => sum + p.width,
-            0,
-          )
-          const subBlockHeight = Math.max(
-            ...currentBlockParts.map((p) => p.height),
-          )
-
+      // Expand each part by quantity and create individual pieces
+      let blockPosition = 0
+      parts.forEach((part) => {
+        for (let i = 0; i < part.quantity; i++) {
           preparedPieces.push({
-            id: `block-${blockId}-${subBlockIndex}`,
-            width: subBlockWidth,
-            height: subBlockHeight,
+            id: `${part.id}-${i}`,
+            width: part.width,
+            height: part.height,
             quantity: 1,
-            label: `Block ${blockId} Part ${subBlockIndex + 1}`,
-            orientation: 'fixed',
+            label: part.label,
+            orientation: part.orientation || 'rotatable',
             blockId: blockId,
-            isBlockComposite: true,
-            originalParts: currentBlockParts,
-            blockLayout: 'horizontal',
+            blockPosition: blockPosition,
+            blockTotalWidth: totalWidth,
+            blockTotalHeight: maxHeight,
+            originalPartId: part.id,
           })
+          blockPosition++
         }
-      }
+      })
     })
 
     // Step 4: Calculate statistics
     const blockCount = blockGroups.size
-    const individualPieceCount = individualParts.reduce(
-      (sum, part) => sum + part.quantity,
-      0,
-    )
-    const compositeBlockCount = preparedPieces.filter(
-      (piece) => piece.isBlockComposite,
+    const totalIndividualPieces = preparedPieces.length
+    const blockPieceCount = preparedPieces.filter(
+      (piece) => piece.blockId,
     ).length
 
     return {
       preparedPieces,
       blockCount,
-      individualPieceCount,
-      compositeBlockCount,
+      totalIndividualPieces,
+      blockPieceCount,
     }
-  }, [dimensionalParts, boardWidth, boardHeight])
+  }, [enhancedParts])
 
   return blockPreparationState
 }

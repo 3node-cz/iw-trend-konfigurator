@@ -131,10 +131,41 @@ export const getPartOrientations = (
     width: number
     height: number
     rotation: 0 | 90
-  }> = [{ width: Number(part.width), height: Number(part.height), rotation: 0 }]
+  }> = []
 
-  // Add 90-degree rotation only if part is not square AND rotation is enabled
-  if (part.width !== part.height && part.orientation === 'rotatable') {
+  // Debug logging for frame pieces
+  if (part.id.includes('_frame_')) {
+    console.log(
+      `Frame piece ${part.id}: grainDirection=${part.grainDirection}, dimensions=${part.width}x${part.height}`,
+    )
+  }
+
+  // For frame pieces with vertical grain direction, force rotation
+  if (part.grainDirection === 'vertical') {
+    // Vertical grain pieces should be rotated 90 degrees
+    orientations.push({
+      width: Number(part.height),
+      height: Number(part.width),
+      rotation: 90,
+    })
+    console.log(
+      `Forcing rotation for vertical grain piece ${part.id}: ${part.width}x${part.height} -> ${part.height}x${part.width} (90°)`,
+    )
+  } else {
+    // Default orientation (horizontal grain or no grain specified)
+    orientations.push({
+      width: Number(part.width),
+      height: Number(part.height),
+      rotation: 0,
+    })
+  }
+
+  // Add 90-degree rotation only if part is not square AND rotation is enabled AND no grain constraint
+  if (
+    part.width !== part.height &&
+    part.orientation === 'rotatable' &&
+    !part.grainDirection // Only allow rotation if no specific grain direction
+  ) {
     orientations.push({
       width: Number(part.height),
       height: Number(part.width),
@@ -468,20 +499,20 @@ export const optimizeCuttingWithBlocks = (
   log(`📦 Processing ${parts.length} parts with potential blocks`)
   log(`📋 Sheet size: ${sheetWidth}×${sheetHeight}mm`)
 
-  // Step 1: Expand parts by quantity first, then create blocks
-  const expandedParts = expandPartsByQuantity(parts)
+  // Step 1: Parts are already expanded by the block preparation hook, so use them directly
+  // No need to expand by quantity since block preparation already created individual pieces
   log(
-    `📦 Expanded ${parts.length} part types into ${expandedParts.length} individual parts`,
+    `📦 Using ${parts.length} individual parts (already expanded by block preparation)`,
   )
 
-  // Debug: Log expanded parts
-  expandedParts.forEach((part) => {
+  // Debug: Log parts
+  parts.forEach((part) => {
     log(
-      `  Expanded part: ${part.id} (${part.width}×${part.height}mm, blockId: ${part.blockId})`,
+      `  Part: ${part.id} (${part.width}×${part.height}mm, qty: ${part.quantity}, blockId: ${part.blockId})`,
     )
   })
 
-  const blocks = createPartBlocks(expandedParts, sheetWidth, sheetHeight)
+  const blocks = createPartBlocks(parts, sheetWidth, sheetHeight)
   log(`📦 Created ${blocks.length} blocks (including individual parts)`)
 
   // Debug: Log block details
@@ -498,77 +529,97 @@ export const optimizeCuttingWithBlocks = (
     })
   })
 
-  // Step 2: Convert blocks to individual parts for optimization
-  // For blocks that can fit on a single board, treat them as single units
-  // For blocks that need to be split, process each sub-block separately
-  const optimizationParts: Part[] = []
-  const blockMap = new Map<string, PartBlock>()
+  // Step 2: Create a block-aware optimization strategy
+  // Group parts by blockId and create placement units
+  const placementUnits: Part[] = []
+  const blockGroups = new Map<number, Part[]>()
+  const individualParts: Part[] = []
+  const compositeToOriginalMap = new Map<string, Part[]>()
 
-  blocks.forEach((block, index) => {
-    // Check if this is a real block (positive blockId) or just an individual part (negative blockId)
-    if (block.blockId > 0) {
-      // This is a real block - treat as composite part regardless of size
-      if (block.canFitOnSingleBoard) {
-        // Create a composite part representing the entire block
-        const compositePartId = `block-${block.blockId}-${index}`
-        const compositePart: Part = {
-          id: compositePartId,
-          width: block.totalWidth,
-          height: block.totalHeight,
-          quantity: 1,
-          label: `Block ${block.blockId} (${block.parts.length} parts)`,
-          blockId: block.blockId,
-          // Mark as fixed orientation to preserve block layout
-          orientation: 'fixed',
-        }
-        optimizationParts.push(compositePart)
-        blockMap.set(compositePartId, block)
-        log(
-          `  ✅ Created composite part for Block ${block.blockId}: ${block.totalWidth}×${block.totalHeight}mm`,
-        )
-      } else {
-        // Block needs to be split into sub-blocks
-        if (block.subBlocks && block.subBlocks.length > 0) {
-          block.subBlocks.forEach((subBlock, subIndex) => {
-            const subBlockPartId = `subblock-${block.blockId}-${subIndex}`
-            const subBlockPart: Part = {
-              id: subBlockPartId,
-              width: subBlock.totalWidth,
-              height: subBlock.totalHeight,
-              quantity: 1,
-              label: `Block ${block.blockId} Part ${subIndex + 1} (${
-                subBlock.parts.length
-              } parts)`,
-              blockId: block.blockId,
-              orientation: 'fixed',
-            }
-            optimizationParts.push(subBlockPart)
-            blockMap.set(subBlockPartId, subBlock)
-            log(
-              `  ✅ Created sub-block part for Block ${block.blockId}: ${subBlock.totalWidth}×${subBlock.totalHeight}mm`,
-            )
-          })
-        } else {
-          // Fallback - add parts directly
-          optimizationParts.push(...block.parts)
-          log(
-            `  ⚠️ Added individual parts from Block ${block.blockId} (fallback)`,
-          )
-        }
+  // Separate parts into blocks and individuals
+  parts.forEach((part) => {
+    if (part.blockId && part.blockId > 0) {
+      if (!blockGroups.has(part.blockId)) {
+        blockGroups.set(part.blockId, [])
       }
+      blockGroups.get(part.blockId)!.push(part)
     } else {
-      // This is an individual part (negative blockId from groupPartsByBlock)
-      optimizationParts.push(...block.parts)
-      log(`  ➡️ Added individual parts (no block assignment)`)
+      individualParts.push(part)
     }
   })
 
-  // Step 3: Optimize using the existing BLF algorithm
-  const basicLayout = optimizeCuttingBLF(optimizationParts, config, logger)
+  // Create composite placement units for blocks
+  blockGroups.forEach((blockParts, blockId) => {
+    const block = blocks.find((b) => b.blockId === blockId)
+    if (!block) return
 
-  // Step 4: Create BlockLayout result
-  const blockLayout: BlockLayout = {
+    if (block.canFitOnSingleBoard) {
+      // Create a composite part for block placement
+      const compositeId = `block-composite-${blockId}`
+      const compositePart: Part = {
+        id: compositeId,
+        width: block.totalWidth,
+        height: block.totalHeight,
+        quantity: 1,
+        label: `Block ${blockId} (${blockParts.length} parts)`,
+        blockId: blockId,
+        orientation: 'fixed',
+      }
+      placementUnits.push(compositePart)
+      compositeToOriginalMap.set(compositeId, blockParts)
+      log(
+        `  ✅ Created composite placement unit for Block ${blockId}: ${block.totalWidth}×${block.totalHeight}mm`,
+      )
+    } else {
+      // Block too large, add parts individually
+      placementUnits.push(...blockParts)
+      log(`  ⚠️ Block ${blockId} too large, adding parts individually`)
+    }
+  })
+
+  // Add individual parts
+  placementUnits.push(...individualParts)
+
+  log(
+    `📦 Created ${placementUnits.length} placement units from ${parts.length} parts`,
+  )
+
+  // Step 3: Optimize using the existing BLF algorithm
+  const basicLayout = optimizeCuttingBLF(placementUnits, config, logger)
+
+  // Step 4: Expand composite parts back to individual parts for the final layout
+  const finalSheets = basicLayout.sheets.map((sheet) => ({
+    ...sheet,
+    placedParts: sheet.placedParts.flatMap((placedPart) => {
+      if (placedPart.part.id.startsWith('block-composite-')) {
+        // Expand composite block back to individual parts
+        const originalParts = compositeToOriginalMap.get(placedPart.part.id)
+        if (!originalParts) return [placedPart]
+
+        let currentX = placedPart.x
+
+        return originalParts.map((originalPart) => {
+          const expandedPart = {
+            part: originalPart,
+            x: currentX,
+            y: placedPart.y,
+            rotation: placedPart.rotation,
+          }
+          // Update position for next part
+          currentX += originalPart.width
+          return expandedPart
+        })
+      } else {
+        // Regular individual part
+        return [placedPart]
+      }
+    }),
+  }))
+
+  // Step 5: Create final BlockLayout result with expanded parts
+  const finalLayout: BlockLayout = {
     ...basicLayout,
+    sheets: finalSheets,
     blocks: blocks,
     unplacedBlocks: blocks.filter((block) =>
       block.parts.some((part) =>
@@ -578,7 +629,7 @@ export const optimizeCuttingWithBlocks = (
   }
 
   log(`\n🎯 === BLOCK CUTTING SUMMARY ===`)
-  log(`📄 Total sheets used: ${blockLayout.sheets.length}`)
+  log(`📄 Total sheets used: ${finalLayout.sheets.length}`)
   log(`📦 Total blocks created: ${blocks.length}`)
   log(
     `📦 Blocks that fit on single board: ${
@@ -590,14 +641,14 @@ export const optimizeCuttingWithBlocks = (
       blocks.filter((b) => !b.canFitOnSingleBoard).length
     }`,
   )
-  log(`❌ Unplaced blocks: ${blockLayout.unplacedBlocks.length}`)
+  log(`❌ Unplaced blocks: ${finalLayout.unplacedBlocks.length}`)
   log(
-    `⚡ Overall efficiency: ${(blockLayout.overallEfficiency * 100).toFixed(
+    `⚡ Overall efficiency: ${(finalLayout.overallEfficiency * 100).toFixed(
       1,
     )}%`,
   )
 
-  return blockLayout
+  return finalLayout
 }
 
 /**

@@ -1,81 +1,69 @@
-import type { Part, CornerModification } from '../types/simple'
-import type { EdgeValue } from './edgeConstants'
-import { DEFAULT_EDGES } from './edgeConstants'
-import { resolveCornerConflicts } from './cornerCalculations'
-
 /**
- * Utility functions for handling part updates
+ * Part update handlers and utilities
  */
 
-/**
- * Update edge treatment for a specific edge of a part
- */
-export const updatePartEdge = (
-  part: Part,
-  edge: string,
-  value: EdgeValue,
-): Partial<Part> => {
-  const updatedEdges = {
-    ...DEFAULT_EDGES,
-    ...(part.edges || {}),
-    [edge]: value,
-  }
-
-  return { edges: updatedEdges }
-}
+import type { Part, EdgeTreatment, CornerModification } from '../types/simple'
 
 /**
- * Update corner modification with automatic conflict resolution
- */
-export const updatePartCorner = (
-  part: Part,
-  corner: string,
-  updates: Partial<CornerModification>,
-): Partial<Part> => {
-  const corners = (part.corners as Record<string, CornerModification>) || {}
-  const currentCorner = corners[corner] || { type: 'none' }
-
-  // Apply updates to current corner
-  const updatedCorner = { ...currentCorner, ...updates }
-
-  // Handle conflict resolution for corners on the same edge
-  const updatedCorners = { ...corners, [corner]: updatedCorner }
-
-  // Apply automatic adjustments if needed
-  const finalCorners = resolveCornerConflicts(part, updatedCorners, corner)
-
-  return {
-    corners: {
-      topLeft: finalCorners['topLeft'] || { type: 'none' },
-      topRight: finalCorners['topRight'] || { type: 'none' },
-      bottomRight: finalCorners['bottomRight'] || { type: 'none' },
-      bottomLeft: finalCorners['bottomLeft'] || { type: 'none' },
-    },
-  }
-}
-
-/**
- * Create update handlers for a part editor component
+ * Create update handlers for part editing
+ * @param part - The part to create handlers for
+ * @param onPartUpdate - The update callback function
+ * @returns Object with update handlers
  */
 export const createPartUpdateHandlers = (
   part: Part,
   onPartUpdate: (id: string, updates: Partial<Part>) => void,
 ) => {
-  const handleEdgeUpdate = (edge: string, value: EdgeValue) => {
-    const updates = updatePartEdge(part, edge, value)
-    onPartUpdate(part.id, updates)
-  }
-
-  const handleCornerUpdate = (
-    corner: string,
-    updates: Partial<CornerModification>,
-  ) => {
-    const partUpdates = updatePartCorner(part, corner, updates)
-    onPartUpdate(part.id, partUpdates)
-  }
-
   return {
-    handleEdgeUpdate,
-    handleCornerUpdate,
+    updateWidth: (width: number) => {
+      onPartUpdate(part.id, { width })
+    },
+    updateHeight: (height: number) => {
+      onPartUpdate(part.id, { height })
+    },
+    updateQuantity: (quantity: number) => {
+      onPartUpdate(part.id, { quantity })
+    },
+    updateLabel: (label: string) => {
+      onPartUpdate(part.id, { label })
+    },
+    updateOrientation: (orientation: 'fixed' | 'rotatable') => {
+      onPartUpdate(part.id, { orientation })
+    },
+    handleEdgeUpdate: (edge: string, value: 'none' | 'abs-1mm' | 'abs-2mm') => {
+      const currentEdges = part.edges || {
+        top: 'none',
+        right: 'none',
+        bottom: 'none',
+        left: 'none',
+      }
+      const updatedEdges: EdgeTreatment = {
+        ...currentEdges,
+        [edge]: value,
+      }
+      onPartUpdate(part.id, { edges: updatedEdges })
+    },
+    handleCornerUpdate: (
+      corner: string,
+      modification: Partial<CornerModification>,
+    ) => {
+      const currentCorners = part.corners || {
+        topLeft: { type: 'none' },
+        topRight: { type: 'none' },
+        bottomRight: { type: 'none' },
+        bottomLeft: { type: 'none' },
+      }
+      const fullModification: CornerModification = {
+        type: modification.type || 'none',
+        ...(modification.x && { x: modification.x }),
+        ...(modification.y && { y: modification.y }),
+        ...(modification.edgeType && { edgeType: modification.edgeType }),
+      }
+      const updatedCorners = {
+        ...currentCorners,
+        [corner]: fullModification,
+      }
+      onPartUpdate(part.id, { corners: updatedCorners })
+    },
   }
 }

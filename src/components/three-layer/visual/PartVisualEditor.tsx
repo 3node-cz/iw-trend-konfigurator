@@ -7,7 +7,7 @@ import { createPartUpdateHandlers } from '../../../utils/partUpdates'
 import { useDebounce } from '../../../hooks/useDebounce'
 import {
   getPartLabel,
-  formatPartDimensions,
+  formatPartDimensionsFromPart,
   getPartStats,
 } from '../../../utils/partFormatting'
 import {
@@ -53,7 +53,7 @@ export const PartVisualEditor: React.FC<PartEditorProps> = React.memo(
           <div className="part-info">
             <div className="label">{getPartLabel(selectedPart)}</div>
             <div className="dimensions">
-              {formatPartDimensions(selectedPart)}
+              {formatPartDimensionsFromPart(selectedPart)}
             </div>
           </div>
           <div className="part-stats">

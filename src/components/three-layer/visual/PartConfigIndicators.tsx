@@ -36,7 +36,7 @@ export const PartConfigIndicators: React.FC<ConfigIndicatorsProps> = ({
           onMouseEnter={() => setHoveredBadge('edges')}
           onMouseLeave={() => setHoveredBadge(null)}
         >
-          <ConfigBadge $type="edges">E</ConfigBadge>
+          <ConfigBadge $type="edges">H</ConfigBadge>
           <ConfigTooltip $visible={hoveredBadge === 'edges'}>
             Hrany s oblepovaním
           </ConfigTooltip>
@@ -51,6 +51,18 @@ export const PartConfigIndicators: React.FC<ConfigIndicatorsProps> = ({
           <ConfigBadge $type="lshape">L</ConfigBadge>
           <ConfigTooltip $visible={hoveredBadge === 'lshape'}>
             L-tvar
+          </ConfigTooltip>
+        </RelativeContainer>
+      )}
+
+      {part.isFrame && (
+        <RelativeContainer
+          onMouseEnter={() => setHoveredBadge('frame')}
+          onMouseLeave={() => setHoveredBadge(null)}
+        >
+          <ConfigBadge $type="frame">F</ConfigBadge>
+          <ConfigTooltip $visible={hoveredBadge === 'frame'}>
+            Rámček
           </ConfigTooltip>
         </RelativeContainer>
       )}

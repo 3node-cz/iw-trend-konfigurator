@@ -17,6 +17,15 @@ const partColorCache = new Map<string, string>()
  * For subblock parts: "subblock-1-0" -> "subblock-1"
  */
 export const getBasePartId = (partId: string): string => {
+  // Handle frame pieces - group them together by original part ID
+  if (partId.includes('_frame_')) {
+    // For frame pieces like "part-123_frame_top-0", return the original part ID
+    const match = partId.match(/^(.*?)_frame_.*?(-\d+)*$/)
+    if (match) {
+      return match[1]
+    }
+  }
+
   // Handle block composite parts
   if (partId.startsWith('block-')) {
     const match = partId.match(/^block-(\d+)-/)
@@ -52,39 +61,45 @@ const hashString = (str: string): number => {
 }
 
 /**
- * Generate a consistent color for a part based on its dimensions
- * Parts with the same dimensions will always get the same color
+ * Generate a consistent color for a part based on its dimensions or block assignment
+ * Parts in the same block will always get the same color
+ * Parts with the same dimensions will get the same color if not in a block
  */
 export const getConsistentPartColor = (
   partId: string,
   part?: { blockId?: number; width?: number; height?: number },
 ): string => {
-  // Create a key based on dimensions for consistent coloring
+  // Create a key based on block assignment or dimensions for consistent coloring
   let colorKey: string
-  
-  if (part?.width && part?.height) {
-    // Use normalized dimensions (smaller dimension first) for consistent colors
-    const [dim1, dim2] = [part.width, part.height].sort((a, b) => a - b)
-    colorKey = `${dim1}x${dim2}`
-    console.log(`Color assignment for part ${partId}: dimensions ${part.width}x${part.height} -> key ${colorKey}`)
-  } else {
-    // Fallback to part ID if dimensions not available
-    colorKey = getBasePartId(partId)
-    console.log(`Color assignment for part ${partId}: no dimensions, using base ID ${colorKey}`)
+
+  // For frame pieces, each piece type should get a unique color
+  if (partId.includes('_frame_')) {
+    // Extract the piece type (top, bottom, left, right) for unique coloring
+    const baseId = partId.replace(/-\d+$/, '') // Remove instance suffix but keep piece type
+    // Add extra differentiation for frame pieces
+    colorKey = `frame_${baseId}`
+  }
+  // For parts in a block, use the block ID for consistent coloring
+  else if (part?.blockId && part.blockId > 0) {
+    colorKey = `block-${part.blockId}`
+  }
+  // For non-block parts, use the base part ID for unique coloring per part type
+  else {
+    // Use base part ID to ensure each different part gets a different color
+    const baseId = getBasePartId(partId)
+    colorKey = `part-${baseId}`
   }
 
   if (partColorCache.has(colorKey)) {
     const cachedColor = partColorCache.get(colorKey)!
-    console.log(`Using cached color for ${colorKey}: ${cachedColor}`)
     return cachedColor
   }
 
-  // Generate hash from dimensions for consistent color assignment
+  // Generate hash from the key for consistent color assignment
   const hash = hashString(colorKey)
   const colorIndex = hash % SHEET_VISUALIZATION.partColors.length
   const color = SHEET_VISUALIZATION.partColors[colorIndex]
 
-  console.log(`New color for ${colorKey}: ${color} (index ${colorIndex})`)
   partColorCache.set(colorKey, color)
   return color
 }

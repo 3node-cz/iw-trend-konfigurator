@@ -20,6 +20,7 @@ export const PartCard = styled(SelectableItem)`
   flex-direction: column;
   gap: 8px;
   transition: all 0.2s ease;
+  position: relative; // for color indicator positioning
 
   &:hover {
     border-color: #3498db;
@@ -124,7 +125,7 @@ export const ConfigIndicators = styled.div`
 `
 
 export const ConfigBadge = styled.span<{
-  $type: 'corners' | 'edges' | 'lshape'
+  $type: 'corners' | 'edges' | 'lshape' | 'frame'
 }>`
   width: 18px;
   height: 18px;
@@ -145,6 +146,8 @@ export const ConfigBadge = styled.span<{
         return '#007bff'
       case 'lshape':
         return '#ffc107'
+      case 'frame':
+        return '#6f42c1'
       default:
         return '#6c757d'
     }
@@ -242,14 +245,16 @@ export const RotationLabel = styled.label`
   }
 `
 
-export const BlockIndicator = styled.div<{ $blockId: number }>`
+export const BlockIndicator = styled.div<{ $blockId: number; $color?: string }>`
   position: absolute;
   top: -8px;
   right: -8px;
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: ${({ $blockId }) => {
+  background: ${({ $color, $blockId }) => {
+    if ($color) return $color
+    // Fallback to blockId-based color if no color provided
     const colors = [
       '#3498db',
       '#e74c3c',
@@ -270,4 +275,14 @@ export const BlockIndicator = styled.div<{ $blockId: number }>`
   justify-content: center;
   border: 2px solid white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`
+
+export const ColorIndicator = styled.div<{ $color: string }>`
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background-color: ${({ $color }) => $color};
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  margin-right: 8px;
 `

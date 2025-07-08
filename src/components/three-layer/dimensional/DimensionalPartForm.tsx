@@ -35,26 +35,12 @@ export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
   })
 
   const onSubmit = (data: PartFormData) => {
-    console.log('Form data received:', data)
-    console.log('Data types:', {
-      width: typeof data.width,
-      height: typeof data.height,
-      quantity: typeof data.quantity,
-    })
-
     // Ensure all values are numbers, not strings
     const partData = transformFormDataToPart({
       ...data,
       width: Number(data.width),
       height: Number(data.height),
       quantity: Number(data.quantity),
-    })
-
-    console.log('Transformed part data:', partData)
-    console.log('Part data types:', {
-      width: typeof partData.width,
-      height: typeof partData.height,
-      quantity: typeof partData.quantity,
     })
 
     onAddPart(partData)

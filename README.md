@@ -218,6 +218,85 @@ Multiple edge treatments available:
 - Wood edges
 - Custom pricing per linear meter
 
+## 📋 GAP 010 Compliance
+
+This application implements **GAP 010 - Evidence parametrů porezu** (Cutting Parameters Evidence) specification for professional cutting service integration.
+
+### GAP 010 Features
+
+- **1:N Relationship Support**: One order can contain multiple cutting pieces
+- **Complete Parameter Evidence**:
+  - Piece dimensions (width, height, base area)
+  - Piece type for material catalog reference
+  - Independent edge processing per edge (top, right, bottom, left)
+  - Additional processing options (corners, L-shapes, frames)
+- **Supplier Integration Ready**: Export format optimized for cutting service providers
+- **Process Flow Compliance**:
+  - Configuration import from external sources
+  - Standardized export format
+  - Print-ready output with order confirmation
+  - Shopify integration support
+
+### Export Format
+
+The application exports cutting configurations in **complete GAP 010 compliant JSON format** including:
+
+#### Complete Cutting Data Structure:
+
+1. **Order Metadata**: Order ID, timestamp, and material specifications
+2. **Sheet-by-Sheet Layout**:
+   - Exact positioning (x, y coordinates) for each piece
+   - Rotation information (0° or 90°)
+   - Cut dimensions after rotation
+   - Sheet efficiency calculations
+3. **Piece Specifications**: Detailed requirements for each part type
+4. **Processing Instructions**: Edge treatments, corners, L-shapes, frames
+5. **Quality Metrics**: Material usage, waste calculations, placement efficiency
+
+#### Example Enhanced Export:
+
+```json
+{
+  "order": "order-1751899061013",
+  "timestamp": "2025-07-07T14:37:41.013Z",
+  "material": {
+    "type": "DTD Laminovaná",
+    "thickness": 18,
+    "sheetSize": { "width": 2800, "height": 2070 }
+  },
+  "sheets": [
+    {
+      "sheetNumber": 1,
+      "dimensions": { "width": 2800, "height": 2070 },
+      "cuts": [
+        {
+          "pieceId": "part-123",
+          "position": { "x": 0, "y": 0 },
+          "dimensions": { "width": 300, "height": 500 },
+          "rotation": 0,
+          "pieceType": "Polička"
+        }
+      ],
+      "efficiency": "78%",
+      "wastedArea": 425600
+    }
+  ],
+  "pieces": [
+    /* detailed specifications */
+  ],
+  "summary": {
+    "totalPieces": 7,
+    "placedPieces": 7,
+    "sheets": 1,
+    "overallEfficiency": "78%",
+    "totalMaterialUsed": 5.816,
+    "totalWastedArea": 1.278
+  }
+}
+```
+
+This format provides **all necessary data** for automated cutting machines and manual cutting operations.
+
 ## 🔮 Future Enhancements
 
 - **PDF Generation**: Complete implementation with part layouts
@@ -234,10 +313,3 @@ This project is part of the IW Trend cutting service platform.
 ---
 
 For technical support or feature requests, please contact the development team.
-...reactDom.configs.recommended.rules,
-},
-})
-
-```
-
-```

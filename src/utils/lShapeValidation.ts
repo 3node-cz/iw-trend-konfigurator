@@ -1,124 +1,151 @@
-import type { LShapeConfig, Part } from '../types/simple'
-import {
-  validateLShapeRadius as validateRadius,
-  getLShapeRadiusConstraints,
-} from './lShapeRadiusCalculations'
+/**
+ * L-Shape validation utilities
+ */
 
+import type { LShapeConfig } from '../types/simple'
+
+/**
+ * Validation constraints for L-Shape configuration
+ */
 export interface LShapeValidationConstraints {
-  minValue: number
+  minLeftWidth: number
+  maxLeftWidth: number
+  minTopHeight: number
+  maxTopHeight: number
+  minCutWidth: number
+  maxCutWidth: number
+  minCutHeight: number
+  maxCutHeight: number
   maxWidth: number
-  radiusConstraints: {
-    bottomLeft: number
-    topLeftCutout: number
-    innerCutout: number
-    rightBottomCutout: number
+  minWidth: number
+}
+
+/**
+ * Get validation constraints for L-Shape based on part dimensions
+ * @param partWidth - Total part width
+ * @param partHeight - Total part height
+ * @returns Validation constraints
+ */
+export const getLShapeValidationConstraints = (
+  partWidth: number,
+  partHeight: number,
+): LShapeValidationConstraints => ({
+  minLeftWidth: 10,
+  maxLeftWidth: partWidth - 10,
+  minTopHeight: 10,
+  maxTopHeight: partHeight - 10,
+  minCutWidth: 10,
+  maxCutWidth: partWidth - 10,
+  minCutHeight: 10,
+  maxCutHeight: partHeight - 10,
+  maxWidth: partWidth,
+  minWidth: 10,
+})
+
+/**
+ * Get L-Shape constraints (alias for getLShapeValidationConstraints)
+ * @param partWidth - Total part width
+ * @param partHeight - Total part height
+ * @returns Validation constraints
+ */
+export const getLShapeConstraints = getLShapeValidationConstraints
+
+/**
+ * Create L-Shape update handlers
+ * @param onUpdate - Update callback function
+ * @returns Object with update handlers
+ */
+export const createLShapeUpdateHandlers = (
+  onUpdate: (updates: Partial<LShapeConfig>) => void,
+) => {
+  return {
+    updateLeftWidth: (leftWidth: number) => {
+      onUpdate({ leftWidth })
+    },
+    updateRightWidth: (rightWidth: number) => {
+      onUpdate({ rightWidth })
+    },
+    updateEnabled: (enabled: boolean) => {
+      onUpdate({ enabled })
+    },
+    updateRadius: (radiusType: string, value: number) => {
+      onUpdate({ [radiusType]: value })
+    },
+    handleLeftWidthChange: (value: string) => {
+      const leftWidth = parseInt(value, 10)
+      if (!isNaN(leftWidth)) {
+        onUpdate({ leftWidth })
+      }
+    },
+    handleRightWidthChange: (value: string) => {
+      const rightWidth = parseInt(value, 10)
+      if (!isNaN(rightWidth)) {
+        onUpdate({ rightWidth })
+      }
+    },
+    handleBottomLeftRadiusChange: (value: string) => {
+      const radius = parseInt(value, 10)
+      if (!isNaN(radius)) {
+        onUpdate({ bottomLeftRadius: radius })
+      }
+    },
+    handleTopLeftCutoutRadiusChange: (value: string) => {
+      const radius = parseInt(value, 10)
+      if (!isNaN(radius)) {
+        onUpdate({ topLeftCutoutRadius: radius })
+      }
+    },
+    handleInnerCutoutRadiusChange: (value: string) => {
+      const radius = parseInt(value, 10)
+      if (!isNaN(radius)) {
+        onUpdate({ innerCutoutRadius: radius })
+      }
+    },
+    handleRightBottomCutoutRadiusChange: (value: string) => {
+      const radius = parseInt(value, 10)
+      if (!isNaN(radius)) {
+        onUpdate({ rightBottomCutoutRadius: radius })
+      }
+    },
   }
 }
 
-export const getLShapeConstraints = (
-  partWidth: number,
-  part: Part,
+/**
+ * Validate L-Shape configuration
+ * @param lShape - L-Shape configuration to validate
+ * @param constraints - Validation constraints
+ * @returns Validation result with error messages
+ */
+export const validateLShapeConfig = (
   lShape: LShapeConfig,
-): LShapeValidationConstraints => ({
-  minValue: 0,
-  maxWidth: partWidth - 10,
-  radiusConstraints: getLShapeRadiusConstraints(part, lShape),
-})
-
-export const validateLShapeWidthValue = (
-  value: number,
   constraints: LShapeValidationConstraints,
-): number => {
-  return Math.min(
-    Math.max(constraints.minValue, value || 0),
-    constraints.maxWidth,
-  )
-}
+): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = []
 
-export const validateLShapeRadiusValue = (
-  part: Part,
-  lShape: LShapeConfig,
-  corner: 'bottomLeft' | 'topLeftCutout' | 'innerCutout' | 'rightBottomCutout',
-  value: number,
-): number => {
-  return validateRadius(part, lShape, corner, value)
-}
+  if (!lShape.enabled) {
+    return { isValid: true, errors: [] }
+  }
 
-export const createLShapeUpdateHandlers = (
-  part: Part,
-  lShape: LShapeConfig | undefined,
-  onUpdate: (updates: Partial<LShapeConfig>) => void,
-  constraints: LShapeValidationConstraints,
-  createDefault: () => LShapeConfig,
-) => {
-  const currentLShape = lShape || { enabled: false }
-
-  const handleToggle = (enabled: boolean) => {
-    if (enabled) {
-      const defaultLShape = createDefault()
-      onUpdate(defaultLShape)
-    } else {
-      onUpdate({ enabled: false })
+  if (lShape.leftWidth !== undefined) {
+    if (lShape.leftWidth < constraints.minLeftWidth) {
+      errors.push(`Ľavá šírka musí byť aspoň ${constraints.minLeftWidth}mm`)
+    }
+    if (lShape.leftWidth > constraints.maxLeftWidth) {
+      errors.push(`Ľavá šírka nesmie presiahnuť ${constraints.maxLeftWidth}mm`)
     }
   }
 
-  const handleLeftWidthChange = (value: string) => {
-    const validatedValue = validateLShapeWidthValue(Number(value), constraints)
-    onUpdate({ leftWidth: validatedValue })
-  }
-
-  const handleRightWidthChange = (value: string) => {
-    const validatedValue = validateLShapeWidthValue(Number(value), constraints)
-    onUpdate({ rightWidth: validatedValue })
-  }
-
-  const handleBottomLeftRadiusChange = (value: string) => {
-    const validatedValue = validateLShapeRadiusValue(
-      part,
-      currentLShape,
-      'bottomLeft',
-      Number(value),
-    )
-    onUpdate({ bottomLeftRadius: validatedValue })
-  }
-
-  const handleTopLeftCutoutRadiusChange = (value: string) => {
-    const validatedValue = validateLShapeRadiusValue(
-      part,
-      currentLShape,
-      'topLeftCutout',
-      Number(value),
-    )
-    onUpdate({ topLeftCutoutRadius: validatedValue })
-  }
-
-  const handleInnerCutoutRadiusChange = (value: string) => {
-    const validatedValue = validateLShapeRadiusValue(
-      part,
-      currentLShape,
-      'innerCutout',
-      Number(value),
-    )
-    onUpdate({ innerCutoutRadius: validatedValue })
-  }
-
-  const handleRightBottomCutoutRadiusChange = (value: string) => {
-    const validatedValue = validateLShapeRadiusValue(
-      part,
-      currentLShape,
-      'rightBottomCutout',
-      Number(value),
-    )
-    onUpdate({ rightBottomCutoutRadius: validatedValue })
+  if (lShape.rightWidth !== undefined) {
+    if (lShape.rightWidth < constraints.minCutWidth) {
+      errors.push(`Pravá šírka musí byť aspoň ${constraints.minCutWidth}mm`)
+    }
+    if (lShape.rightWidth > constraints.maxCutWidth) {
+      errors.push(`Pravá šírka nesmie presiahnuť ${constraints.maxCutWidth}mm`)
+    }
   }
 
   return {
-    handleToggle,
-    handleLeftWidthChange,
-    handleRightWidthChange,
-    handleBottomLeftRadiusChange,
-    handleTopLeftCutoutRadiusChange,
-    handleInnerCutoutRadiusChange,
-    handleRightBottomCutoutRadiusChange,
+    isValid: errors.length === 0,
+    errors,
   }
 }

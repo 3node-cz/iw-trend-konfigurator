@@ -49,13 +49,16 @@ export interface Part {
   }
   edges?: EdgeTreatment
   lShape?: LShapeConfig
+  frame?: FrameConfig
   orientation?: 'fixed' | 'rotatable' // whether part can be rotated for better packing
+  grainDirection?: 'horizontal' | 'vertical' // grain direction for frame pieces
   blockId?: number // block number for texture continuity (1, 2, 3...). If undefined, part is individual
 
   // Configuration status metadata (computed properties)
   hasCornerModifications?: boolean // true if any corner has bevel/round modifications
   hasEdgeTreatments?: boolean // true if any edge has treatment applied
   isLShape?: boolean // true if L-shape is enabled
+  isFrame?: boolean // true if frame is enabled
   hasAdvancedConfig?: boolean // true if any of the above are configured
 }
 
@@ -93,4 +96,12 @@ export interface PartBlock {
 export interface BlockLayout extends SheetLayout {
   blocks: PartBlock[]
   unplacedBlocks: PartBlock[]
+}
+
+// Frame configuration for frame types
+export interface FrameConfig {
+  enabled: boolean
+  type: 'type1' | 'type2' | 'type3' | 'type4' // frame types from the image, no 'none' option
+  width: number // frame width (70mm from image)
+  grainDirection: 'horizontal' | 'vertical' // smer vlakna
 }

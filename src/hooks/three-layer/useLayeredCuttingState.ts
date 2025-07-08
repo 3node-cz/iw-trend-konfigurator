@@ -22,12 +22,17 @@
  * - Immediate visual feedback
  */
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
+import {
+  getConsistentPartColor,
+  clearColorCache,
+} from '../../utils/colorManagement'
 import type {
   SheetLayout,
   CornerModification,
   LShapeConfig,
   EdgeTreatment,
+  FrameConfig,
 } from '../../types/simple'
 import type { EdgeValue } from '../../utils/edgeConstants'
 import { useBlockPreparation, type PreparedPiece } from './useBlockPreparation'
@@ -37,6 +42,7 @@ import {
   hasCornerModifications,
   hasEdgeTreatmentsInterface,
   isLShape,
+  isFrame,
   hasAdvancedConfigInterface,
 } from '../../utils/partEnhancements'
 
@@ -49,14 +55,15 @@ export interface BasicDimensionalPart {
   label?: string
   orientation?: 'fixed' | 'rotatable'
   blockId?: number // block number for texture continuity (1, 2, 3...). If undefined, part is individual
+  color?: string // assigned color for visualization
 }
 
 // Layer 2: Block preparation properties
 export interface BlockPreparationLayer {
   preparedPieces: PreparedPiece[]
   blockCount: number
-  individualPieceCount: number
-  compositeBlockCount: number
+  totalIndividualPieces: number
+  blockPieceCount: number
 }
 
 // Layer 3: Board placement properties
@@ -77,6 +84,7 @@ export interface VisualEnhancements {
   }
   edges?: EdgeTreatment
   lShape?: LShapeConfig
+  frame?: FrameConfig
 }
 
 // Combined part with all layers for UI display
@@ -86,6 +94,7 @@ export type EnhancedCuttingPart = BasicDimensionalPart &
     hasCornerModifications?: boolean
     hasEdgeTreatments?: boolean
     isLShape?: boolean
+    isFrame?: boolean
     hasAdvancedConfig?: boolean
   }
 
@@ -153,10 +162,40 @@ export const useLayeredCuttingState = (): LayeredCuttingStateAPI => {
   >({})
 
   // Debounce dimensional changes to avoid excessive recalculations
-  const debouncedDimensionalParts = useDebounceValue(dimensionalParts, 300)
+  // Combined enhanced parts for UI display
+  const enhancedParts = useMemo((): EnhancedCuttingPart[] => {
+    return dimensionalParts.map((dimensionalPart) => {
+      const enhancements = visualEnhancements[dimensionalPart.id] || {}
 
-  // Layer 2: Block preparation from dimensional parts
-  const blockPreparation = useBlockPreparation(debouncedDimensionalParts)
+      // Compute indicator flags using utility functions
+      const cornerModifications = hasCornerModifications(enhancements.corners)
+      const edgeTreatments = hasEdgeTreatmentsInterface(enhancements.edges)
+      const lShapeEnabled = isLShape(enhancements.lShape)
+      const frameEnabled = isFrame(enhancements.frame)
+      const advancedConfig = hasAdvancedConfigInterface(
+        enhancements.corners,
+        enhancements.edges,
+        enhancements.lShape,
+        enhancements.frame,
+      )
+
+      return {
+        ...dimensionalPart,
+        ...enhancements,
+        hasCornerModifications: cornerModifications,
+        hasEdgeTreatments: edgeTreatments,
+        isLShape: lShapeEnabled,
+        isFrame: frameEnabled,
+        hasAdvancedConfig: advancedConfig,
+      } as EnhancedCuttingPart
+    })
+  }, [dimensionalParts, visualEnhancements])
+
+  // Debounce enhanced parts for block preparation
+  const debouncedEnhancedParts = useDebounceValue(enhancedParts, 300)
+
+  // Layer 2: Block preparation from enhanced parts (includes frame configuration)
+  const blockPreparation = useBlockPreparation(debouncedEnhancedParts)
 
   // Layer 3: Board placement from prepared pieces
   const boardPlacement = useBoardPlacement(blockPreparation.preparedPieces)
@@ -170,48 +209,113 @@ export const useLayeredCuttingState = (): LayeredCuttingStateAPI => {
     [boardPlacement.boardLayout, boardPlacement.isCalculating],
   )
 
-  // Combined enhanced parts for UI display
-  const enhancedParts = useMemo((): EnhancedCuttingPart[] => {
-    return dimensionalParts.map((dimensionalPart) => {
-      const enhancements = visualEnhancements[dimensionalPart.id] || {}
-
-      // Compute indicator flags using utility functions
-      const cornerModifications = hasCornerModifications(enhancements.corners)
-      const edgeTreatments = hasEdgeTreatmentsInterface(enhancements.edges)
-      const lShapeEnabled = isLShape(enhancements.lShape)
-      const advancedConfig = hasAdvancedConfigInterface(
-        enhancements.corners,
-        enhancements.edges,
-        enhancements.lShape,
-      )
-
-      return {
-        ...dimensionalPart,
-        ...enhancements,
-        hasCornerModifications: cornerModifications,
-        hasEdgeTreatments: edgeTreatments,
-        isLShape: lShapeEnabled,
-        hasAdvancedConfig: advancedConfig,
-      } as EnhancedCuttingPart
-    })
-  }, [dimensionalParts, visualEnhancements])
-
   // Layer 1 operations (affect layout optimization)
   const addDimensionalPart = useCallback(
     (partData: Omit<BasicDimensionalPart, 'id'>) => {
+      const id = `part-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       const newPart: BasicDimensionalPart = {
         ...partData,
-        id: `part-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id,
+        color: getConsistentPartColor(id, {
+          blockId: partData.blockId,
+          width: partData.width,
+          height: partData.height,
+        }),
       }
       setDimensionalParts((prev) => [...prev, newPart])
     },
     [],
   )
 
+  // Ensure all parts have colors assigned
+  useEffect(() => {
+    const partsNeedingColors = dimensionalParts.filter((part) => !part.color)
+    if (partsNeedingColors.length > 0) {
+      const updatedParts = dimensionalParts.map((part) => {
+        if (!part.color) {
+          return {
+            ...part,
+            color: getConsistentPartColor(part.id, {
+              blockId: part.blockId,
+              width: part.width,
+              height: part.height,
+            }),
+          }
+        }
+        return part
+      })
+      setDimensionalParts(updatedParts)
+    }
+  }, [dimensionalParts])
+
+  // Synchronize colors for parts in the same block
+  useEffect(() => {
+    // Group parts by blockId
+    const blockGroups = new Map<number, BasicDimensionalPart[]>()
+    dimensionalParts.forEach((part) => {
+      if (part.blockId) {
+        if (!blockGroups.has(part.blockId)) {
+          blockGroups.set(part.blockId, [])
+        }
+        blockGroups.get(part.blockId)!.push(part)
+      }
+    })
+
+    // Check if any block has parts with different colors
+    let needsUpdate = false
+    const updatedParts = [...dimensionalParts]
+
+    blockGroups.forEach((parts, blockId) => {
+      if (parts.length > 1) {
+        // Get the consistent color for this block
+        const blockColor = getConsistentPartColor('', { blockId })
+
+        // Check if all parts in the block have the same color
+        const hasInconsistentColors = parts.some(
+          (part) => part.color !== blockColor,
+        )
+
+        if (hasInconsistentColors) {
+          needsUpdate = true
+          // Update all parts in this block to use the same color
+          parts.forEach((part) => {
+            const index = updatedParts.findIndex((p) => p.id === part.id)
+            if (index !== -1) {
+              updatedParts[index] = {
+                ...updatedParts[index],
+                color: blockColor,
+              }
+            }
+          })
+        }
+      }
+    })
+
+    if (needsUpdate) {
+      setDimensionalParts(updatedParts)
+    }
+  }, [dimensionalParts])
+
   const updateDimensionalPart = useCallback(
     (id: string, updates: Partial<BasicDimensionalPart>) => {
       setDimensionalParts((prev) =>
-        prev.map((part) => (part.id === id ? { ...part, ...updates } : part)),
+        prev.map((part) => {
+          if (part.id === id) {
+            const updatedPart = { ...part, ...updates }
+
+            // If blockId is being changed, recalculate the color
+            if ('blockId' in updates) {
+              updatedPart.color = getConsistentPartColor(part.id, {
+                blockId: updatedPart.blockId,
+                width: updatedPart.width,
+                height: updatedPart.height,
+              })
+            }
+
+            return updatedPart
+          }
+          return part
+        }),
       )
     },
     [],
@@ -224,11 +328,15 @@ export const useLayeredCuttingState = (): LayeredCuttingStateAPI => {
       const { [id]: _, ...remaining } = prev
       return remaining
     })
+    // Clear color cache to ensure fresh color assignment
+    clearColorCache()
   }, [])
 
   const clearAllParts = useCallback(() => {
     setDimensionalParts([])
     setVisualEnhancements({})
+    // Clear color cache when clearing all parts
+    clearColorCache()
   }, [])
 
   // Layer 3 operations (visual only, no layout impact)
@@ -375,14 +483,8 @@ export const useLayeredCuttingState = (): LayeredCuttingStateAPI => {
 
   const totalPartCount = useMemo(() => {
     const total = dimensionalParts.reduce((sum, part) => {
-      console.log(
-        `Part ${part.id}: quantity=${
-          part.quantity
-        } (type: ${typeof part.quantity})`,
-      )
       return sum + Number(part.quantity)
     }, 0)
-    console.log(`Total part count: ${total}`)
     return total
   }, [dimensionalParts])
 
