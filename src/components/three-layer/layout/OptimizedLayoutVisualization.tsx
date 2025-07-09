@@ -3,6 +3,7 @@ import type { SheetLayout, PlacedPart } from '../../../types/simple'
 import type { EnhancedCuttingPart } from '../../../hooks/three-layer/useLayeredCuttingState'
 import { getBasePartId } from '../../../utils/colorManagement'
 import { SHEET_VISUALIZATION } from '../../../utils/appConstants'
+import { ColorIndicator } from '../../common/ui'
 import {
   calculateSheetScale,
   groupPartsByBaseId,
@@ -457,10 +458,8 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
           {Object.keys(partGroups).length > 0 && (
             <Legend>
               {Object.entries(partGroups).map(([id, group]) => (
-                <LegendItem
-                  key={id}
-                  $color={group.color}
-                >
+                <LegendItem key={id}>
+                  <ColorIndicator $color={group.color} />
                   {group.label} ({group.count}×)
                 </LegendItem>
               ))}

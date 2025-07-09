@@ -1,12 +1,18 @@
 import React from 'react'
 import type { Part } from '../../../types/simple'
-import {
-  ConfigIndicators,
-  ConfigBadge,
-  ConfigTooltip,
-  RelativeContainer,
-  NoDataSpan,
-} from '../EnhancedPartsList.styles'
+import { ConfigBadge } from '../../common/ui/ConfigBadge'
+import styled from 'styled-components'
+
+const ConfigIndicators = styled.div`
+  display: flex;
+  gap: 4px;
+  align-items: center;
+`
+
+const NoDataSpan = styled.span`
+  opacity: 0.5;
+  font-style: italic;
+`
 
 interface ConfigIndicatorsProps {
   part: Part
@@ -15,56 +21,42 @@ interface ConfigIndicatorsProps {
 export const PartConfigIndicators: React.FC<ConfigIndicatorsProps> = ({
   part,
 }) => {
-  const [hoveredBadge, setHoveredBadge] = React.useState<string | null>(null)
-
   return (
     <ConfigIndicators>
       {part.hasCornerModifications && (
-        <RelativeContainer
-          onMouseEnter={() => setHoveredBadge('corners')}
-          onMouseLeave={() => setHoveredBadge(null)}
+        <ConfigBadge
+          type="corners"
+          tooltipText="Upravené rohy"
         >
-          <ConfigBadge $type="corners">C</ConfigBadge>
-          <ConfigTooltip $visible={hoveredBadge === 'corners'}>
-            Upravené rohy
-          </ConfigTooltip>
-        </RelativeContainer>
+          C
+        </ConfigBadge>
       )}
 
       {part.hasEdgeTreatments && (
-        <RelativeContainer
-          onMouseEnter={() => setHoveredBadge('edges')}
-          onMouseLeave={() => setHoveredBadge(null)}
+        <ConfigBadge
+          type="edges"
+          tooltipText="Hrany s oblepovaním"
         >
-          <ConfigBadge $type="edges">H</ConfigBadge>
-          <ConfigTooltip $visible={hoveredBadge === 'edges'}>
-            Hrany s oblepovaním
-          </ConfigTooltip>
-        </RelativeContainer>
+          H
+        </ConfigBadge>
       )}
 
       {part.isLShape && (
-        <RelativeContainer
-          onMouseEnter={() => setHoveredBadge('lshape')}
-          onMouseLeave={() => setHoveredBadge(null)}
+        <ConfigBadge
+          type="lshape"
+          tooltipText="L-tvar"
         >
-          <ConfigBadge $type="lshape">L</ConfigBadge>
-          <ConfigTooltip $visible={hoveredBadge === 'lshape'}>
-            L-tvar
-          </ConfigTooltip>
-        </RelativeContainer>
+          L
+        </ConfigBadge>
       )}
 
       {part.isFrame && (
-        <RelativeContainer
-          onMouseEnter={() => setHoveredBadge('frame')}
-          onMouseLeave={() => setHoveredBadge(null)}
+        <ConfigBadge
+          type="frame"
+          tooltipText="Rámček"
         >
-          <ConfigBadge $type="frame">F</ConfigBadge>
-          <ConfigTooltip $visible={hoveredBadge === 'frame'}>
-            Rámček
-          </ConfigTooltip>
-        </RelativeContainer>
+          F
+        </ConfigBadge>
       )}
 
       {!part.hasAdvancedConfig && <NoDataSpan>—</NoDataSpan>}

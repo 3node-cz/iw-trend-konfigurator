@@ -2,7 +2,28 @@
  * Styled components for OptimizedLayoutVisualization
  */
 import styled from 'styled-components'
-import { SHEET_VISUALIZATION } from '../../../utils/appConstants'
+import { APP_CONFIG } from '../../../config/appConfig'
+
+// Recreate the SHEET_VISUALIZATION structure from appConfig components
+const SHEET_VISUALIZATION = {
+  maxPreviewWidth: APP_CONFIG.visualization.sheet.maxPreviewWidth,
+  maxPreviewHeight: APP_CONFIG.visualization.sheet.maxPreviewHeight,
+  gridSize: APP_CONFIG.visualization.sheet.gridSize,
+  strokeWidth: {
+    sheet: 2,
+    part: APP_CONFIG.visualization.parts.strokeWidth.normal,
+    partHover: APP_CONFIG.visualization.parts.strokeWidth.hover,
+    grid: 1,
+  },
+  colors: {
+    sheetBackground: APP_CONFIG.visualization.sheet.backgroundColor,
+    sheetBorder: APP_CONFIG.visualization.sheet.borderColor,
+    gridLines: APP_CONFIG.visualization.sheet.gridColor,
+    partText: APP_CONFIG.visualization.parts.text.color,
+    dimensionText: APP_CONFIG.branding.colors.secondary,
+  },
+  partColors: APP_CONFIG.branding.colors.partsPalette,
+}
 
 export const VisualizationContainer = styled.div`
   background: white;
@@ -135,21 +156,12 @@ export const Legend = styled.div`
   border: 1px solid #e9ecef;
 `
 
-export const LegendItem = styled.div<{ $color: string }>`
+export const LegendItem = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 0.8rem;
   color: #2c3e50;
-
-  &::before {
-    content: '';
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
-    background: ${(props) => props.$color};
-    border: 1px solid rgba(0, 0, 0, 0.1);
-  }
 `
 
 export const EmptyStateMessage = styled.div`

@@ -52,7 +52,8 @@ export interface Part {
   frame?: FrameConfig
   orientation?: 'fixed' | 'rotatable' // whether part can be rotated for better packing
   grainDirection?: 'horizontal' | 'vertical' // grain direction for frame pieces
-  blockId?: number // block number for texture continuity (1, 2, 3...). If undefined, part is individual
+  blockId?: number // block number for grouping parts together on layout (1, 2, 3...). If undefined, part is individual
+  woodType?: string // wood type ID from MATERIAL_CONFIG.woodTypes, independent of block
 
   // Configuration status metadata (computed properties)
   hasCornerModifications?: boolean // true if any corner has bevel/round modifications
@@ -104,4 +105,10 @@ export interface FrameConfig {
   type: 'type1' | 'type2' | 'type3' | 'type4' // frame types from the image, no 'none' option
   width: number // frame width (70mm from image)
   grainDirection: 'horizontal' | 'vertical' // smer vlakna
+}
+
+// Block/Row configuration for wood type selection
+export interface BlockConfig {
+  blockId: number
+  woodType: string // wood type ID from MATERIAL_CONFIG.woodTypes
 }

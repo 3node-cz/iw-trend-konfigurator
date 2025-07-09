@@ -1,4 +1,5 @@
 import type {
+  Part,
   CornerModification,
   LShapeConfig,
   EdgeTreatment,
@@ -7,8 +8,16 @@ import type {
 import type { EdgeValue } from './edgeConstants'
 
 /**
- * Utility functions for calculating part enhancement indicators
+ * Utility functions for calculating part enhancement indicators and configuration status
+ * Consolidated from partEnhancements.ts and partConfigurationStatus.ts
  */
+
+/**
+ * Check if a corner has any modifications (bevel or round)
+ */
+export const hasCornerModification = (corner: CornerModification): boolean => {
+  return corner.type !== 'none' && corner.type !== undefined
+}
 
 /**
  * Check if a part has corner modifications
@@ -16,8 +25,14 @@ import type { EdgeValue } from './edgeConstants'
 export const hasCornerModifications = (
   corners?: Record<string, CornerModification>,
 ): boolean => {
-  return !!(corners && Object.values(corners).some((corner) => corner !== null))
+  if (!corners) return false
+  return Object.values(corners).some((corner) => hasCornerModification(corner))
 }
+
+/**
+ * Check if any corners in the part have modifications (alias for compatibility)
+ */
+export const hasAnyCornerModifications = hasCornerModifications
 
 /**
  * Check if a part has edge treatments - Record<string, EdgeValue> version
@@ -36,10 +51,22 @@ export const hasEdgeTreatmentsInterface = (edges?: EdgeTreatment): boolean => {
 }
 
 /**
+ * Check if any edges have treatments applied (alias for compatibility)
+ */
+export const hasAnyEdgeTreatments = hasEdgeTreatmentsInterface
+
+/**
  * Check if a part is L-shaped
  */
 export const isLShape = (lShape?: LShapeConfig): boolean => {
   return lShape?.enabled === true
+}
+
+/**
+ * Check if L-shape configuration is enabled and has meaningful settings
+ */
+export const isLShapeConfigured = (lShape?: LShapeConfig): boolean => {
+  return isLShape(lShape) && !!(lShape?.leftWidth || lShape?.rightWidth)
 }
 
 /**
@@ -84,6 +111,29 @@ export const hasAdvancedConfigInterface = (
 }
 
 /**
+ * Check if a part has advanced configuration (alias for compatibility)
+ */
+export const hasAdvancedConfiguration = hasAdvancedConfigInterface
+
+/**
+ * Compute comprehensive part configuration status
+ */
+export const computePartConfigurationStatus = (part: Part) => {
+  return {
+    hasCornerModifications: hasCornerModifications(part.corners),
+    hasEdgeTreatments: hasEdgeTreatmentsInterface(part.edges),
+    isLShape: isLShape(part.lShape),
+    isFrame: isFrame(part.frame),
+    hasAdvancedConfig: hasAdvancedConfigInterface(
+      part.corners,
+      part.edges,
+      part.lShape,
+      part.frame,
+    ),
+  }
+}
+
+/**
  * Generate unique part ID
  */
 export const generatePartId = (): string => {
@@ -111,13 +161,20 @@ export const getDefaultCorners = () => ({
 })
 
 /**
+ * Default L-shape configuration
+ */
+export const getDefaultLShape = (): LShapeConfig => ({
+  enabled: false,
+})
+
+/**
  * Default frame configuration
  */
-export const getDefaultFrame = () => ({
+export const getDefaultFrame = (): FrameConfig => ({
   enabled: false,
-  type: 'none' as const,
+  type: 'type1',
   width: 70,
-  grainDirection: 'horizontal' as const,
+  grainDirection: 'horizontal',
 })
 
 /**

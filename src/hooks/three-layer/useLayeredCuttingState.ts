@@ -27,12 +27,14 @@ import {
   getConsistentPartColor,
   clearColorCache,
 } from '../../utils/colorManagement'
+import { MATERIAL_CONFIG } from '../../config/appConfig'
 import type {
   SheetLayout,
   CornerModification,
   LShapeConfig,
   EdgeTreatment,
   FrameConfig,
+  BlockConfig,
 } from '../../types/simple'
 import type { EdgeValue } from '../../utils/edgeConstants'
 import { useBlockPreparation, type PreparedPiece } from './useBlockPreparation'
@@ -54,7 +56,8 @@ export interface BasicDimensionalPart {
   quantity: number
   label?: string
   orientation?: 'fixed' | 'rotatable'
-  blockId?: number // block number for texture continuity (1, 2, 3...). If undefined, part is individual
+  blockId?: number // block number for grouping parts together on layout (1, 2, 3...). If undefined, part is individual
+  woodType?: string // wood type ID from MATERIAL_CONFIG.woodTypes, independent of block
   color?: string // assigned color for visualization
 }
 
@@ -128,6 +131,14 @@ export interface LayeredCuttingStateAPI {
   ) => void
   updatePartLShape: (id: string, lShapeUpdates: Partial<LShapeConfig>) => void
 
+  // Wood type operations (independent of blocks)
+  updatePartWoodType: (partId: string, woodType: string) => void
+
+  // Block configuration operations (deprecated - will remove)
+  blockConfigs: BlockConfig[]
+  updateBlockWoodType: (blockId: number, woodType: string) => void
+  getBlockWoodType: (blockId: number) => string
+
   // Enhanced data for UI
   enhancedParts: EnhancedCuttingPart[]
   getEnhancedPartById: (id: string) => EnhancedCuttingPart | null
@@ -160,6 +171,9 @@ export const useLayeredCuttingState = (): LayeredCuttingStateAPI => {
   const [visualEnhancements, setVisualEnhancements] = useState<
     Record<string, VisualEnhancements>
   >({})
+
+  // Block configuration state (wood type per block)
+  const [blockConfigs, setBlockConfigs] = useState<BlockConfig[]>([])
 
   // Debounce dimensional changes to avoid excessive recalculations
   // Combined enhanced parts for UI display
@@ -216,6 +230,7 @@ export const useLayeredCuttingState = (): LayeredCuttingStateAPI => {
       const newPart: BasicDimensionalPart = {
         ...partData,
         id,
+        woodType: partData.woodType || MATERIAL_CONFIG.defaultWoodType,
         color: getConsistentPartColor(id, {
           blockId: partData.blockId,
           width: partData.width,
@@ -310,6 +325,20 @@ export const useLayeredCuttingState = (): LayeredCuttingStateAPI => {
                 width: updatedPart.width,
                 height: updatedPart.height,
               })
+
+              // Create block configuration if new block is assigned
+              if (
+                updatedPart.blockId &&
+                !blockConfigs.find((c) => c.blockId === updatedPart.blockId)
+              ) {
+                setBlockConfigs((prevConfigs) => [
+                  ...prevConfigs,
+                  {
+                    blockId: updatedPart.blockId!,
+                    woodType: MATERIAL_CONFIG.defaultWoodType,
+                  },
+                ])
+              }
             }
 
             return updatedPart
@@ -318,8 +347,19 @@ export const useLayeredCuttingState = (): LayeredCuttingStateAPI => {
         }),
       )
     },
-    [],
+    [blockConfigs],
   )
+
+  const updatePartWoodType = useCallback((partId: string, woodType: string) => {
+    setDimensionalParts((prev) =>
+      prev.map((part) => {
+        if (part.id === partId) {
+          return { ...part, woodType }
+        }
+        return part
+      }),
+    )
+  }, [])
 
   const removeDimensionalPart = useCallback((id: string) => {
     setDimensionalParts((prev) => prev.filter((part) => part.id !== id))
@@ -507,6 +547,30 @@ export const useLayeredCuttingState = (): LayeredCuttingStateAPI => {
     updatePartEdge,
     updatePartCorner,
     updatePartLShape,
+
+    // Wood type operations
+    updatePartWoodType,
+
+    // Block configuration (deprecated)
+    blockConfigs,
+    updateBlockWoodType: (blockId: number, woodType: string) => {
+      setBlockConfigs((prev) => {
+        const existingConfigIndex = prev.findIndex((c) => c.blockId === blockId)
+        if (existingConfigIndex >= 0) {
+          // Update existing config
+          return prev.map((config, index) =>
+            index === existingConfigIndex ? { ...config, woodType } : config,
+          )
+        } else {
+          // Create new config
+          return [...prev, { blockId, woodType }]
+        }
+      })
+    },
+    getBlockWoodType: (blockId: number) => {
+      const config = blockConfigs.find((c) => c.blockId === blockId)
+      return config ? config.woodType : MATERIAL_CONFIG.defaultWoodType
+    },
 
     // Enhanced data for UI
     enhancedParts,

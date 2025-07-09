@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import type { Part } from '../types/simple'
 import { useLayeredCuttingState } from '../hooks/three-layer'
-import { hasBlockValidationErrors } from '../utils/blockValidationUtils'
+import { hasBlockValidationErrors } from '../utils/blockValidation'
 import {
   getConsistentPartColor,
   clearColorCache,
@@ -10,7 +10,7 @@ import {
   separatePartUpdates,
   processEdgeUpdates,
   processCornerUpdates,
-} from '../utils/partUpdateHelpers'
+} from '../utils/partUpdates'
 import { LoadingIndicator, LoadingDots } from './LoadingIndicator'
 import { DimensionalPartForm } from './three-layer/dimensional/DimensionalPartForm'
 import { EnhancedPartsList } from './three-layer/EnhancedPartsList'
@@ -53,6 +53,9 @@ export const LayeredCuttingApp: React.FC = () => {
     updatePartEdge,
     updatePartCorner,
     updatePartLShape,
+
+    // Wood type operations
+    updatePartWoodType,
 
     // Enhanced data for UI
     enhancedParts,
@@ -185,7 +188,10 @@ export const LayeredCuttingApp: React.FC = () => {
 
       <MainGrid>
         <LeftColumn>
-          <DimensionalPartForm onAddPart={addDimensionalPart} />
+          <DimensionalPartForm
+            onAddPart={addDimensionalPart}
+            existingParts={enhancedParts}
+          />
 
           <MemoizedEnhancedPartsList
             enhancedParts={enhancedParts}
@@ -197,6 +203,7 @@ export const LayeredCuttingApp: React.FC = () => {
             onClearAll={clearAllParts}
             onPartBlockUpdate={handlePartBlockUpdate}
             onPartRotationUpdate={handlePartRotationUpdate}
+            onPartWoodTypeUpdate={updatePartWoodType}
           />
 
           <MemoizedVisualEnhancementEditor

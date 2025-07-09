@@ -20,11 +20,10 @@ export const EdgesGrid = styled.div`
   }
 `
 
-export const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+import { FormGroup as BaseFormGroup } from '../../../components/common/ui'
 
+// Re-export with custom styling for labels
+export const FormGroup = styled(BaseFormGroup)`
   label {
     font-weight: 600;
     color: #2c3e50;

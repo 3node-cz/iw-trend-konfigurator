@@ -2,7 +2,11 @@
  * Styled components for EnhancedPartsList
  */
 import styled from 'styled-components'
-import { SelectableItem } from '../common/CommonStyles'
+import { SelectableItem, ColorIndicator } from '../common/ui'
+import { BREAKPOINTS } from '../../utils/uiConstants'
+
+// Re-export the ColorIndicator from UI components
+export { ColorIndicator }
 
 export const PartItem = styled(SelectableItem)`
   display: grid;
@@ -18,12 +22,16 @@ export const PartCard = styled(SelectableItem)`
   border: 2px solid #e1e8ed;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   transition: all 0.2s ease;
-  position: relative; // for color indicator positioning
+  position: relative;
+  min-height: 160px; /* Ensure consistent card height */
+  cursor: pointer;
 
   &:hover {
     border-color: #3498db;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);
+    transform: translateY(-2px);
   }
 
   ${({ $selected }) =>
@@ -31,6 +39,7 @@ export const PartCard = styled(SelectableItem)`
     `
     border-color: #3498db;
     background: #f8fbff;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
   `}
 `
 
@@ -44,13 +53,15 @@ export const PartTitle = styled.div`
   font-size: 1.1rem;
   font-weight: 600;
   color: #2c3e50;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+  line-height: 1.3;
 `
 
 export const PartDimensions = styled.div`
-  font-size: 0.9rem;
-  color: #7f8c8d;
-  margin-bottom: 8px;
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-bottom: 4px;
+  font-weight: 500;
 `
 
 export const PartMetrics = styled.div`
@@ -58,31 +69,59 @@ export const PartMetrics = styled.div`
   justify-content: space-between;
   align-items: center;
   font-size: 0.9rem;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
 `
 
 export const PartMetric = styled.div`
   display: flex;
-  align-items: baseline;
-  gap: 4px;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
 
   .value {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     color: #2c3e50;
+    line-height: 1.2;
   }
 
   .label {
-    font-size: 0.8rem;
-    color: #7f8c8d;
+    font-size: 0.75rem;
+    color: #6c757d;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
   }
 `
 
 export const PartControls = styled.div`
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 12px;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+
+  /* Ensure consistent width for all child elements */
+  > * {
+    min-width: 0; /* Allow shrinking */
+  }
+
+  /* Special handling for selectors to ensure consistent sizing */
+  select {
+    width: 100%;
+    height: 32px;
+    box-sizing: border-box;
+  }
+
+  @media (max-width: ${BREAKPOINTS.tablet}) {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
 `
 
 export const PartActions = styled.div`
@@ -93,39 +132,77 @@ export const PartActions = styled.div`
 export const StatsRow = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 12px;
-  background: #e8f4fd;
-  border-radius: 6px;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, #e8f4fd 0%, #f0f8ff 100%);
+  border-radius: 8px;
+  border: 1px solid #d6ebf7;
+
+  @media (max-width: ${BREAKPOINTS.tablet}) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 `
 
 export const Stat = styled.div`
   text-align: center;
+  padding: 8px;
 
   .value {
-    font-size: 1.2rem;
-    font-weight: 600;
+    font-size: 1.5rem;
+    font-weight: 700;
     color: #2c3e50;
+    line-height: 1.2;
   }
 
   .label {
-    font-size: 0.7rem;
-    color: #7f8c8d;
+    font-size: 0.75rem;
+    color: #5a6c7d;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-top: 2px;
+    margin-top: 4px;
+    font-weight: 500;
   }
 `
 
+// Local components for backwards compatibility
+
+// Create local definitions instead since we're having issues with imports
+// These will be removed once all files have been updated to use the UI components directly
+const RelativeContainerBase = styled.div`
+  position: relative;
+`
+
+const ConfigTooltipBase = styled.div<{ $visible?: boolean }>`
+  position: absolute;
+  background-color: #333;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  z-index: 2000;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: ${(props) => (props.$visible ? 1 : 0)};
+  visibility: ${(props) => (props.$visible ? 'visible' : 'hidden')};
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+`
+
+// For type safety
+type ConfigBadgeType = 'corners' | 'edges' | 'lshape' | 'frame'
+
+// For backwards compatibility while we transition references
 export const ConfigIndicators = styled.div`
   display: flex;
   gap: 4px;
   align-items: center;
 `
 
+// Recreate original ConfigBadge for backwards compatibility
 export const ConfigBadge = styled.span<{
-  $type: 'corners' | 'edges' | 'lshape' | 'frame'
+  $type: ConfigBadgeType
 }>`
   width: 18px;
   height: 18px;
@@ -156,18 +233,7 @@ export const ConfigBadge = styled.span<{
   color: ${(props) => (props.$type === 'lshape' ? '#000' : '#fff')};
 `
 
-export const ConfigTooltip = styled.div<{ $visible: boolean }>`
-  position: absolute;
-  background: #2c3e50;
-  color: white;
-  padding: 6px 8px;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  white-space: nowrap;
-  z-index: 1000;
-  opacity: ${(props) => (props.$visible ? 1 : 0)};
-  visibility: ${(props) => (props.$visible ? 'visible' : 'hidden')};
-  transition: opacity 0.2s, visibility 0.2s;
+export const ConfigTooltip = styled(ConfigTooltipBase)<{ $visible: boolean }>`
   transform: translateY(-100%);
   margin-top: -8px;
 
@@ -178,13 +244,11 @@ export const ConfigTooltip = styled.div<{ $visible: boolean }>`
     left: 50%;
     transform: translateX(-50%);
     border: 4px solid transparent;
-    border-top-color: #2c3e50;
+    border-top-color: #333;
   }
 `
 
-export const RelativeContainer = styled.div`
-  position: relative;
-`
+export const RelativeContainer = RelativeContainerBase
 
 export const NoDataSpan = styled.span`
   font-size: 0.7rem;
@@ -215,35 +279,19 @@ export const BlockControlsContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-`
+  width: 100%;
 
-export const BlockSelector = styled.select`
-  padding: 4px 6px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  background: white;
-  min-width: 90px;
-  cursor: pointer;
-
-  &:focus {
-    outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  /* Ensure the selector takes full width */
+  select {
+    flex: 1;
+    min-width: 0;
   }
 `
 
-export const RotationLabel = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.8rem;
-  cursor: pointer;
-
-  input {
-    margin: 0;
-  }
-`
+// These components have been moved to DomainComponents.tsx
+// Re-exporting them to maintain compatibility with existing code
+import { BlockSelector, WoodTypeSelector, RotationToggle } from '../common/ui'
+export { BlockSelector, WoodTypeSelector, RotationToggle }
 
 export const BlockIndicator = styled.div<{ $blockId: number; $color?: string }>`
   position: absolute;
@@ -277,12 +325,4 @@ export const BlockIndicator = styled.div<{ $blockId: number; $color?: string }>`
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `
 
-export const ColorIndicator = styled.div<{ $color: string }>`
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  background-color: ${({ $color }) => $color};
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  flex-shrink: 0;
-  margin-right: 8px;
-`
+// ColorIndicator is now imported from the UI components library

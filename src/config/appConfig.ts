@@ -71,6 +71,19 @@ export const MATERIAL_CONFIG = {
     { width: 1830, height: 1220, name: 'Kompaktná doska' },
   ],
 
+  // Available wood types
+  woodTypes: [
+    { id: 'pine', name: 'Borovica', isDefault: true },
+    { id: 'oak', name: 'Dub' },
+    { id: 'beech', name: 'Buk' },
+    { id: 'birch', name: 'Breza' },
+    { id: 'spruce', name: 'Smrek' },
+    { id: 'maple', name: 'Javor' },
+  ],
+
+  // Default wood type
+  defaultWoodType: 'pine',
+
   // Default board selection
   defaultBoard: {
     width: 2800,

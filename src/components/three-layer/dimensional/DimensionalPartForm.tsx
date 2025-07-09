@@ -1,11 +1,13 @@
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import type { Part } from '../../../types/simple'
+import { MATERIAL_CONFIG } from '../../../config/appConfig'
 import {
   FORM_DEFAULTS,
   PART_CONSTRAINTS,
   SHEET_CONSTRAINTS,
 } from '../../../utils/appConstants'
+import { getAvailableBlockNumbers } from '../../../utils/blockManagement'
 import type { PartFormData } from '../../../utils/formValidation'
 import {
   getWidthValidationRules,
@@ -13,24 +15,56 @@ import {
   getQuantityValidationRules,
   transformFormDataToPart,
 } from '../../../utils/formValidation'
-import { Card, CardTitle, PrimaryButton } from '../../common/CommonStyles'
-import { FormGrid, FormField, ErrorMessage } from './DimensionalPartForm.styles'
+import {
+  Card,
+  CardTitle,
+  Button,
+  FormField,
+  Toggle,
+  Input,
+} from '../../common/ui'
+import { FormGrid } from './DimensionalPartForm.styles'
+import {
+  BlockSelector,
+  WoodTypeSelector,
+  BlockControlsContainer,
+} from '../EnhancedPartsList.styles'
+import styled from 'styled-components'
+
+// Create a special wrapper for the toggle to ensure optical vertical centering
+const ToggleWrapper = styled.div`
+  height: 36px; /* Match the input height */
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  /* Position toggle to align with input center - optical adjustment */
+  padding-top: 9px; /* Slightly less than mathematical center for better visual alignment */
+`
 interface DimensionalPartFormProps {
   onAddPart: (part: Omit<Part, 'id'>) => void
+  existingParts?: Part[] // For generating available block numbers
 }
 
 export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
   onAddPart,
+  existingParts = [],
 }) => {
+  const availableBlocks = getAvailableBlockNumbers(existingParts)
+
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isValid },
   } = useForm<PartFormData>({
     mode: 'onChange',
     defaultValues: {
       quantity: FORM_DEFAULTS.quantity,
+      rotatable: true,
+      woodType: MATERIAL_CONFIG.defaultWoodType,
+      blockId: undefined, // Explicitly set to undefined to ensure "Bez bloku" is selected by default
     },
   })
 
@@ -41,10 +75,19 @@ export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
       width: Number(data.width),
       height: Number(data.height),
       quantity: Number(data.quantity),
+      blockId: data.blockId || undefined,
     })
 
     onAddPart(partData)
-    reset({ quantity: FORM_DEFAULTS.quantity })
+    reset({
+      quantity: FORM_DEFAULTS.quantity,
+      rotatable: true,
+      woodType: MATERIAL_CONFIG.defaultWoodType,
+      blockId: undefined, // Clear block selection to "Bez bloku"
+      width: undefined, // Clear width field
+      height: undefined, // Clear height field
+      label: '', // Clear label field
+    })
   }
 
   return (
@@ -53,9 +96,14 @@ export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <FormGrid>
-          <FormField>
-            <label htmlFor="width">Šírka (mm)</label>
-            <input
+          {/* Row 1: Basic dimensions */}
+          <FormField
+            label="Šírka (mm)"
+            htmlFor="width"
+            error={errors.width?.message}
+            required
+          >
+            <Input
               id="width"
               type="number"
               min={PART_CONSTRAINTS.minWidth}
@@ -68,14 +116,15 @@ export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
                 valueAsNumber: true,
               })}
             />
-            {errors.width && (
-              <ErrorMessage>{errors.width.message}</ErrorMessage>
-            )}
           </FormField>
 
-          <FormField>
-            <label htmlFor="height">Výška (mm)</label>
-            <input
+          <FormField
+            label="Výška (mm)"
+            htmlFor="height"
+            error={errors.height?.message}
+            required
+          >
+            <Input
               id="height"
               type="number"
               min={PART_CONSTRAINTS.minHeight}
@@ -88,14 +137,15 @@ export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
                 valueAsNumber: true,
               })}
             />
-            {errors.height && (
-              <ErrorMessage>{errors.height.message}</ErrorMessage>
-            )}
           </FormField>
 
-          <FormField>
-            <label htmlFor="quantity">Počet kusov</label>
-            <input
+          <FormField
+            label="Počet kusov"
+            htmlFor="quantity"
+            error={errors.quantity?.message}
+            required
+          >
+            <Input
               id="quantity"
               type="number"
               min={PART_CONSTRAINTS.minQuantity}
@@ -105,14 +155,76 @@ export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
                 valueAsNumber: true,
               })}
             />
-            {errors.quantity && (
-              <ErrorMessage>{errors.quantity.message}</ErrorMessage>
-            )}
           </FormField>
 
-          <FormField className="full-width">
-            <label htmlFor="label">Názov dielu (voliteľné)</label>
-            <input
+          {/* Row 2: Configuration options */}
+          <FormField
+            label="Blok"
+            htmlFor="blockId"
+          >
+            <BlockControlsContainer>
+              <BlockSelector
+                id="blockId"
+                defaultValue="" // Force "Bez bloku" to be selected by default
+                {...register('blockId', {
+                  setValueAs: (value) =>
+                    value === '' ? undefined : Number(value),
+                })}
+                title="Priradiť k bloku pre zoskupenie na doske"
+              >
+                <option value="">Bez bloku</option>
+                {availableBlocks.map((blockNum) => (
+                  <option
+                    key={blockNum}
+                    value={blockNum}
+                  >
+                    Blok {blockNum}
+                  </option>
+                ))}
+              </BlockSelector>
+            </BlockControlsContainer>
+          </FormField>
+
+          <FormField
+            label="Typ dreva"
+            htmlFor="woodType"
+          >
+            <WoodTypeSelector
+              id="woodType"
+              {...register('woodType')}
+              title="Typ dreva pre materiál"
+            >
+              {MATERIAL_CONFIG.woodTypes.map((wood) => (
+                <option
+                  key={wood.id}
+                  value={wood.id}
+                >
+                  {wood.name}
+                </option>
+              ))}
+            </WoodTypeSelector>
+          </FormField>
+
+          <FormField
+            label="Rotácia"
+            htmlFor="rotatable"
+          >
+            <ToggleWrapper className="toggle-container">
+              <Toggle
+                id="rotatable"
+                checked={!!watch('rotatable')}
+                onChange={(checked) => setValue('rotatable', checked)}
+                size="small" /* Use small size for better proportions */
+              />
+            </ToggleWrapper>
+          </FormField>
+
+          {/* Row 3: Label (full width) */}
+          <FormField
+            label="Názov dielu (voliteľné)"
+            htmlFor="label"
+          >
+            <Input
               id="label"
               type="text"
               placeholder="napr. Polička, Dvierka..."
@@ -121,12 +233,13 @@ export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
           </FormField>
         </FormGrid>
 
-        <PrimaryButton
+        <Button
           type="submit"
+          variant="primary"
           disabled={!isValid}
         >
           Pridať diel
-        </PrimaryButton>
+        </Button>
       </form>
     </Card>
   )

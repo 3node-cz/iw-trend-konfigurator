@@ -1,6 +1,7 @@
 import React from 'react'
 import type { EnhancedCuttingPart } from '../../hooks/three-layer/useLayeredCuttingState'
 import { SPACING } from '../../utils/uiConstants'
+import { MATERIAL_CONFIG } from '../../config/appConfig'
 import { getAvailableBlockNumbers } from '../../utils/blockManagement'
 import { validateBlockWidth } from '../../utils/blockValidation'
 import { PartConfigIndicators } from './visual/PartConfigIndicators'
@@ -8,9 +9,10 @@ import {
   Card,
   CardTitle,
   GridContainer,
-  EmptyStateContainer,
-  DangerButton,
-} from '../common/CommonStyles'
+  EmptyState,
+  Button,
+  RotationToggle,
+} from '../common/ui'
 import {
   PartCard,
   PartTitle,
@@ -26,7 +28,7 @@ import {
   ColorIndicator,
   BlockControlsContainer,
   BlockSelector,
-  RotationLabel,
+  WoodTypeSelector,
   SpacedContainer,
 } from './EnhancedPartsList.styles'
 
@@ -40,6 +42,7 @@ interface EnhancedPartsListProps {
   onClearAll: () => void
   onPartBlockUpdate: (partId: string, blockId: number | undefined) => void
   onPartRotationUpdate: (partId: string, rotatable: boolean) => void
+  onPartWoodTypeUpdate: (partId: string, woodType: string) => void
 }
 
 export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
@@ -53,12 +56,17 @@ export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
     onClearAll,
     onPartBlockUpdate,
     onPartRotationUpdate,
+    onPartWoodTypeUpdate,
   }) => {
     const availableBlocks = getAvailableBlockNumbers(enhancedParts)
 
     const handleBlockChange = (partId: string, blockId: string) => {
       const numericBlockId = blockId === '' ? undefined : parseInt(blockId, 10)
       onPartBlockUpdate(partId, numericBlockId)
+    }
+
+    const handleWoodTypeChange = (partId: string, woodType: string) => {
+      onPartWoodTypeUpdate(partId, woodType)
     }
 
     const handleRotationChange = (partId: string, rotatable: boolean) => {
@@ -82,9 +90,10 @@ export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
       return (
         <Card>
           <CardTitle>Zoznam dielcov</CardTitle>
-          <EmptyStateContainer>
-            <p>Zatiaľ nie sú pridané žiadne dielce</p>
-          </EmptyStateContainer>
+          <EmptyState
+            title="Prázdny zoznam"
+            message="Zatiaľ nie sú pridané žiadne dielce"
+          />
         </Card>
       )
     }
@@ -95,15 +104,15 @@ export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
 
         <StatsRow>
           <Stat>
-            <span className="value">{enhancedParts.length}</span>
+            <div className="value">{enhancedParts.length}</div>
             <div className="label">Typov dielcov</div>
           </Stat>
           <Stat>
-            <span className="value">{totalParts}</span>
+            <div className="value">{totalParts}</div>
             <div className="label">Kusov celkom</div>
           </Stat>
           <Stat>
-            <span className="value">{(totalArea / 1000000).toFixed(2)} m²</span>
+            <div className="value">{(totalArea / 1000000).toFixed(2)} m²</div>
             <div className="label">Celková plocha</div>
           </Stat>
         </StatsRow>
@@ -165,67 +174,86 @@ export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
                     </PartMetric>
                   </PartMetrics>
 
-                  {/* Third row: Controls (Block, Rotation) */}
+                  {/* Third row: Controls (Block, Wood Type, Rotation) */}
                   <PartControls>
-                    <div>
-                      {/* Hide block control only if frame is enabled */}
-                      {!part.frame?.enabled && (
-                        <BlockControlsContainer>
-                          <BlockSelector
-                            value={part.blockId || ''}
-                            onChange={(e) =>
-                              handleBlockChange(part.id, e.target.value)
-                            }
-                            onClick={(e) => e.stopPropagation()}
-                            title="Priradiť k bloku pre zachovanie textúry dreva"
-                          >
-                            <option value="">Bez bloku</option>
-                            {availableBlocks.map((blockNum) => (
-                              <option
-                                key={blockNum}
-                                value={blockNum}
-                              >
-                                Blok {blockNum}
-                              </option>
-                            ))}
-                          </BlockSelector>
-                          {part.blockId && (
-                            <BlockIndicator
-                              $blockId={part.blockId}
-                              $color={part.color}
-                            >
-                              {part.blockId}
-                            </BlockIndicator>
-                          )}
-                        </BlockControlsContainer>
-                      )}
-                    </div>
-
-                    {/* Hide rotation control if frame is enabled */}
-                    {!part.frame?.enabled && (
-                      <RotationLabel>
-                        <input
-                          type="checkbox"
-                          checked={part.orientation === 'rotatable'}
+                    {/* Block selector - hidden if frame is enabled */}
+                    {!part.frame?.enabled ? (
+                      <BlockControlsContainer>
+                        <BlockSelector
+                          value={part.blockId || ''}
                           onChange={(e) =>
-                            handleRotationChange(part.id, e.target.checked)
+                            handleBlockChange(part.id, e.target.value)
                           }
-                        />
-                        Rotácia
-                      </RotationLabel>
+                          onClick={(e) => e.stopPropagation()}
+                          title="Priradiť k bloku pre zoskupenie na doske"
+                        >
+                          <option value="">Bez bloku</option>
+                          {availableBlocks.map((blockNum) => (
+                            <option
+                              key={blockNum}
+                              value={blockNum}
+                            >
+                              Blok {blockNum}
+                            </option>
+                          ))}
+                        </BlockSelector>
+                        {part.blockId && (
+                          <BlockIndicator
+                            $blockId={part.blockId}
+                            $color={part.color}
+                          >
+                            {part.blockId}
+                          </BlockIndicator>
+                        )}
+                      </BlockControlsContainer>
+                    ) : (
+                      <div></div>
+                    )}
+
+                    {/* Wood Type Selector - Always visible */}
+                    <WoodTypeSelector
+                      value={part.woodType || MATERIAL_CONFIG.defaultWoodType}
+                      onChange={(e) =>
+                        handleWoodTypeChange(part.id, e.target.value)
+                      }
+                      onClick={(e) => e.stopPropagation()}
+                      title="Typ dreva pre materiál"
+                    >
+                      {MATERIAL_CONFIG.woodTypes.map((wood) => (
+                        <option
+                          key={wood.id}
+                          value={wood.id}
+                        >
+                          {wood.name}
+                        </option>
+                      ))}
+                    </WoodTypeSelector>
+
+                    {/* Rotation control - hidden if frame is enabled */}
+                    {!part.frame?.enabled ? (
+                      <RotationToggle
+                        checked={part.orientation === 'rotatable'}
+                        onChange={(checked) =>
+                          handleRotationChange(part.id, checked)
+                        }
+                      />
+                    ) : (
+                      <div></div>
                     )}
                   </PartControls>
 
                   {/* Fourth row: Actions aligned to right */}
                   <PartActions>
-                    <DangerButton
-                      onClick={(e) => {
+                    <Button
+                      variant="danger"
+                      size="small"
+                      onClick={(e: React.MouseEvent) => {
                         e.stopPropagation()
                         onRemovePart(part.id)
                       }}
                     >
                       Odstrániť
-                    </DangerButton>
+                    </Button>
                   </PartActions>
                 </PartCard>
 
@@ -238,7 +266,12 @@ export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
         </GridContainer>
 
         <SpacedContainer $marginTop={SPACING.lg}>
-          <DangerButton onClick={onClearAll}>Vymazať všetko</DangerButton>
+          <Button
+            variant="danger"
+            onClick={onClearAll}
+          >
+            Vymazať všetko
+          </Button>
         </SpacedContainer>
       </Card>
     )

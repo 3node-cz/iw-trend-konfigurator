@@ -103,7 +103,21 @@ export {
   isLShapeConfigured,
   hasAdvancedConfiguration,
   computePartConfigurationStatus,
-} from './partConfigurationStatus'
+  // Additional exports from consolidated partEnhancements
+  hasCornerModification,
+  hasCornerModifications,
+  hasEdgeTreatments,
+  hasEdgeTreatmentsInterface,
+  isLShape,
+  isFrame,
+  hasAdvancedConfig,
+  hasAdvancedConfigInterface,
+  generatePartId,
+  getDefaultEdges,
+  getDefaultCorners,
+  getDefaultLShape,
+  getDefaultFrame,
+} from './partEnhancements'
 
 export {
   formatPartLabel,
@@ -119,3 +133,23 @@ export {
   SVG_RENDERING,
   SHEET_VISUALIZATION,
 } from './appConstants'
+
+// Block Validation (consolidated)
+export {
+  validateBlockWidth,
+  validateAllBlocks,
+  hasBlockValidationErrors,
+  groupPartsByBlock,
+  calculateBlockWidth,
+} from './blockValidation'
+
+// Part Updates (consolidated)
+export {
+  createPartUpdateHandlers,
+  EDGE_INDEX_MAP,
+  CORNER_INDEX_MAP,
+  separatePartUpdates,
+  hasCuttingUpdates,
+  processEdgeUpdates,
+  processCornerUpdates,
+} from './partUpdates'

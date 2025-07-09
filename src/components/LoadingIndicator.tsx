@@ -1,11 +1,10 @@
 import React from 'react'
 import {
-  Spinner,
-  LoadingContainer,
-  LoadingMessage,
-  LoadingDotsContainer,
-} from './LoadingIndicator.styles'
+  LoadingIndicator as BaseLoadingIndicator,
+  LoadingDots as BaseLoadingDots,
+} from './common/ui/LoadingIndicator'
 
+// Re-export with default message specific to this application
 interface LoadingIndicatorProps {
   isLoading: boolean
   message?: string
@@ -14,24 +13,21 @@ interface LoadingIndicatorProps {
 
 export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   isLoading,
-  message = 'Calculating layout...',
+  message = 'Calculating layout...', // Default message specific to this app
   overlay = false,
 }) => {
-  if (!isLoading) return null
-
   return (
-    <LoadingContainer $overlay={overlay}>
-      <Spinner />
-      <LoadingMessage>{message}</LoadingMessage>
-    </LoadingContainer>
+    <BaseLoadingIndicator
+      isLoading={isLoading}
+      message={message}
+      overlay={overlay}
+    />
   )
 }
 
-// Lightweight loading dots for inline use
+// Re-export lightweight loading dots for inline use
 export const LoadingDots: React.FC<{ isLoading: boolean }> = ({
   isLoading,
 }) => {
-  if (!isLoading) return null
-
-  return <LoadingDotsContainer />
+  return <BaseLoadingDots isLoading={isLoading} />
 }

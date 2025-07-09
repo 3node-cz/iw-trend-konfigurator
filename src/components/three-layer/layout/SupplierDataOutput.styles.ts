@@ -22,20 +22,14 @@ export const SupplierDataDescription = styled.p`
   line-height: 1.4;
 `
 
-export const CopyButton = styled.button`
-  background: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 16px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  margin-bottom: 16px;
-  transition: background-color 0.2s;
+// Import Button from our common UI components
+import { Button } from '../../../components/common/ui'
 
-  &:hover {
-    background: #2980b9;
-  }
+// Use our common Button component with primary variant
+export const CopyButton = styled(Button).attrs({
+  variant: 'primary',
+})`
+  margin-bottom: 16px;
 
   &:active {
     background: #21618c;

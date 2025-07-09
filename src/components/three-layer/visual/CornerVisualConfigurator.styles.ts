@@ -37,9 +37,10 @@ export const CornerSection = styled.div`
   }
 `
 
-export const FormGroup = styled.div`
-  margin-bottom: 12px;
+import { FormGroup as BaseFormGroup } from '../../../components/common/ui'
 
+// Re-export with custom styling for labels
+export const FormGroup = styled(BaseFormGroup)`
   label {
     display: block;
     margin-bottom: 4px;

@@ -10,6 +10,8 @@ export interface PartFormData {
   quantity: number
   label?: string
   rotatable?: boolean
+  blockId?: number
+  woodType?: string
 }
 
 /**
@@ -78,6 +80,8 @@ export const transformFormDataToPart = (
   quantity: Number(data.quantity),
   label: data.label || undefined,
   orientation: data.rotatable ? 'rotatable' : 'fixed',
+  blockId: data.blockId || undefined,
+  woodType: data.woodType || undefined,
 })
 
 /**
