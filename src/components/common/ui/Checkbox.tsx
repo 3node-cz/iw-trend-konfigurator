@@ -88,8 +88,7 @@ export const Checkbox = ({
   disabled?: boolean
   hasError?: boolean
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
-  [key: string]: any
-}) => {
+} & React.InputHTMLAttributes<HTMLInputElement>) => {
   return (
     <CheckboxContainer>
       <HiddenCheckbox
