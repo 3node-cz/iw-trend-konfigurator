@@ -53,12 +53,21 @@ export const createPartUpdateHandlers = (
         bottomRight: { type: 'none' },
         bottomLeft: { type: 'none' },
       }
+      
+      // Get existing corner data to preserve existing values
+      const existingCornerData = currentCorners[corner as keyof typeof currentCorners] || { type: 'none' }
+      
       const fullModification: CornerModification = {
-        type: modification.type || 'none',
-        ...(modification.x && { x: modification.x }),
-        ...(modification.y && { y: modification.y }),
+        type: modification.type || existingCornerData.type || 'none',
+        ...(modification.x !== undefined && { x: modification.x }),
+        ...(modification.y !== undefined && { y: modification.y }),
         ...(modification.edgeType && { edgeType: modification.edgeType }),
+        // Preserve existing values if not being updated
+        ...(existingCornerData.x !== undefined && modification.x === undefined && { x: existingCornerData.x }),
+        ...(existingCornerData.y !== undefined && modification.y === undefined && { y: existingCornerData.y }),
+        ...(existingCornerData.edgeType && !modification.edgeType && { edgeType: existingCornerData.edgeType }),
       }
+      
       const updatedCorners = {
         ...currentCorners,
         [corner]: fullModification,
