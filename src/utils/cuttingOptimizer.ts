@@ -513,7 +513,9 @@ export const optimizeCuttingWithBlocks = (
   let totalSheetNumber = 1
 
   partsByWoodType.forEach((woodTypeParts, woodType) => {
-    log(`\n🌳 Processing wood type: ${woodType} (${woodTypeParts.length} parts)`)
+    log(
+      `\n🌳 Processing wood type: ${woodType} (${woodTypeParts.length} parts)`,
+    )
 
     // Process this wood type using the existing algorithm
     const blocks = createPartBlocks(woodTypeParts, sheetWidth, sheetHeight)
@@ -601,15 +603,22 @@ export const optimizeCuttingWithBlocks = (
 
   // Calculate overall efficiency
   const totalUsedArea = allSheets.reduce((sum, sheet) => {
-    return sum + sheet.placedParts.reduce((sheetSum, placedPart) => {
-      return sheetSum + Number(placedPart.part.width) * Number(placedPart.part.height)
-    }, 0)
+    return (
+      sum +
+      sheet.placedParts.reduce((sheetSum, placedPart) => {
+        return (
+          sheetSum +
+          Number(placedPart.part.width) * Number(placedPart.part.height)
+        )
+      }, 0)
+    )
   }, 0)
   const totalSheetArea = allSheets.reduce(
     (sum, sheet) => sum + sheet.sheetWidth * sheet.sheetHeight,
     0,
   )
-  const overallEfficiency = totalSheetArea > 0 ? totalUsedArea / totalSheetArea : 0
+  const overallEfficiency =
+    totalSheetArea > 0 ? totalUsedArea / totalSheetArea : 0
 
   // Create final result
   const finalLayout: BlockLayout = {

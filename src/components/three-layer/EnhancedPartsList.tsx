@@ -3,7 +3,10 @@ import type { EnhancedCuttingPart } from '../../hooks/three-layer/useLayeredCutt
 import { SPACING } from '../../utils/uiConstants'
 import { MATERIAL_CONFIG } from '../../config/appConfig'
 import { getAvailableBlockNumbers } from '../../utils/blockManagement'
-import { validateBlockWidth, validateBlockWoodType } from '../../utils/blockValidation'
+import {
+  validateBlockWidth,
+  validateBlockWoodType,
+} from '../../utils/blockValidation'
 import { PartConfigIndicators } from './visual/PartConfigIndicators'
 import {
   Card,
@@ -120,12 +123,15 @@ export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
         <GridContainer>
           {enhancedParts.map((part) => {
             const blockErrors: string[] = []
-            
+
             if (part.blockId) {
               const widthError = validateBlockWidth(enhancedParts, part.blockId)
               if (widthError) blockErrors.push(widthError)
-              
-              const woodTypeError = validateBlockWoodType(enhancedParts, part.blockId)
+
+              const woodTypeError = validateBlockWoodType(
+                enhancedParts,
+                part.blockId,
+              )
               if (woodTypeError) blockErrors.push(woodTypeError)
             }
 
@@ -266,7 +272,9 @@ export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
                 {blockErrors.length > 0 && (
                   <div>
                     {blockErrors.map((error, index) => (
-                      <BlockValidationError key={index}>{error}</BlockValidationError>
+                      <BlockValidationError key={index}>
+                        {error}
+                      </BlockValidationError>
                     ))}
                   </div>
                 )}

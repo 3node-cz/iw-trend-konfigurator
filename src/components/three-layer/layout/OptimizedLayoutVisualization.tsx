@@ -47,60 +47,61 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
     const [selectedSheetIndex, setSelectedSheetIndex] = useState(0)
 
     // Memoize expensive calculations for the current sheet
-  const currentSheetData = useMemo(() => {
-    if (!sheetLayout || sheetLayout.sheets.length === 0) return null
+    const currentSheetData = useMemo(() => {
+      if (!sheetLayout || sheetLayout.sheets.length === 0) return null
 
-    const currentSheet = sheetLayout.sheets[selectedSheetIndex]
-    const { sheetWidth, sheetHeight, placedParts, efficiency } = currentSheet
+      const currentSheet = sheetLayout.sheets[selectedSheetIndex]
+      const { sheetWidth, sheetHeight, placedParts, efficiency } = currentSheet
 
-    return {
-      currentSheet,
-      sheetWidth,
-      sheetHeight,
-      placedParts,
-      efficiency,
-      scaledDimensions: calculateSheetScale(sheetWidth, sheetHeight),
-      partGroups: (() => {
-        return groupPartsByBaseId(placedParts, enhancedParts)
-      })(),
-      wastedArea: calculateWastedArea(sheetWidth, sheetHeight, placedParts),
-      layoutStats: calculateLayoutStats(sheetLayout),
+      return {
+        currentSheet,
+        sheetWidth,
+        sheetHeight,
+        placedParts,
+        efficiency,
+        scaledDimensions: calculateSheetScale(sheetWidth, sheetHeight),
+        partGroups: (() => {
+          return groupPartsByBaseId(placedParts, enhancedParts)
+        })(),
+        wastedArea: calculateWastedArea(sheetWidth, sheetHeight, placedParts),
+        layoutStats: calculateLayoutStats(sheetLayout),
+      }
+    }, [sheetLayout, selectedSheetIndex, enhancedParts])
+
+    // Helper function to get wood type for a sheet
+    const getSheetWoodType = (sheet: { placedParts: PlacedPart[] }) => {
+      if (!sheet.placedParts || sheet.placedParts.length === 0)
+        return 'neurčený'
+
+      // Get wood type directly from the first placed part
+      const firstPart = sheet.placedParts[0]
+      const woodType = firstPart.part.woodType
+
+      return woodType || 'neurčený'
     }
-  }, [sheetLayout, selectedSheetIndex, enhancedParts])
 
-  // Helper function to get wood type for a sheet
-  const getSheetWoodType = (sheet: { placedParts: PlacedPart[] }) => {
-    if (!sheet.placedParts || sheet.placedParts.length === 0) return 'neurčený'
-    
-    // Get wood type directly from the first placed part
-    const firstPart = sheet.placedParts[0]
-    const woodType = firstPart.part.woodType
-    
-    return woodType || 'neurčený'
-  }
-
-  // Helper function to get wood type display name
-  const getWoodTypeDisplayName = (woodType: string) => {
-    const woodTypeMap: { [key: string]: string } = {
-      // English IDs (from appConfig)
-      'pine': 'Borovica',
-      'oak': 'Dub', 
-      'beech': 'Buk',
-      'birch': 'Breza',
-      'spruce': 'Smrek',
-      'maple': 'Javor',
-      // Slovak names (in case they're stored directly)
-      'borovica': 'Borovica',
-      'dub': 'Dub',
-      'buk': 'Buk',
-      'breza': 'Breza',
-      'smrek': 'Smrek',
-      'javor': 'Javor',
-      // Fallback
-      'neurčený': 'Neurčený'
+    // Helper function to get wood type display name
+    const getWoodTypeDisplayName = (woodType: string) => {
+      const woodTypeMap: { [key: string]: string } = {
+        // English IDs (from appConfig)
+        pine: 'Borovica',
+        oak: 'Dub',
+        beech: 'Buk',
+        birch: 'Breza',
+        spruce: 'Smrek',
+        maple: 'Javor',
+        // Slovak names (in case they're stored directly)
+        borovica: 'Borovica',
+        dub: 'Dub',
+        buk: 'Buk',
+        breza: 'Breza',
+        smrek: 'Smrek',
+        javor: 'Javor',
+        // Fallback
+        neurčený: 'Neurčený',
+      }
+      return woodTypeMap[woodType] || woodType
     }
-    return woodTypeMap[woodType] || woodType
-  }
 
     if (!sheetLayout || sheetLayout.sheets.length === 0) {
       return (
@@ -151,9 +152,7 @@ export const OptimizedLayoutVisualization: React.FC<SheetVisualizationProps> =
             <div className="board-dimensions">
               {sheetWidth} × {sheetHeight} mm
             </div>
-            <div className="board-label">
-              Rozmery dosky
-            </div>
+            <div className="board-label">Rozmery dosky</div>
           </BoardDimensions>
 
           <SheetSVG
