@@ -56,9 +56,27 @@ export const SheetTab = styled.button<{ $active: boolean }>`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 80px;
 
   &:hover {
     background: ${(props) => (props.$active ? '#2980b9' : '#ecf0f1')};
+  }
+
+  .board-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .wood-type {
+    font-size: 0.7rem;
+    font-weight: 400;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 `
 

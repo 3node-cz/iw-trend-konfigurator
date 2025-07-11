@@ -39,9 +39,16 @@ export const validateAllBlocks = (parts: Part[]): string[] => {
   ]
 
   blockIds.forEach((blockId) => {
-    const error = validateBlockWidth(parts, blockId!)
-    if (error) {
-      errors.push(error)
+    // Check block width
+    const widthError = validateBlockWidth(parts, blockId!)
+    if (widthError) {
+      errors.push(widthError)
+    }
+
+    // Check wood type consistency
+    const woodTypeError = validateBlockWoodType(parts, blockId!)
+    if (woodTypeError) {
+      errors.push(woodTypeError)
     }
   })
 
@@ -56,10 +63,17 @@ export const validateAllBlocks = (parts: Part[]): string[] => {
 export const hasBlockValidationErrors = (parts: Part[]): boolean => {
   const blockGroups = groupPartsByBlock(parts)
 
-  // Check each block for width validation errors
+  // Check each block for validation errors
   for (const [, blockParts] of blockGroups.entries()) {
+    // Check width validation
     const totalWidth = calculateBlockWidth(blockParts)
     if (totalWidth > SHEET_CONSTRAINTS.standardWidth) {
+      return true
+    }
+
+    // Check wood type consistency
+    const woodTypes = [...new Set(blockParts.map((part) => part.woodType))]
+    if (woodTypes.length > 1) {
       return true
     }
   }
@@ -94,4 +108,26 @@ export const groupPartsByBlock = (parts: Part[]): Map<number, Part[]> => {
  */
 export const calculateBlockWidth = (blockParts: Part[]): number => {
   return blockParts.reduce((sum, part) => sum + part.width * part.quantity, 0)
+}
+
+/**
+ * Validate wood type consistency within blocks
+ */
+export const validateBlockWoodType = (
+  parts: Part[],
+  blockId: number,
+): string | null => {
+  const blockParts = parts.filter((part) => part.blockId === blockId)
+  if (blockParts.length <= 1) return null
+
+  // Get unique wood types in the block
+  const woodTypes = [...new Set(blockParts.map((part) => part.woodType))]
+
+  if (woodTypes.length > 1) {
+    return `Blok ${blockId} obsahuje rôzne typy dreva (${woodTypes.join(
+      ', ',
+    )}). Všetky diely v bloku musia mať rovnaký typ dreva.`
+  }
+
+  return null
 }

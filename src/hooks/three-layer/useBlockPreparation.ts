@@ -26,6 +26,7 @@ export interface PreparedPiece {
   orientation?: 'fixed' | 'rotatable'
   grainDirection?: 'horizontal' | 'vertical' // Grain direction for frame pieces
   blockId?: number
+  woodType?: string // Wood type information - CRITICAL for board grouping
   // Block-specific properties for grouping
   blockPosition?: number // Position within the block (0, 1, 2, ...)
   blockTotalWidth?: number // Total width of the complete block
@@ -76,6 +77,7 @@ export const useBlockPreparation = (
                 label: framePiece.label,
                 orientation: framePiece.orientation, // Use the orientation from frame calculation
                 grainDirection: framePiece.grainDirection, // Include grain direction
+                woodType: part.woodType, // Preserve wood type from original part
                 originalPartId: part.id,
               })
             }
@@ -109,6 +111,7 @@ export const useBlockPreparation = (
           quantity: 1,
           label: part.label,
           orientation: part.orientation || 'rotatable',
+          woodType: part.woodType, // Preserve wood type information
           originalPartId: part.id,
         })
       }
@@ -138,6 +141,7 @@ export const useBlockPreparation = (
             blockPosition: blockPosition,
             blockTotalWidth: totalWidth,
             blockTotalHeight: maxHeight,
+            woodType: part.woodType, // Preserve wood type information for blocks
             originalPartId: part.id,
           })
           blockPosition++

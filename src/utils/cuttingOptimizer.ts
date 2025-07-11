@@ -133,13 +133,6 @@ export const getPartOrientations = (
     rotation: 0 | 90
   }> = []
 
-  // Debug logging for frame pieces
-  if (part.id.includes('_frame_')) {
-    console.log(
-      `Frame piece ${part.id}: grainDirection=${part.grainDirection}, dimensions=${part.width}x${part.height}`,
-    )
-  }
-
   // For frame pieces with vertical grain direction, force rotation
   if (part.grainDirection === 'vertical') {
     // Vertical grain pieces should be rotated 90 degrees
@@ -148,9 +141,6 @@ export const getPartOrientations = (
       height: Number(part.width),
       rotation: 90,
     })
-    console.log(
-      `Forcing rotation for vertical grain piece ${part.id}: ${part.width}x${part.height} -> ${part.height}x${part.width} (90°)`,
-    )
   } else {
     // Default orientation (horizontal grain or no grain specified)
     orientations.push({
@@ -486,6 +476,7 @@ export const optimizeCuttingBLF = (
 /**
  * Optimizes cutting layout with block support for texture continuity
  * Blocks are groups of parts that must be placed together to maintain wood texture continuity
+ * Groups parts by wood type first, then generates separate boards for each wood type
  */
 export const optimizeCuttingWithBlocks = (
   parts: Part[],
@@ -495,158 +486,147 @@ export const optimizeCuttingWithBlocks = (
   const { sheetWidth, sheetHeight, enableLogging } = config
   const log = enableLogging ? logger.log : () => {}
 
-  log('🔧 Advanced BLF Algorithm with Block Support')
+  log('🔧 Advanced BLF Algorithm with Block Support and Wood Type Grouping')
   log(`📦 Processing ${parts.length} parts with potential blocks`)
   log(`📋 Sheet size: ${sheetWidth}×${sheetHeight}mm`)
 
-  // Step 1: Parts are already expanded by the block preparation hook, so use them directly
-  // No need to expand by quantity since block preparation already created individual pieces
-  log(
-    `📦 Using ${parts.length} individual parts (already expanded by block preparation)`,
-  )
-
-  // Debug: Log parts
+  // Step 1: Group parts by wood type first
+  const partsByWoodType = new Map<string, Part[]>()
   parts.forEach((part) => {
-    log(
-      `  Part: ${part.id} (${part.width}×${part.height}mm, qty: ${part.quantity}, blockId: ${part.blockId})`,
-    )
-  })
-
-  const blocks = createPartBlocks(parts, sheetWidth, sheetHeight)
-  log(`📦 Created ${blocks.length} blocks (including individual parts)`)
-
-  // Debug: Log block details
-  blocks.forEach((block) => {
-    log(
-      `  Block ${block.blockId}: ${block.parts.length} parts, ${block.totalWidth}×${block.totalHeight}mm, canFit: ${block.canFitOnSingleBoard}`,
-    )
-    block.parts.forEach((part, index) => {
-      log(
-        `    Part ${index + 1}: ${part.id} (${part.width}×${
-          part.height
-        }mm, qty: ${part.quantity})`,
-      )
-    })
-  })
-
-  // Step 2: Create a block-aware optimization strategy
-  // Group parts by blockId and create placement units
-  const placementUnits: Part[] = []
-  const blockGroups = new Map<number, Part[]>()
-  const individualParts: Part[] = []
-  const compositeToOriginalMap = new Map<string, Part[]>()
-
-  // Separate parts into blocks and individuals
-  parts.forEach((part) => {
-    if (part.blockId && part.blockId > 0) {
-      if (!blockGroups.has(part.blockId)) {
-        blockGroups.set(part.blockId, [])
-      }
-      blockGroups.get(part.blockId)!.push(part)
-    } else {
-      individualParts.push(part)
+    const woodType = part.woodType || 'default'
+    if (!partsByWoodType.has(woodType)) {
+      partsByWoodType.set(woodType, [])
     }
+    partsByWoodType.get(woodType)!.push(part)
   })
 
-  // Create composite placement units for blocks
-  blockGroups.forEach((blockParts, blockId) => {
-    const block = blocks.find((b) => b.blockId === blockId)
-    if (!block) return
-
-    if (block.canFitOnSingleBoard) {
-      // Create a composite part for block placement
-      const compositeId = `block-composite-${blockId}`
-      const compositePart: Part = {
-        id: compositeId,
-        width: block.totalWidth,
-        height: block.totalHeight,
-        quantity: 1,
-        label: `Block ${blockId} (${blockParts.length} parts)`,
-        blockId: blockId,
-        orientation: 'fixed',
-      }
-      placementUnits.push(compositePart)
-      compositeToOriginalMap.set(compositeId, blockParts)
-      log(
-        `  ✅ Created composite placement unit for Block ${blockId}: ${block.totalWidth}×${block.totalHeight}mm`,
-      )
-    } else {
-      // Block too large, add parts individually
-      placementUnits.push(...blockParts)
-      log(`  ⚠️ Block ${blockId} too large, adding parts individually`)
-    }
+  log(`🌳 Found ${partsByWoodType.size} different wood types:`)
+  partsByWoodType.forEach((typeParts, woodType) => {
+    log(`  - ${woodType}: ${typeParts.length} parts`)
   })
 
-  // Add individual parts
-  placementUnits.push(...individualParts)
+  // Step 2: Process each wood type separately and collect results
+  const allSheets: Sheet[] = []
+  const allUnplacedParts: Part[] = []
+  const allBlocks: PartBlock[] = []
+  const allUnplacedBlocks: PartBlock[] = []
+  let totalSheetNumber = 1
 
-  log(
-    `📦 Created ${placementUnits.length} placement units from ${parts.length} parts`,
-  )
+  partsByWoodType.forEach((woodTypeParts, woodType) => {
+    log(`\n🌳 Processing wood type: ${woodType} (${woodTypeParts.length} parts)`)
 
-  // Step 3: Optimize using the existing BLF algorithm
-  const basicLayout = optimizeCuttingBLF(placementUnits, config, logger)
+    // Process this wood type using the existing algorithm
+    const blocks = createPartBlocks(woodTypeParts, sheetWidth, sheetHeight)
+    log(`📦 Created ${blocks.length} blocks for ${woodType}`)
 
-  // Step 4: Expand composite parts back to individual parts for the final layout
-  const finalSheets = basicLayout.sheets.map((sheet) => ({
-    ...sheet,
-    placedParts: sheet.placedParts.flatMap((placedPart) => {
-      if (placedPart.part.id.startsWith('block-composite-')) {
-        // Expand composite block back to individual parts
-        const originalParts = compositeToOriginalMap.get(placedPart.part.id)
-        if (!originalParts) return [placedPart]
+    // Create placement units for this wood type
+    const placementUnits: Part[] = []
+    const blockGroups = new Map<number, Part[]>()
+    const individualParts: Part[] = []
+    const compositeToOriginalMap = new Map<string, Part[]>()
 
-        let currentX = placedPart.x
-
-        return originalParts.map((originalPart) => {
-          const expandedPart = {
-            part: originalPart,
-            x: currentX,
-            y: placedPart.y,
-            rotation: placedPart.rotation,
-          }
-          // Update position for next part
-          currentX += originalPart.width
-          return expandedPart
-        })
+    // Separate parts into blocks and individuals
+    woodTypeParts.forEach((part) => {
+      if (part.blockId && part.blockId > 0) {
+        if (!blockGroups.has(part.blockId)) {
+          blockGroups.set(part.blockId, [])
+        }
+        blockGroups.get(part.blockId)!.push(part)
       } else {
-        // Regular individual part
-        return [placedPart]
+        individualParts.push(part)
       }
-    }),
-  }))
+    })
 
-  // Step 5: Create final BlockLayout result with expanded parts
+    // Create composite placement units for blocks
+    blockGroups.forEach((blockParts, blockId) => {
+      const block = blocks.find((b) => b.blockId === blockId)
+      if (!block) return
+
+      if (block.canFitOnSingleBoard) {
+        const compositeId = `block-composite-${blockId}`
+        const compositePart: Part = {
+          id: compositeId,
+          width: block.totalWidth,
+          height: block.totalHeight,
+          quantity: 1,
+          label: `Block ${blockId} (${blockParts.length} parts)`,
+          blockId: blockId,
+          orientation: 'fixed',
+          woodType: woodType, // Preserve wood type
+        }
+        placementUnits.push(compositePart)
+        compositeToOriginalMap.set(compositeId, blockParts)
+      } else {
+        placementUnits.push(...blockParts)
+      }
+    })
+
+    // Add individual parts
+    placementUnits.push(...individualParts)
+
+    // Optimize this wood type
+    const woodTypeLayout = optimizeCuttingBLF(placementUnits, config, logger)
+
+    // Expand composite parts back to individual parts and adjust sheet numbers
+    const expandedSheets = woodTypeLayout.sheets.map((sheet) => ({
+      ...sheet,
+      sheetNumber: totalSheetNumber++,
+      placedParts: sheet.placedParts.flatMap((placedPart) => {
+        if (placedPart.part.id.startsWith('block-composite-')) {
+          const originalParts = compositeToOriginalMap.get(placedPart.part.id)
+          if (!originalParts) return [placedPart]
+
+          let currentX = placedPart.x
+          return originalParts.map((originalPart) => {
+            const expandedPart = {
+              part: originalPart,
+              x: currentX,
+              y: placedPart.y,
+              rotation: placedPart.rotation,
+            }
+            currentX += originalPart.width
+            return expandedPart
+          })
+        } else {
+          return [placedPart]
+        }
+      }),
+    }))
+
+    // Collect results from this wood type
+    allSheets.push(...expandedSheets)
+    allUnplacedParts.push(...woodTypeLayout.unplacedParts)
+    allBlocks.push(...blocks)
+  })
+
+  // Calculate overall efficiency
+  const totalUsedArea = allSheets.reduce((sum, sheet) => {
+    return sum + sheet.placedParts.reduce((sheetSum, placedPart) => {
+      return sheetSum + Number(placedPart.part.width) * Number(placedPart.part.height)
+    }, 0)
+  }, 0)
+  const totalSheetArea = allSheets.reduce(
+    (sum, sheet) => sum + sheet.sheetWidth * sheet.sheetHeight,
+    0,
+  )
+  const overallEfficiency = totalSheetArea > 0 ? totalUsedArea / totalSheetArea : 0
+
+  // Create final result
   const finalLayout: BlockLayout = {
-    ...basicLayout,
-    sheets: finalSheets,
-    blocks: blocks,
-    unplacedBlocks: blocks.filter((block) =>
-      block.parts.some((part) =>
-        basicLayout.unplacedParts.some((unplaced) => unplaced.id === part.id),
-      ),
-    ),
+    sheets: allSheets,
+    totalSheets: allSheets.length,
+    overallEfficiency,
+    unplacedParts: allUnplacedParts,
+    blocks: allBlocks,
+    unplacedBlocks: allUnplacedBlocks,
   }
 
-  log(`\n🎯 === BLOCK CUTTING SUMMARY ===`)
+  log(`\n🎯 === WOOD TYPE GROUPED CUTTING SUMMARY ===`)
   log(`📄 Total sheets used: ${finalLayout.sheets.length}`)
-  log(`📦 Total blocks created: ${blocks.length}`)
-  log(
-    `📦 Blocks that fit on single board: ${
-      blocks.filter((b) => b.canFitOnSingleBoard).length
-    }`,
-  )
-  log(
-    `📦 Blocks requiring splitting: ${
-      blocks.filter((b) => !b.canFitOnSingleBoard).length
-    }`,
-  )
-  log(`❌ Unplaced blocks: ${finalLayout.unplacedBlocks.length}`)
-  log(
-    `⚡ Overall efficiency: ${(finalLayout.overallEfficiency * 100).toFixed(
-      1,
-    )}%`,
-  )
+  log(`🌳 Wood types processed: ${partsByWoodType.size}`)
+  log(`📦 Total blocks created: ${allBlocks.length}`)
+  log(`❌ Unplaced parts: ${allUnplacedParts.length}`)
+  log(`⚡ Overall efficiency: ${(overallEfficiency * 100).toFixed(1)}%`)
 
   return finalLayout
 }

@@ -137,6 +137,7 @@ export {
 // Block Validation (consolidated)
 export {
   validateBlockWidth,
+  validateBlockWoodType,
   validateAllBlocks,
   hasBlockValidationErrors,
   groupPartsByBlock,

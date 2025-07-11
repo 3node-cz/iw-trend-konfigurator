@@ -58,6 +58,7 @@ export const useBoardPlacement = (
         grainDirection: piece.grainDirection, // Preserve grain direction for frame pieces
         label: piece.label,
         blockId: piece.blockId, // Preserve the blockId for block-aware optimization
+        woodType: piece.woodType, // Preserve wood type for wood-type-aware optimization
       }))
 
       // Use the block-aware optimizer (this handles the placement and visualization correctly)
