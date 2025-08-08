@@ -1,7 +1,6 @@
 import React from 'react'
 import type { Part } from '../../../types/simple'
 import { PartPreviewCanvas } from './PartVisualPreview'
-import { EdgeSelector } from './EdgeVisualSelector'
 import { CornerConfigurator } from './CornerVisualConfigurator'
 import { createPartUpdateHandlers } from '../../../utils/partUpdates'
 import { useDebounce } from '../../../hooks/useDebounce'
@@ -38,7 +37,7 @@ export const PartVisualEditor: React.FC<PartEditorProps> = React.memo(
       )
     }
 
-    const { handleEdgeUpdate, handleCornerUpdate } = createPartUpdateHandlers(
+    const { handleCornerUpdate } = createPartUpdateHandlers(
       selectedPart,
       debouncedOnPartUpdate,
     )
@@ -65,11 +64,6 @@ export const PartVisualEditor: React.FC<PartEditorProps> = React.memo(
         </PartHeader>
 
         <PartPreviewCanvas part={selectedPart} />
-
-        <EdgeSelector
-          part={selectedPart}
-          onEdgeUpdate={handleEdgeUpdate}
-        />
 
         <CornerConfigurator
           part={selectedPart}

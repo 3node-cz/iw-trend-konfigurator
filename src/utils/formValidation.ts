@@ -3,6 +3,7 @@
  */
 
 import { PART_CONSTRAINTS, SHEET_CONSTRAINTS } from './appConstants'
+import type { EdgeValue } from './edgeConstants'
 
 export interface PartFormData {
   width: number
@@ -12,6 +13,12 @@ export interface PartFormData {
   rotatable?: boolean
   blockId?: number
   woodType?: string
+  edges?: {
+    top?: EdgeValue
+    right?: EdgeValue
+    bottom?: EdgeValue
+    left?: EdgeValue
+  }
 }
 
 /**
@@ -82,6 +89,14 @@ export const transformFormDataToPart = (
   orientation: data.rotatable ? 'rotatable' : 'fixed',
   blockId: data.blockId || undefined,
   woodType: data.woodType || undefined,
+  edges: data.edges && Object.values(data.edges).some(edge => edge && edge !== 'none') 
+    ? {
+        top: data.edges.top || 'none',
+        right: data.edges.right || 'none',
+        bottom: data.edges.bottom || 'none',
+        left: data.edges.left || 'none',
+      }
+    : undefined,
 })
 
 /**

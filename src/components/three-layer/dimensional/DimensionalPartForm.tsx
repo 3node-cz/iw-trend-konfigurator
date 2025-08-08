@@ -1,6 +1,7 @@
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import type { Part } from '../../../types/simple'
+import type { EdgeValue } from '../../../utils/edgeConstants'
 import { MATERIAL_CONFIG } from '../../../config/appConfig'
 import {
   FORM_DEFAULTS,
@@ -23,12 +24,13 @@ import {
   Toggle,
   Input,
 } from '../../common/ui'
-import { FormGrid } from './DimensionalPartForm.styles'
+import { FormGrid, ButtonRow, NameInputContainer, CardHeader, EdgeContainer } from './DimensionalPartForm.styles'
 import {
   BlockSelector,
   WoodTypeSelector,
   BlockControlsContainer,
 } from '../EnhancedPartsList.styles'
+import { EdgeFormSelector } from '../visual/EdgeFormSelector'
 import styled from 'styled-components'
 
 // Create a special wrapper for the toggle to ensure optical vertical centering
@@ -65,8 +67,22 @@ export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
       rotatable: true,
       woodType: MATERIAL_CONFIG.defaultWoodType,
       blockId: undefined, // Explicitly set to undefined to ensure "Bez bloku" is selected by default
+      edges: {
+        top: 'none',
+        right: 'none',
+        bottom: 'none',
+        left: 'none',
+      },
     },
   })
+
+  // Watch edges for controlled updates
+  const currentEdges = watch('edges')
+
+  const handleEdgeUpdate = (edge: string, value: EdgeValue) => {
+    const edgePath = `edges.${edge}` as keyof PartFormData
+    setValue(edgePath, value, { shouldValidate: true })
+  }
 
   const onSubmit = (data: PartFormData) => {
     // Ensure all values are numbers, not strings
@@ -87,16 +103,37 @@ export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
       width: undefined, // Clear width field
       height: undefined, // Clear height field
       label: '', // Clear label field
+      edges: {
+        top: 'none',
+        right: 'none',
+        bottom: 'none',
+        left: 'none',
+      },
     })
   }
 
   return (
     <Card>
-      <CardTitle>Pridať nový diel</CardTitle>
+      <CardHeader>
+        <CardTitle>Pridať nový diel</CardTitle>
+        <NameInputContainer>
+          <FormField
+            label="Názov dielu (voliteľné)"
+            htmlFor="label"
+          >
+            <Input
+              id="label"
+              type="text"
+              placeholder="napr. Polička, Dvierka..."
+              {...register('label')}
+            />
+          </FormField>
+        </NameInputContainer>
+      </CardHeader>
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <FormGrid>
-          {/* Row 1: Basic dimensions */}
+          {/* Row 1: Basic dimensions - thirds layout */}
           <FormField
             label="Šírka (mm)"
             htmlFor="width"
@@ -157,7 +194,7 @@ export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
             />
           </FormField>
 
-          {/* Row 2: Configuration options */}
+          {/* Row 2: Configuration options - thirds layout */}
           <FormField
             label="Blok"
             htmlFor="blockId"
@@ -219,27 +256,31 @@ export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
             </ToggleWrapper>
           </FormField>
 
-          {/* Row 3: Label (full width) */}
-          <FormField
-            label="Názov dielu (voliteľné)"
-            htmlFor="label"
-          >
-            <Input
-              id="label"
-              type="text"
-              placeholder="napr. Polička, Dvierka..."
-              {...register('label')}
-            />
-          </FormField>
+          {/* Row 3: Edge Configuration (full width) */}
+          <EdgeContainer>
+            <FormField
+              label="Hrany"
+            >
+              <EdgeFormSelector
+                edges={currentEdges}
+                onEdgeUpdate={handleEdgeUpdate}
+                size="small"
+                orientation="horizontal"
+              />
+            </FormField>
+          </EdgeContainer>
         </FormGrid>
 
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={!isValid}
-        >
-          Pridať diel
-        </Button>
+        {/* Button row */}
+        <ButtonRow>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={!isValid}
+          >
+            Pridať diel
+          </Button>
+        </ButtonRow>
       </form>
     </Card>
   )

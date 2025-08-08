@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import type { Part } from '../types/simple'
+import type { EdgeValue } from '../utils/edgeConstants'
 import { useLayeredCuttingState } from '../hooks/three-layer'
 import { hasBlockValidationErrors } from '../utils/blockValidation'
 import {
@@ -127,6 +128,18 @@ export const LayeredCuttingApp: React.FC = () => {
     [updateDimensionalPart],
   )
 
+  // Edge update handler for managing part edges
+  const handlePartEdgeUpdate = useCallback(
+    (partId: string, edge: string, value: EdgeValue) => {
+      const edgeKeys = ['top', 'right', 'bottom', 'left'] as const
+      const edgeIndex = edgeKeys.indexOf(edge as typeof edgeKeys[number])
+      if (edgeIndex !== -1) {
+        updatePartEdge(partId, edgeIndex, value)
+      }
+    },
+    [updatePartEdge],
+  )
+
   // Optimized: Memoize selected part to avoid recalculation on every render
   const selectedPart = useMemo(() => {
     return selectedPartId ? getEnhancedPartById(selectedPartId) : null
@@ -204,6 +217,7 @@ export const LayeredCuttingApp: React.FC = () => {
             onPartBlockUpdate={handlePartBlockUpdate}
             onPartRotationUpdate={handlePartRotationUpdate}
             onPartWoodTypeUpdate={updatePartWoodType}
+            onPartEdgeUpdate={handlePartEdgeUpdate}
           />
 
           <MemoizedVisualEnhancementEditor

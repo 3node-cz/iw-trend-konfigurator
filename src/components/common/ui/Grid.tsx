@@ -111,7 +111,7 @@ export const ResponsiveGrid = styled(Grid)<{
 // Legacy compatibility - improved for better parts list layout
 export const GridContainer = styled(Grid).attrs({ $gap: 'lg' })`
   /* Custom styling for parts list layout */
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: 1fr;
   align-items: stretch;
 
   @media (max-width: ${BREAKPOINTS.tablet}) {

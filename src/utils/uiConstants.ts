@@ -151,6 +151,6 @@ export const COMPONENT_DIMENSIONS = {
 
 // Layout constants
 export const LAYOUT = {
-  maxWidth: '1200px',
+  maxWidth: '1440px',
   containerPadding: SPACING.xxl,
 } as const

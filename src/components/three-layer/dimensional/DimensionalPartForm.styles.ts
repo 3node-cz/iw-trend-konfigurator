@@ -13,9 +13,72 @@ export const FormGrid = styled.div`
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
+
+  /* Full width containers that span all columns */
+  .full-width {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
 `
 
-export const FormField = styled(InputGroup)`
+export const CardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 20px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+`
+
+export const ButtonRow = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: 8px;
+
+  @media (max-width: 768px) {
+    justify-content: stretch;
+  }
+`
+
+export const NameInputContainer = styled.div`
+  flex: 1;
+  max-width: 300px;
+  min-width: 200px;
+
+  @media (max-width: 768px) {
+    max-width: none;
+    min-width: auto;
+  }
+`
+
+export const EdgeContainer = styled.div`
+  grid-column: 1 / -1;
+  width: 100%;
+  
+  /* Ensure the FormField and its children take full width */
+  > * {
+    width: 100%;
+    
+    /* Target the FormGroup inside FormField */
+    > div {
+      width: 100%;
+      margin-bottom: 0; /* Remove default margin since we're in a grid */
+      
+      /* Target the EdgeFormSelector container */
+      > div:last-child {
+        width: 100%;
+      }
+    }
+  }
+`
+
+export const StyledFormField = styled(InputGroup)`
   display: flex;
   flex-direction: column;
   justify-content: flex-end; // Align items to bottom for consistent heights

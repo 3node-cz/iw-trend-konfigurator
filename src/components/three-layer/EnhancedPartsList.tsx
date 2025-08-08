@@ -1,5 +1,6 @@
 import React from 'react'
 import type { EnhancedCuttingPart } from '../../hooks/three-layer/useLayeredCuttingState'
+import type { EdgeValue } from '../../utils/edgeConstants'
 import { SPACING } from '../../utils/uiConstants'
 import { MATERIAL_CONFIG } from '../../config/appConfig'
 import { getAvailableBlockNumbers } from '../../utils/blockManagement'
@@ -8,6 +9,8 @@ import {
   validateBlockWoodType,
 } from '../../utils/blockValidation'
 import { PartConfigIndicators } from './visual/PartConfigIndicators'
+import { CompactPartPreview } from './visual/CompactPartPreview'
+import { EdgeFormSelector } from './visual/EdgeFormSelector'
 import {
   Card,
   CardTitle,
@@ -18,6 +21,8 @@ import {
 } from '../common/ui'
 import {
   PartCard,
+  PartCardContent,
+  PartPreviewSection,
   PartTitle,
   PartDimensions,
   PartMetrics,
@@ -46,6 +51,7 @@ interface EnhancedPartsListProps {
   onPartBlockUpdate: (partId: string, blockId: number | undefined) => void
   onPartRotationUpdate: (partId: string, rotatable: boolean) => void
   onPartWoodTypeUpdate: (partId: string, woodType: string) => void
+  onPartEdgeUpdate: (partId: string, edge: string, value: EdgeValue) => void
 }
 
 export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
@@ -60,6 +66,7 @@ export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
     onPartBlockUpdate,
     onPartRotationUpdate,
     onPartWoodTypeUpdate,
+    onPartEdgeUpdate,
   }) => {
     const availableBlocks = getAvailableBlockNumbers(enhancedParts)
 
@@ -141,27 +148,29 @@ export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
                   $selected={selectedPartId === part.id}
                   onClick={() => onPartSelect(part.id)}
                 >
-                  {/* First row: Title and dimensions with indicators on the right */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <ColorIndicator $color={part.color || '#3498db'} />
-                      <div>
-                        <PartTitle>
-                          {part.label || `Diel ${part.width}×${part.height}`}
-                        </PartTitle>
-                        <PartDimensions>
-                          {part.width} × {part.height} mm
-                        </PartDimensions>
+                  {/* Left side: All part content */}
+                  <PartCardContent>
+                    {/* First row: Title and dimensions with config indicators */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <ColorIndicator $color={part.color || '#3498db'} />
+                        <div>
+                          <PartTitle>
+                            {part.label || `Diel ${part.width}×${part.height}`}
+                          </PartTitle>
+                          <PartDimensions>
+                            {part.width} × {part.height} mm
+                          </PartDimensions>
+                        </div>
                       </div>
+                      <PartConfigIndicators part={part} />
                     </div>
-                    <PartConfigIndicators part={part} />
-                  </div>
 
                   {/* Second row: Metrics side by side */}
                   <PartMetrics>
@@ -254,6 +263,16 @@ export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
                     )}
                   </PartControls>
 
+                  {/* Edge Configuration Row */}
+                  <div style={{ marginTop: '12px', width: '100%' }}>
+                    <EdgeFormSelector
+                      edges={part.edges}
+                      onEdgeUpdate={(edge, value) => onPartEdgeUpdate(part.id, edge, value)}
+                      size="small"
+                      orientation="horizontal"
+                    />
+                  </div>
+
                   {/* Fourth row: Actions aligned to right */}
                   <PartActions>
                     <Button
@@ -267,6 +286,12 @@ export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
                       Odstrániť
                     </Button>
                   </PartActions>
+                  </PartCardContent>
+
+                  {/* Right side: Part preview taking full height */}
+                  <PartPreviewSection>
+                    <CompactPartPreview part={part} size={120} />
+                  </PartPreviewSection>
                 </PartCard>
 
                 {blockErrors.length > 0 && (

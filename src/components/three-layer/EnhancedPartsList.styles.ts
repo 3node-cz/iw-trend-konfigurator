@@ -21,8 +21,8 @@ export const PartCard = styled(SelectableItem)`
   background: white;
   border: 2px solid #e1e8ed;
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-direction: row;
+  gap: 16px;
   transition: all 0.2s ease;
   position: relative;
   min-height: 160px; /* Ensure consistent card height */
@@ -41,6 +41,27 @@ export const PartCard = styled(SelectableItem)`
     background: #f8fbff;
     box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
   `}
+`
+
+export const PartCardContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-width: 0; /* Allow content to shrink */
+`
+
+export const PartPreviewSection = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 140px;
+  height: 100%;
+  min-height: 140px;
+  border-left: 1px solid #e1e8ed;
+  padding-left: 16px;
+  margin-left: 16px;
 `
 
 export const PartHeader = styled.div`
