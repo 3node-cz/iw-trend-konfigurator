@@ -24,7 +24,13 @@ import {
   Toggle,
   Input,
 } from '../../common/ui'
-import { FormGrid, ButtonRow, NameInputContainer, CardHeader, EdgeContainer } from './DimensionalPartForm.styles'
+import {
+  FormGrid,
+  ButtonRow,
+  NameInputContainer,
+  CardHeader,
+  EdgeContainer,
+} from './DimensionalPartForm.styles'
 import {
   BlockSelector,
   WoodTypeSelector,
@@ -258,9 +264,7 @@ export const DimensionalPartForm: React.FC<DimensionalPartFormProps> = ({
 
           {/* Row 3: Edge Configuration (full width) */}
           <EdgeContainer>
-            <FormField
-              label="Hrany"
-            >
+            <FormField label="Hrany">
               <EdgeFormSelector
                 edges={currentEdges}
                 onEdgeUpdate={handleEdgeUpdate}

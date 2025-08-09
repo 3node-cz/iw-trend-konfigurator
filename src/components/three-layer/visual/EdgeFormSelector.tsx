@@ -1,6 +1,6 @@
 /**
  * EdgeFormSelector Component
- * 
+ *
  * A compact edge selector component for use in forms and part rows.
  * Displays edge options in a horizontal grid layout.
  */

@@ -3,12 +3,12 @@
  */
 import styled from 'styled-components'
 
-export const CompactPreviewContainer = styled.div<{ 
+export const CompactPreviewContainer = styled.div<{
   $width: number
-  $height: number 
+  $height: number
 }>`
-  width: ${props => props.$width}px;
-  height: ${props => props.$height}px;
+  width: ${(props) => props.$width}px;
+  height: ${(props) => props.$height}px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -36,10 +36,10 @@ export const FramePiece = styled.div<{
   $color: string
 }>`
   position: absolute;
-  left: ${props => props.$x}px;
-  top: ${props => props.$y}px;
-  width: ${props => props.$width}px;
-  height: ${props => props.$height}px;
-  background: ${props => props.$color};
+  left: ${(props) => props.$x}px;
+  top: ${(props) => props.$y}px;
+  width: ${(props) => props.$width}px;
+  height: ${(props) => props.$height}px;
+  background: ${(props) => props.$color};
   opacity: 0.9;
 `

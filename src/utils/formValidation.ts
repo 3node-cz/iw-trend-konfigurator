@@ -89,14 +89,16 @@ export const transformFormDataToPart = (
   orientation: data.rotatable ? 'rotatable' : 'fixed',
   blockId: data.blockId || undefined,
   woodType: data.woodType || undefined,
-  edges: data.edges && Object.values(data.edges).some(edge => edge && edge !== 'none') 
-    ? {
-        top: data.edges.top || 'none',
-        right: data.edges.right || 'none',
-        bottom: data.edges.bottom || 'none',
-        left: data.edges.left || 'none',
-      }
-    : undefined,
+  edges:
+    data.edges &&
+    Object.values(data.edges).some((edge) => edge && edge !== 'none')
+      ? {
+          top: data.edges.top || 'none',
+          right: data.edges.right || 'none',
+          bottom: data.edges.bottom || 'none',
+          left: data.edges.left || 'none',
+        }
+      : undefined,
 })
 
 /**

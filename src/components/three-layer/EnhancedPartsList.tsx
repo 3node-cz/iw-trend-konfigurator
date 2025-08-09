@@ -172,125 +172,130 @@ export const EnhancedPartsList: React.FC<EnhancedPartsListProps> = React.memo(
                       <PartConfigIndicators part={part} />
                     </div>
 
-                  {/* Second row: Metrics side by side */}
-                  <PartMetrics>
-                    <PartMetric>
-                      <div className="value">{part.quantity}</div>
-                      <div className="label">ks</div>
-                    </PartMetric>
-                    <PartMetric>
-                      <div className="value">
-                        {(
-                          (part.width * part.height * part.quantity) /
-                          1000000
-                        ).toFixed(3)}
-                      </div>
-                      <div className="label">m²</div>
-                    </PartMetric>
-                    <PartMetric>
-                      <div className="value">
-                        {((part.width * part.height) / 1000000).toFixed(3)}
-                      </div>
-                      <div className="label">m²/ks</div>
-                    </PartMetric>
-                  </PartMetrics>
+                    {/* Second row: Metrics side by side */}
+                    <PartMetrics>
+                      <PartMetric>
+                        <div className="value">{part.quantity}</div>
+                        <div className="label">ks</div>
+                      </PartMetric>
+                      <PartMetric>
+                        <div className="value">
+                          {(
+                            (part.width * part.height * part.quantity) /
+                            1000000
+                          ).toFixed(3)}
+                        </div>
+                        <div className="label">m²</div>
+                      </PartMetric>
+                      <PartMetric>
+                        <div className="value">
+                          {((part.width * part.height) / 1000000).toFixed(3)}
+                        </div>
+                        <div className="label">m²/ks</div>
+                      </PartMetric>
+                    </PartMetrics>
 
-                  {/* Third row: Controls (Block, Wood Type, Rotation) */}
-                  <PartControls>
-                    {/* Block selector - hidden if frame is enabled */}
-                    {!part.frame?.enabled ? (
-                      <BlockControlsContainer>
-                        <BlockSelector
-                          value={part.blockId || ''}
-                          onChange={(e) =>
-                            handleBlockChange(part.id, e.target.value)
-                          }
-                          onClick={(e) => e.stopPropagation()}
-                          title="Priradiť k bloku pre zoskupenie na doske"
-                        >
-                          <option value="">Bez bloku</option>
-                          {availableBlocks.map((blockNum) => (
-                            <option
-                              key={blockNum}
-                              value={blockNum}
-                            >
-                              Blok {blockNum}
-                            </option>
-                          ))}
-                        </BlockSelector>
-                        {part.blockId && (
-                          <BlockIndicator
-                            $blockId={part.blockId}
-                            $color={part.color}
+                    {/* Third row: Controls (Block, Wood Type, Rotation) */}
+                    <PartControls>
+                      {/* Block selector - hidden if frame is enabled */}
+                      {!part.frame?.enabled ? (
+                        <BlockControlsContainer>
+                          <BlockSelector
+                            value={part.blockId || ''}
+                            onChange={(e) =>
+                              handleBlockChange(part.id, e.target.value)
+                            }
+                            onClick={(e) => e.stopPropagation()}
+                            title="Priradiť k bloku pre zoskupenie na doske"
                           >
-                            {part.blockId}
-                          </BlockIndicator>
-                        )}
-                      </BlockControlsContainer>
-                    ) : (
-                      <div></div>
-                    )}
+                            <option value="">Bez bloku</option>
+                            {availableBlocks.map((blockNum) => (
+                              <option
+                                key={blockNum}
+                                value={blockNum}
+                              >
+                                Blok {blockNum}
+                              </option>
+                            ))}
+                          </BlockSelector>
+                          {part.blockId && (
+                            <BlockIndicator
+                              $blockId={part.blockId}
+                              $color={part.color}
+                            >
+                              {part.blockId}
+                            </BlockIndicator>
+                          )}
+                        </BlockControlsContainer>
+                      ) : (
+                        <div></div>
+                      )}
 
-                    {/* Wood Type Selector - Always visible */}
-                    <WoodTypeSelector
-                      value={part.woodType || MATERIAL_CONFIG.defaultWoodType}
-                      onChange={(e) =>
-                        handleWoodTypeChange(part.id, e.target.value)
-                      }
-                      onClick={(e) => e.stopPropagation()}
-                      title="Typ dreva pre materiál"
-                    >
-                      {MATERIAL_CONFIG.woodTypes.map((wood) => (
-                        <option
-                          key={wood.id}
-                          value={wood.id}
-                        >
-                          {wood.name}
-                        </option>
-                      ))}
-                    </WoodTypeSelector>
-
-                    {/* Rotation control - hidden if frame is enabled */}
-                    {!part.frame?.enabled ? (
-                      <RotationToggle
-                        checked={part.orientation === 'rotatable'}
-                        onChange={(checked) =>
-                          handleRotationChange(part.id, checked)
+                      {/* Wood Type Selector - Always visible */}
+                      <WoodTypeSelector
+                        value={part.woodType || MATERIAL_CONFIG.defaultWoodType}
+                        onChange={(e) =>
+                          handleWoodTypeChange(part.id, e.target.value)
                         }
+                        onClick={(e) => e.stopPropagation()}
+                        title="Typ dreva pre materiál"
+                      >
+                        {MATERIAL_CONFIG.woodTypes.map((wood) => (
+                          <option
+                            key={wood.id}
+                            value={wood.id}
+                          >
+                            {wood.name}
+                          </option>
+                        ))}
+                      </WoodTypeSelector>
+
+                      {/* Rotation control - hidden if frame is enabled */}
+                      {!part.frame?.enabled ? (
+                        <RotationToggle
+                          checked={part.orientation === 'rotatable'}
+                          onChange={(checked) =>
+                            handleRotationChange(part.id, checked)
+                          }
+                        />
+                      ) : (
+                        <div></div>
+                      )}
+                    </PartControls>
+
+                    {/* Edge Configuration Row */}
+                    <div style={{ marginTop: '12px', width: '100%' }}>
+                      <EdgeFormSelector
+                        edges={part.edges}
+                        onEdgeUpdate={(edge, value) =>
+                          onPartEdgeUpdate(part.id, edge, value)
+                        }
+                        size="small"
+                        orientation="horizontal"
                       />
-                    ) : (
-                      <div></div>
-                    )}
-                  </PartControls>
+                    </div>
 
-                  {/* Edge Configuration Row */}
-                  <div style={{ marginTop: '12px', width: '100%' }}>
-                    <EdgeFormSelector
-                      edges={part.edges}
-                      onEdgeUpdate={(edge, value) => onPartEdgeUpdate(part.id, edge, value)}
-                      size="small"
-                      orientation="horizontal"
-                    />
-                  </div>
-
-                  {/* Fourth row: Actions aligned to right */}
-                  <PartActions>
-                    <Button
-                      variant="danger"
-                      size="small"
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation()
-                        onRemovePart(part.id)
-                      }}
-                    >
-                      Odstrániť
-                    </Button>
-                  </PartActions>
+                    {/* Fourth row: Actions aligned to right */}
+                    <PartActions>
+                      <Button
+                        variant="danger"
+                        size="small"
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation()
+                          onRemovePart(part.id)
+                        }}
+                      >
+                        Odstrániť
+                      </Button>
+                    </PartActions>
                   </PartCardContent>
 
                   {/* Right side: Part preview taking full height */}
                   <PartPreviewSection>
-                    <CompactPartPreview part={part} size={120} />
+                    <CompactPartPreview
+                      part={part}
+                      size={120}
+                    />
                   </PartPreviewSection>
                 </PartCard>
 

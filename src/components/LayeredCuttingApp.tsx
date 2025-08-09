@@ -132,7 +132,7 @@ export const LayeredCuttingApp: React.FC = () => {
   const handlePartEdgeUpdate = useCallback(
     (partId: string, edge: string, value: EdgeValue) => {
       const edgeKeys = ['top', 'right', 'bottom', 'left'] as const
-      const edgeIndex = edgeKeys.indexOf(edge as typeof edgeKeys[number])
+      const edgeIndex = edgeKeys.indexOf(edge as (typeof edgeKeys)[number])
       if (edgeIndex !== -1) {
         updatePartEdge(partId, edgeIndex, value)
       }

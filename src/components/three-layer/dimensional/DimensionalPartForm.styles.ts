@@ -60,16 +60,16 @@ export const NameInputContainer = styled.div`
 export const EdgeContainer = styled.div`
   grid-column: 1 / -1;
   width: 100%;
-  
+
   /* Ensure the FormField and its children take full width */
   > * {
     width: 100%;
-    
+
     /* Target the FormGroup inside FormField */
     > div {
       width: 100%;
       margin-bottom: 0; /* Remove default margin since we're in a grid */
-      
+
       /* Target the EdgeFormSelector container */
       > div:last-child {
         width: 100%;
