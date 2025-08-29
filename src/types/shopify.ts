@@ -124,3 +124,37 @@ export interface OrderFormData {
   palettePayment: boolean
   notes: string
 }
+
+// Cutting specification interfaces
+export interface EdgeMaterial {
+  id: string
+  name: string
+  productCode: string
+  availability: 'available' | 'unavailable' | 'limited'
+  thickness: number // in mm (0.4, 0.8, 2)
+  warehouse: string
+}
+
+export interface CuttingPiece {
+  id: string
+  partName: string // Názov dielca
+  length: number // in mm
+  width: number // in mm
+  quantity: number
+  glueEdge: boolean // Letokruhy
+  withoutEdge: boolean // Bez orezu
+  duplicate: boolean // Dupel
+  edgeAllAround: string | null // Hrana dookola
+  edgeTop: string | null // Hrana vrch
+  edgeBottom: string | null // Hrana spodok
+  edgeLeft: string | null // Hrana ľavá
+  edgeRight: string | null // Hrana pravá
+  notes: string // Poznámka
+}
+
+export interface CuttingSpecification {
+  material: MaterialSearchResult
+  edgeMaterial: EdgeMaterial | null
+  glueType: string // PUR transparentná/bílá, etc.
+  pieces: CuttingPiece[]
+}

@@ -10,7 +10,7 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Checkbox,
+  Switch,
   FormControlLabel,
   Box,
   Typography,
@@ -319,7 +319,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
             <Grid size={{ xs: 12, md: 6 }}>
               <FormControlLabel
                 control={
-                  <Checkbox
+                  <Switch
                     checked={formData.withoutEdges}
                     onChange={handleCheckboxChange('withoutEdges')}
                   />
@@ -351,7 +351,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
             <Grid size={{ xs: 12, md: 6 }}>
               <FormControlLabel
                 control={
-                  <Checkbox
+                  <Switch
                     checked={formData.palettePayment}
                     onChange={handleCheckboxChange('palettePayment')}
                   />
@@ -406,8 +406,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
               backgroundColor: '#1976d2',
               '&:hover': {
                 backgroundColor: '#1565c0'
-              },
-              textTransform: 'none'
+              }
             }}
           >
             Vytvoriť

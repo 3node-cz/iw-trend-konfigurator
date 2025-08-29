@@ -48,7 +48,6 @@ const OrdersHeader: React.FC<OrdersHeaderProps> = ({ onOrderCreated }) => {
             '&:hover': {
               bgcolor: '#45a049'
             },
-            textTransform: 'none',
             px: 3
           }}
         >

@@ -94,7 +94,7 @@ const OrdersFilters: React.FC = () => {
               <Button
                 variant="contained"
                 startIcon={<SearchIcon />}
-                sx={{ textTransform: 'none', minWidth: 120 }}
+                sx={{ minWidth: 120 }}
               >
                 Hledat
               </Button>
@@ -102,7 +102,7 @@ const OrdersFilters: React.FC = () => {
                 variant="outlined"
                 startIcon={<ClearIcon />}
                 onClick={handleClearFilters}
-                sx={{ textTransform: 'none', minWidth: 120 }}
+                sx={{ minWidth: 120 }}
               >
                 Zrušit filtry
               </Button>

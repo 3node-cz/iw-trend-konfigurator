@@ -195,7 +195,6 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                         '&:hover': {
                           backgroundColor: selectedMaterialIds.includes(material.id) ? '#ccc' : '#45a049'
                         },
-                        textTransform: 'none',
                         fontSize: '12px'
                       }}
                     >
@@ -216,7 +215,6 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
             variant="outlined"
             startIcon={<VisibilityIcon />}
             onClick={() => setShowAllModal(true)}
-            sx={{ textTransform: 'none' }}
           >
             Zobraziť všetky
           </Button>

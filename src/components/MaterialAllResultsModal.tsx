@@ -72,7 +72,6 @@ const MaterialAllResultsModal: React.FC<MaterialAllResultsModalProps> = ({
         <Button
           variant="outlined"
           onClick={onClose}
-          sx={{ textTransform: 'none' }}
         >
           Zavrieť
         </Button>

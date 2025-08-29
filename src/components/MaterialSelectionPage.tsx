@@ -212,7 +212,6 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={onBack}
-          sx={{ textTransform: 'none' }}
         >
           Späť
         </Button>
@@ -243,7 +242,6 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
               startIcon={<ClearIcon />}
               onClick={handleClearSearch}
               size="small"
-              sx={{ textTransform: 'none' }}
             >
               Vymazať výsledky
             </Button>
@@ -290,14 +288,12 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
             <Button
               variant="outlined"
               onClick={() => setSelectedMaterials([])}
-              sx={{ textTransform: 'none' }}
             >
               Zmazať všetko
             </Button>
             <Button
               variant="contained"
               onClick={() => onContinue?.(selectedMaterials)}
-              sx={{ textTransform: 'none' }}
             >
               Pokračovať ({selectedMaterials.length})
             </Button>
