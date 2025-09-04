@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Card,
   CardContent,
@@ -19,7 +19,8 @@ import {
   Search as SearchIcon,
   Clear as ClearIcon
 } from '@mui/icons-material'
-import type { EdgeMaterial } from '../types/shopify'
+import { searchEdgeMaterials } from '../services/shopifyApi'
+import type { EdgeMaterial, MaterialSearchResult } from '../types/shopify'
 
 interface EdgeSelectionCardProps {
   selectedEdge: EdgeMaterial | null
@@ -36,6 +37,7 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
 }) => {
   const [edgeSearchQuery, setEdgeSearchQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
+  const [edgeSearchResults, setEdgeSearchResults] = useState<MaterialSearchResult[]>([])
 
   // Mock edge materials data
   const mockEdgeMaterials: EdgeMaterial[] = [
@@ -100,13 +102,65 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
     }
   }
 
-  const handleEdgeSearch = (query: string) => {
-    setEdgeSearchQuery(query)
-    // TODO: Implement actual edge material search
+  // Debounced search for edge materials
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (edgeSearchQuery.length >= 2) {
+        handleEdgeSearch(edgeSearchQuery)
+      } else {
+        setEdgeSearchResults([])
+      }
+    }, 300)
+
+    return () => clearTimeout(timeoutId)
+  }, [edgeSearchQuery])
+
+  const handleEdgeSearch = async (query: string) => {
+    if (query.length < 2) {
+      setEdgeSearchResults([])
+      return
+    }
+
+    setIsSearching(true)
+    try {
+      console.log('🔍 Searching for edge materials:', query)
+      const results = await searchEdgeMaterials({ 
+        query: query,
+        limit: 10
+      })
+      console.log('✅ Found', results.length, 'edge materials')
+      setEdgeSearchResults(results)
+    } catch (error) {
+      console.error('❌ Edge search error:', error)
+      setEdgeSearchResults([])
+    } finally {
+      setIsSearching(false)
+    }
   }
+
+  const handleSearchInputChange = (query: string) => {
+    setEdgeSearchQuery(query)
+  }
+
+  // Convert MaterialSearchResult to EdgeMaterial
+  const convertToEdgeMaterial = (result: MaterialSearchResult): EdgeMaterial => ({
+    id: result.id,
+    name: result.name,
+    productCode: result.productCode || result.code,
+    availability: result.availability,
+    thickness: 0.8, // Default thickness, could be extracted from dimensions
+    warehouse: result.warehouse
+  })
 
   const handleSelectEdge = (edge: EdgeMaterial) => {
     onEdgeChange(edge)
+    setEdgeSearchQuery('') // Clear search after selection
+    setEdgeSearchResults([]) // Clear results
+  }
+
+  const handleSelectEdgeFromSearch = (result: MaterialSearchResult) => {
+    const edgeMaterial = convertToEdgeMaterial(result)
+    handleSelectEdge(edgeMaterial)
   }
 
   return (
@@ -123,7 +177,7 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
             size="small"
             placeholder="Hľadať hranu..."
             value={edgeSearchQuery}
-            onChange={(e) => handleEdgeSearch(e.target.value)}
+            onChange={(e) => handleSearchInputChange(e.target.value)}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -138,7 +192,7 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
                 <InputAdornment position="end">
                   <Button
                     size="small"
-                    onClick={() => handleEdgeSearch('')}
+                    onClick={() => handleSearchInputChange('')}
                     sx={{ minWidth: 'auto', p: 0.5 }}
                   >
                     <ClearIcon fontSize="small" />
@@ -148,6 +202,47 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
             }}
           />
         </Box>
+
+        {/* Edge Search Results */}
+        {edgeSearchResults.length > 0 && (
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Výsledky vyhľadávania ({edgeSearchResults.length})
+            </Typography>
+            {edgeSearchResults.map((result) => (
+              <Box key={result.id} sx={{ mb: 1 }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => handleSelectEdgeFromSearch(result)}
+                  sx={{ 
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    textAlign: 'left',
+                    px: 2,
+                    py: 1
+                  }}
+                >
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {result.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {result.productCode || result.code} • {result.warehouse}
+                    </Typography>
+                  </Box>
+                  <Chip
+                    label={getAvailabilityText(result.availability)}
+                    size="small"
+                    color={getAvailabilityColor(result.availability)}
+                    variant="outlined"
+                  />
+                </Button>
+              </Box>
+            ))}
+            <Divider sx={{ my: 2 }} />
+          </Box>
+        )}
 
         {/* Selected Edge Display */}
         {selectedEdge ? (

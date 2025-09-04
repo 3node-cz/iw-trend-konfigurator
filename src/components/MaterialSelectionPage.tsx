@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import {
   Box,
   Container,
@@ -12,6 +12,7 @@ import {
 } from '@mui/icons-material'
 import MaterialSearch from './MaterialSearch'
 import MaterialResultsTable from './MaterialResultsTable'
+import { searchMaterials } from '../services/shopifyApi'
 import type { MaterialSearchResult, SelectedMaterial } from '../types/shopify'
 
 interface MaterialSelectionPageProps {
@@ -30,151 +31,33 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query) // Track the current search query
     
     if (query.length < 2) {
       setSearchResults([])
       return
     }
-
+    
     setIsLoading(true)
     try {
-      // TODO: Replace with actual Shopify API call
-      // For now, mock data based on your images
-      const mockResults: MaterialSearchResult[] = [
-        {
-          id: '1',
-          code: 'H1180',
-          name: 'DTD_H1180 ST37 Dub Halifax prírodný 2800/2070/18.6',
-          productCode: '275048',
-          availability: 'available' as const,
-          warehouse: 'Bratislava',
-          price: {
-            amount: 118.8996,
-            currency: 'EUR',
-            perUnit: '/ ks'
-          },
-          totalPrice: {
-            amount: 90.9129,
-            currency: 'EUR'
-          },
-          discountInfo: '32 % / 0 %',
-          quantity: 1,
-          dimensions: {
-            width: 2800,
-            height: 2070,
-            thickness: 18.6
-          }
-        },
-        {
-          id: '2', 
-          code: 'H1180',
-          name: 'DTD_H1181 ST37 Dub Halifax lakovaný 2800/2070/18.6',
-          productCode: '275049',
-          availability: 'available' as const,
-          warehouse: 'Bratislava',
-          price: {
-            amount: 121.8424,
-            currency: 'EUR',
-            perUnit: '/ ks'
-          },
-          totalPrice: {
-            amount: 92.8526,
-            currency: 'EUR'
-          },
-          discountInfo: '32 % / 0 %',
-          quantity: 1
-        },
-        {
-          id: '3',
-          code: 'H1181',
-          name: 'DTD_H1181 ST37 Dub Halifax tmavý 2800/2070/18.6',
-          productCode: '275050',
-          availability: 'limited' as const,
-          warehouse: 'Žilina',
-          price: {
-            amount: 125.5500,
-            currency: 'EUR',
-            perUnit: '/ ks'
-          },
-          totalPrice: {
-            amount: 95.4180,
-            currency: 'EUR'
-          },
-          discountInfo: '24 % / 0 %',
-          quantity: 1
-        },
-        {
-          id: '4',
-          code: 'U999',
-          name: 'DTD_U999 ST9 Dub Sanremo svetlý 2800/2070/18.6',
-          productCode: '275051',
-          availability: 'available' as const,
-          warehouse: 'Bratislava',
-          price: {
-            amount: 110.2000,
-            currency: 'EUR',
-            perUnit: '/ ks'
-          },
-          totalPrice: {
-            amount: 83.9520,
-            currency: 'EUR'
-          },
-          discountInfo: '24 % / 0 %',
-          quantity: 1
-        },
-        {
-          id: '5',
-          code: 'W980',
-          name: 'DTD_W980 ST22 Béžová 2800/2070/18.6',
-          productCode: '275052',
-          availability: 'unavailable' as const,
-          warehouse: 'Partizánske',
-          price: {
-            amount: 98.7500,
-            currency: 'EUR',
-            perUnit: '/ ks'
-          },
-          totalPrice: {
-            amount: 75.0600,
-            currency: 'EUR'
-          },
-          discountInfo: '24 % / 0 %',
-          quantity: 1
-        },
-        {
-          id: '6',
-          code: 'F426',
-          name: 'DTD_F426 ST10 Dekor Buk prírodný 2800/2070/18.6',
-          productCode: '275053',
-          availability: 'available' as const,
-          warehouse: 'Bratislava',
-          price: {
-            amount: 104.3300,
-            currency: 'EUR',
-            perUnit: '/ ks'
-          },
-          totalPrice: {
-            amount: 79.2916,
-            currency: 'EUR'
-          },
-          discountInfo: '24 % / 0 %',
-          quantity: 1
-        }
-      ].filter(item => 
-        item.code.toLowerCase().includes(query.toLowerCase()) ||
-        item.name.toLowerCase().includes(query.toLowerCase())
-      )
+      console.log('🔍 Starting material search for:', query)
       
-      setSearchResults(mockResults)
+      // Use the real Shopify API
+      const results = await searchMaterials({ 
+        query: query,
+        limit: 20
+      })
+      
+      console.log('✅ Search completed. Found', results.length, 'results')
+      setSearchResults(results)
     } catch (error) {
-      console.error('Search error:', error)
+      console.error('❌ Search error:', error)
       setSearchResults([])
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   const handleAddMaterial = (material: MaterialSearchResult) => {
     // Check if material is already selected

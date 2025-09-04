@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Box,
   TextField,
@@ -91,19 +91,6 @@ const MaterialSearch: React.FC<MaterialSearchProps> = ({
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
         <Typography variant="body2" color="text.secondary">
           Produkty
-        </Typography>
-        <Typography 
-          variant="body2" 
-          sx={{ 
-            color: '#666',
-            backgroundColor: '#f5f5f5',
-            px: 1,
-            py: 0.5,
-            borderRadius: 1,
-            fontSize: '12px'
-          }}
-        >
-          Zobraziť všetko (6)
         </Typography>
       </Box>
     </Box>
