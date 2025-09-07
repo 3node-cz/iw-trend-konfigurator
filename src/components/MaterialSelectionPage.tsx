@@ -17,17 +17,19 @@ import type { MaterialSearchResult, SelectedMaterial } from '../types/shopify'
 
 interface MaterialSelectionPageProps {
   orderName?: string
+  initialSelectedMaterials?: SelectedMaterial[]
   onBack?: () => void
   onContinue?: (selectedMaterials: SelectedMaterial[]) => void
 }
 
 const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
   orderName = "Aricoma",
+  initialSelectedMaterials = [],
   onBack,
   onContinue
 }) => {
   const [searchResults, setSearchResults] = useState<MaterialSearchResult[]>([])
-  const [selectedMaterials, setSelectedMaterials] = useState<SelectedMaterial[]>([])
+  const [selectedMaterials, setSelectedMaterials] = useState<SelectedMaterial[]>(initialSelectedMaterials)
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -73,7 +75,8 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
       quantity: material.quantity || 1,
       price: material.price.amount,
       totalPrice: material.totalPrice?.amount || material.price.amount,
-      variantId: `variant-${material.id}`
+      variantId: `variant-${material.id}`,
+      image: material.image // Preserve the image
     }
     
     setSelectedMaterials(prev => [...prev, selectedMaterial])
@@ -89,7 +92,7 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
+    <Container maxWidth={false} sx={{ maxWidth: '1920px', mx: 'auto', py: 3 }}>
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <Button
@@ -161,7 +164,8 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
                 amount: material.totalPrice,
                 currency: 'EUR'
               },
-              quantity: material.quantity
+              quantity: material.quantity,
+              image: material.image // Include the image in the display mapping
             }))}
             onRemoveMaterial={handleRemoveMaterial}
             isSelectedMaterials

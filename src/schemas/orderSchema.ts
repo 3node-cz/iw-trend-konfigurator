@@ -2,7 +2,6 @@ import { z } from 'zod'
 
 const REQUIRED_FIELD_MESSAGE = 'Toto pole je povinné'
 const MIN_LENGTH_MESSAGE = 'Minimálne 2 znaky'
-const INVALID_DATE_MESSAGE = 'Neplatný dátum'
 
 export const orderSchema = z.object({
   company: z.string()
@@ -22,9 +21,7 @@ export const orderSchema = z.object({
     .min(1, REQUIRED_FIELD_MESSAGE)
     .min(2, MIN_LENGTH_MESSAGE),
   
-  deliveryDate: z.date({
-    errorMap: () => ({ message: REQUIRED_FIELD_MESSAGE })
-  }).nullable().refine(date => date !== null, {
+  deliveryDate: z.date().nullable().refine(date => date !== null, {
     message: REQUIRED_FIELD_MESSAGE
   }),
   

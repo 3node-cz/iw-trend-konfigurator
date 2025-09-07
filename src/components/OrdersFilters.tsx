@@ -22,7 +22,6 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 
 const OrdersFilters: React.FC = () => {
   const [orderNumber, setOrderNumber] = useState('')
-  const [orderName, setOrderName] = useState('')
   const [orderState, setOrderState] = useState('')
   const [orderType, setOrderType] = useState('')
   const [dateFrom, setDateFrom] = useState<Date | null>(null)
@@ -31,7 +30,6 @@ const OrdersFilters: React.FC = () => {
 
   const handleClearFilters = () => {
     setOrderNumber('')
-    setOrderName('')
     setOrderState('')
     setOrderType('')
     setDateFrom(null)

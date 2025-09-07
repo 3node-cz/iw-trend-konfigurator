@@ -1,4 +1,4 @@
-import type { OrderFormData, CuttingSpecification, MaterialSearchParams, MaterialSearchResult } from '../types/shopify'
+import type { MaterialSearchParams, MaterialSearchResult, CompleteOrder } from '../types/shopify'
 
 
 // Frontend-safe Shopify configuration (Storefront API only)
@@ -9,12 +9,6 @@ const SHOPIFY_STOREFRONT_CONFIG = {
 
 // ⚠️ NEVER put Admin API credentials in frontend!
 // Admin API calls should go through your backend API
-
-interface CompleteOrder {
-  order: OrderFormData
-  specification: CuttingSpecification
-  submittedAt: Date
-}
 
 // Shopify Storefront API for searching materials
 export const searchMaterials = async (params: MaterialSearchParams): Promise<MaterialSearchResult[]> => {
@@ -27,6 +21,18 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
             title
             handle
             description
+            featuredImage {
+              url
+              altText
+            }
+            images(first: 3) {
+              edges {
+                node {
+                  url
+                  altText
+                }
+              }
+            }
             variants(first: 1) {
               edges {
                 node {
@@ -42,6 +48,10 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
                   }
                   availableForSale
                   quantityAvailable
+                  image {
+                    url
+                    altText
+                  }
                 }
               }
             }
@@ -130,7 +140,10 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
           amount: parseFloat(variant.compareAtPrice.amount),
           currency: variant.compareAtPrice.currencyCode
         } : undefined,
-        dimensions: metafields.dimensions ? JSON.parse(metafields.dimensions) : undefined
+        dimensions: metafields.dimensions ? JSON.parse(metafields.dimensions) : undefined,
+        image: variant?.image?.url || product.featuredImage?.url,
+        images: product.images?.edges?.map((edge: any) => edge.node.url) || [],
+        description: product.description
       } as MaterialSearchResult
     })
   } catch (error) {
@@ -141,15 +154,14 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
 
 // Submit complete order to Shopify (Admin API)
 export const submitOrderToShopify = async (completeOrder: CompleteOrder): Promise<any> => {
-  const { order, specification } = completeOrder
+  const { order, specification: specifications } = completeOrder
 
   // Prepare order data for Shopify
   const shopifyOrder = {
     order: {
       email: 'orders@iwtrend.sk', // Default email or from order
-      line_items: [
-        // Main material
-        {
+      line_items: specifications.flatMap((specification, index) => {
+        const materialLineItem = {
           variant_id: specification.material.id,
           quantity: specification.pieces.reduce((sum, piece) => sum + piece.quantity, 0),
           properties: [
@@ -164,21 +176,31 @@ export const submitOrderToShopify = async (completeOrder: CompleteOrder): Promis
             {
               name: 'Typ lepidla',
               value: specification.glueType
+            },
+            {
+              name: 'Materiál číslo',
+              value: (index + 1).toString()
             }
           ]
-        },
-        // Edge material (if selected)
-        ...(specification.edgeMaterial ? [{
+        }
+
+        const edgeLineItem = specification.edgeMaterial ? {
           variant_id: specification.edgeMaterial.id,
           quantity: 1, // Calculate based on pieces
           properties: [
             {
               name: 'Typ hrany',
               value: 'Hrana'
+            },
+            {
+              name: 'Materiál číslo',
+              value: (index + 1).toString()
             }
           ]
-        }] : [])
-      ],
+        } : null
+
+        return [materialLineItem, edgeLineItem].filter(Boolean)
+      }),
       shipping_address: {
         company: order.company,
         address1: order.transferLocation,
@@ -190,8 +212,8 @@ export const submitOrderToShopify = async (completeOrder: CompleteOrder): Promis
       metafields: [
         {
           namespace: 'cutting_specification',
-          key: 'pieces',
-          value: JSON.stringify(specification.pieces),
+          key: 'specifications',
+          value: JSON.stringify(specifications),
           type: 'json'
         },
         {
@@ -214,6 +236,7 @@ export const submitOrderToShopify = async (completeOrder: CompleteOrder): Promis
     // NOTE: This function currently won't work because Admin API access is not configured
     // Admin API calls should go through your backend server, not frontend
     console.warn('⚠️ Admin API calls should be handled by backend server')
+    console.log('Order would be submitted:', shopifyOrder)
     
     throw new Error('Order submission must be implemented on backend server for security')
   } catch (error) {

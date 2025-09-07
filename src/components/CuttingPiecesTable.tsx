@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useEffect } from 'react'
+import React, { useMemo, useCallback } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -13,10 +13,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
   IconButton,
   Box,
   Typography,
@@ -26,6 +22,7 @@ import {
   Delete as DeleteIcon
 } from '@mui/icons-material'
 import type { CuttingPiece, EdgeMaterial } from '../types/shopify'
+import { DebouncedTextInput, DebouncedNumberInput, EdgeThicknessSelect, HeaderWithHint, EdgeOrientationHint } from './common'
 
 interface CuttingPiecesTableProps {
   pieces: CuttingPiece[]
@@ -36,106 +33,22 @@ interface CuttingPiecesTableProps {
 
 const columnHelper = createColumnHelper<CuttingPiece>()
 
-// Debounced Text Input Component
-const DebouncedTextInput: React.FC<{
-  initialValue: string
-  onChange: (value: string) => void
-  placeholder?: string
-  sx?: any
-  multiline?: boolean
-  rows?: number
-}> = ({ initialValue, onChange, placeholder, sx, multiline, rows }) => {
-  const [value, setValue] = useState(initialValue)
-
-  // Update local state when initialValue changes
-  useEffect(() => {
-    setValue(initialValue)
-  }, [initialValue])
-
-  // Debounced onChange
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      if (value !== initialValue) {
-        onChange(value)
-      }
-    }, 600)
-
-    return () => clearTimeout(handler)
-  }, [value, onChange, initialValue])
-
-  return (
-    <TextField
-      value={value}
-      onChange={(e) => setValue(e.target.value)}
-      onBlur={() => onChange(value)} // Also update on blur for immediate feedback
-      placeholder={placeholder}
-      sx={sx}
-      multiline={multiline}
-      rows={rows}
-    />
-  )
-}
-
-// Debounced Number Input Component
-const DebouncedNumberInput: React.FC<{
-  initialValue: number
-  onChange: (value: number) => void
-  min?: number
-  sx?: any
-}> = ({ initialValue, onChange, min, sx }) => {
-  const [value, setValue] = useState(initialValue.toString())
-
-  // Update local state when initialValue changes
-  useEffect(() => {
-    setValue(initialValue.toString())
-  }, [initialValue])
-
-  // Debounced onChange
-  useEffect(() => {
-    const numValue = Number(value)
-    const handler = setTimeout(() => {
-      if (numValue !== initialValue && !isNaN(numValue)) {
-        onChange(numValue)
-      }
-    }, 600)
-
-    return () => clearTimeout(handler)
-  }, [value, onChange, initialValue])
-
-  const handleBlur = () => {
-    const numValue = Number(value)
-    if (!isNaN(numValue)) {
-      onChange(numValue)
-    } else {
-      setValue(initialValue.toString()) // Reset to initial value if invalid
-    }
-  }
-
-  return (
-    <TextField
-      type="number"
-      value={value}
-      onChange={(e) => setValue(e.target.value)}
-      onBlur={handleBlur}
-      sx={sx}
-      slotProps={{ htmlInput: { min } }}
-    />
-  )
-}
-
 const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   pieces,
   edgeMaterial,
   onPieceChange,
   onRemovePiece
 }) => {
-  const edgeOptions = useMemo(() => {
-    if (!edgeMaterial) return []
-    return [
-      { value: edgeMaterial.id, label: edgeMaterial.name },
-      { value: 'none', label: 'Bez hrany' }
-    ]
-  }, [edgeMaterial])
+  // Edge thickness selection - no longer need to create options from edgeMaterial
+
+  // Memoized change handlers to prevent unnecessary re-renders
+  const handlePieceChange = useCallback((pieceId: string, updates: Partial<CuttingPiece>) => {
+    onPieceChange(pieceId, updates)
+  }, [onPieceChange])
+
+  const handleRemovePiece = useCallback((pieceId: string) => {
+    onRemovePiece(pieceId)
+  }, [onRemovePiece])
 
   const columns = useMemo<ColumnDef<CuttingPiece, any>[]>(() => [
     // Row number
@@ -147,17 +60,18 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
           {row.index + 1}
         </Typography>
       ),
-      size: 50
+      size: 40
     }),
 
     // Part Name
     columnHelper.accessor('partName', {
       header: 'Názov dielca',
+      size: 130,
       cell: ({ row, getValue }) => (
         <DebouncedTextInput
           initialValue={getValue() || ''}
-          onChange={(value) => onPieceChange(row.original.id, { partName: value })}
-          sx={{ minWidth: 150 }}
+          onChange={(value) => handlePieceChange(row.original.id, { partName: value })}
+          sx={{ minWidth: 120 }}
           placeholder="Názov dielca"
         />
       )
@@ -166,11 +80,12 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
     // Length
     columnHelper.accessor('length', {
       header: 'Dĺžka',
+      size: 100,
       cell: ({ row, getValue }) => (
         <DebouncedNumberInput
           initialValue={getValue() || 0}
-          onChange={(value) => onPieceChange(row.original.id, { length: value })}
-          sx={{ width: 120 }}
+          onChange={(value) => handlePieceChange(row.original.id, { length: value })}
+          sx={{ width: 90 }}
           min={0}
         />
       )
@@ -179,11 +94,12 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
     // Width
     columnHelper.accessor('width', {
       header: 'Šírka',
+      size: 100,
       cell: ({ row, getValue }) => (
         <DebouncedNumberInput
           initialValue={getValue() || 0}
-          onChange={(value) => onPieceChange(row.original.id, { width: value })}
-          sx={{ width: 120 }}
+          onChange={(value) => handlePieceChange(row.original.id, { width: value })}
+          sx={{ width: 90 }}
           min={0}
         />
       )
@@ -192,11 +108,12 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
     // Quantity
     columnHelper.accessor('quantity', {
       header: 'Počet',
+      size: 80,
       cell: ({ row, getValue }) => (
         <DebouncedNumberInput
           initialValue={getValue()}
-          onChange={(value) => onPieceChange(row.original.id, { quantity: value })}
-          sx={{ width: 80 }}
+          onChange={(value) => handlePieceChange(row.original.id, { quantity: value })}
+          sx={{ width: 70 }}
           min={1}
         />
       )
@@ -205,10 +122,11 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
     // Letokruhy
     columnHelper.accessor('glueEdge', {
       header: 'Letokruhy',
+      size: 80,
       cell: ({ row, getValue }) => (
         <Switch
           checked={getValue()}
-          onChange={(e) => onPieceChange(row.original.id, { glueEdge: e.target.checked })}
+          onChange={(e) => handlePieceChange(row.original.id, { glueEdge: e.target.checked })}
         />
       )
     }),
@@ -216,10 +134,11 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
     // Without Edge
     columnHelper.accessor('withoutEdge', {
       header: 'Bez orezu',
+      size: 80,
       cell: ({ row, getValue }) => (
         <Switch
           checked={getValue()}
-          onChange={(e) => onPieceChange(row.original.id, { withoutEdge: e.target.checked })}
+          onChange={(e) => handlePieceChange(row.original.id, { withoutEdge: e.target.checked })}
         />
       )
     }),
@@ -227,10 +146,11 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
     // Dupel
     columnHelper.accessor('duplicate', {
       header: 'Dupel',
+      size: 70,
       cell: ({ row, getValue }) => (
         <Switch
           checked={getValue()}
-          onChange={(e) => onPieceChange(row.original.id, { duplicate: e.target.checked })}
+          onChange={(e) => handlePieceChange(row.original.id, { duplicate: e.target.checked })}
         />
       )
     }),
@@ -238,126 +158,106 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
     // Edge All Around
     columnHelper.accessor('edgeAllAround', {
       header: 'Hrana dookola',
+      size: 90,
       cell: ({ row, getValue }) => (
-        <FormControl sx={{ minWidth: 150 }}>
-          <Select
-            value={getValue() || ''}
-            onChange={(e) => onPieceChange(row.original.id, { edgeAllAround: e.target.value || null })}
-            displayEmpty
-          >
-            <MenuItem value="">
-              <em>Žiadna</em>
-            </MenuItem>
-            {edgeOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <EdgeThicknessSelect
+          value={getValue()}
+          onChange={(value) => handlePieceChange(row.original.id, { edgeAllAround: value })}
+          edgeMaterial={edgeMaterial}
+          minWidth={80}
+        />
       )
     }),
 
     // Edge Top
     columnHelper.accessor('edgeTop', {
-      header: 'Hrana vrch',
+      header: () => (
+        <HeaderWithHint
+          title="Hrana vrch"
+          hintTitle="Orientácia hrán"
+          hintContent={<EdgeOrientationHint />}
+        />
+      ),
+      size: 90,
       cell: ({ row, getValue }) => (
-        <FormControl sx={{ minWidth: 150 }}>
-          <Select
-            value={getValue() || ''}
-            onChange={(e) => onPieceChange(row.original.id, { edgeTop: e.target.value || null })}
-            displayEmpty
-          >
-            <MenuItem value="">
-              <em>Žiadna</em>
-            </MenuItem>
-            {edgeOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <EdgeThicknessSelect
+          value={getValue()}
+          onChange={(value) => handlePieceChange(row.original.id, { edgeTop: value })}
+          edgeMaterial={edgeMaterial}
+          minWidth={80}
+        />
       )
     }),
 
     // Edge Bottom
     columnHelper.accessor('edgeBottom', {
-      header: 'Hrana spodok',
+      header: () => (
+        <HeaderWithHint
+          title="Hrana spodok"
+          hintTitle="Orientácia hrán"
+          hintContent={<EdgeOrientationHint />}
+        />
+      ),
+      size: 90,
       cell: ({ row, getValue }) => (
-        <FormControl sx={{ minWidth: 150 }}>
-          <Select
-            value={getValue() || ''}
-            onChange={(e) => onPieceChange(row.original.id, { edgeBottom: e.target.value || null })}
-            displayEmpty
-          >
-            <MenuItem value="">
-              <em>Žiadna</em>
-            </MenuItem>
-            {edgeOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <EdgeThicknessSelect
+          value={getValue()}
+          onChange={(value) => handlePieceChange(row.original.id, { edgeBottom: value })}
+          edgeMaterial={edgeMaterial}
+          minWidth={80}
+        />
       )
     }),
 
     // Edge Left
     columnHelper.accessor('edgeLeft', {
-      header: 'Hrana ľavá',
+      header: () => (
+        <HeaderWithHint
+          title="Hrana ľavá"
+          hintTitle="Orientácia hrán"
+          hintContent={<EdgeOrientationHint />}
+        />
+      ),
+      size: 90,
       cell: ({ row, getValue }) => (
-        <FormControl sx={{ minWidth: 150 }}>
-          <Select
-            value={getValue() || ''}
-            onChange={(e) => onPieceChange(row.original.id, { edgeLeft: e.target.value || null })}
-            displayEmpty
-          >
-            <MenuItem value="">
-              <em>Žiadna</em>
-            </MenuItem>
-            {edgeOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <EdgeThicknessSelect
+          value={getValue()}
+          onChange={(value) => handlePieceChange(row.original.id, { edgeLeft: value })}
+          edgeMaterial={edgeMaterial}
+          minWidth={80}
+        />
       )
     }),
 
     // Edge Right
     columnHelper.accessor('edgeRight', {
-      header: 'Hrana pravá',
+      header: () => (
+        <HeaderWithHint
+          title="Hrana pravá"
+          hintTitle="Orientácia hrán"
+          hintContent={<EdgeOrientationHint />}
+        />
+      ),
+      size: 90,
       cell: ({ row, getValue }) => (
-        <FormControl sx={{ minWidth: 150 }}>
-          <Select
-            value={getValue() || ''}
-            onChange={(e) => onPieceChange(row.original.id, { edgeRight: e.target.value || null })}
-            displayEmpty
-          >
-            <MenuItem value="">
-              <em>Žiadna</em>
-            </MenuItem>
-            {edgeOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <EdgeThicknessSelect
+          value={getValue()}
+          onChange={(value) => handlePieceChange(row.original.id, { edgeRight: value })}
+          edgeMaterial={edgeMaterial}
+          minWidth={80}
+        />
       )
     }),
 
     // Notes
     columnHelper.accessor('notes', {
       header: 'Poznámka',
+      size: 160,
       cell: ({ row, getValue }) => (
         <DebouncedTextInput
           initialValue={getValue()}
-          onChange={(value) => onPieceChange(row.original.id, { notes: value })}
-          sx={{ minWidth: 200 }}
+          onChange={(value) => handlePieceChange(row.original.id, { notes: value })}
+          sx={{ minWidth: 150 }}
           multiline
           rows={1}
         />
@@ -372,14 +272,14 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         <IconButton
           size="small"
           color="error"
-          onClick={() => onRemovePiece(row.original.id)}
+          onClick={() => handleRemovePiece(row.original.id)}
         >
           <DeleteIcon />
         </IconButton>
       ),
-      size: 80
+      size: 70
     })
-  ], [edgeOptions, onPieceChange, onRemovePiece])
+  ], [edgeMaterial, handlePieceChange, handleRemovePiece])
 
   const table = useReactTable({
     data: pieces,
@@ -421,7 +321,9 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                     fontWeight: 600,
                     backgroundColor: '#f5f5f5',
                     whiteSpace: 'nowrap',
-                    minWidth: header.column.columnDef.size || 'auto'
+                    minWidth: header.column.columnDef.size || 'auto',
+                    py: 1,
+                    px: 1
                   }}
                 >
                   {flexRender(header.column.columnDef.header, header.getContext())}
@@ -437,7 +339,8 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                 <TableCell 
                   key={cell.id}
                   sx={{ 
-                    py: 1,
+                    py: 0.5,
+                    px: 1,
                     verticalAlign: 'top'
                   }}
                 >

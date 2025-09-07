@@ -1,80 +1,63 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Container } from '@mui/material'
 import OrdersPage from './components/OrdersPage'
 import MaterialSelectionPage from './components/MaterialSelectionPage'
 import CuttingSpecificationPage from './components/CuttingSpecificationPage'
 import OrderRecapitulationPage from './components/OrderRecapitulationPage'
+import CuttingLayoutDemo from './components/CuttingLayoutDemo'
 import { submitOrderToShopify } from './services/shopifyApi'
-import type { SelectedMaterial, OrderFormData, MaterialSearchResult, CuttingSpecification } from './types/shopify'
+import type { SelectedMaterial, OrderFormData, CuttingSpecification, CompleteOrder } from './types/shopify'
 
-type AppView = 'orders' | 'material-selection' | 'cutting-specification' | 'recapitulation'
-
-interface CompleteOrder {
-  order: OrderFormData
-  specification: CuttingSpecification
-  submittedAt: Date
-}
+type AppView = 'orders' | 'material-selection' | 'cutting-specification' | 'recapitulation' | 'cutting-demo'
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('orders')
   const [currentOrder, setCurrentOrder] = useState<OrderFormData | null>(null)
-  const [selectedMaterial, setSelectedMaterial] = useState<MaterialSearchResult | null>(null)
-  const [cuttingSpecification, setCuttingSpecification] = useState<CuttingSpecification | null>(null)
+  const [selectedMaterials, setSelectedMaterials] = useState<SelectedMaterial[]>([])
+  const [cuttingSpecifications, setCuttingSpecifications] = useState<CuttingSpecification[]>([])
 
   const handleOrderCreated = (orderData: OrderFormData) => {
     setCurrentOrder(orderData)
     setCurrentView('material-selection')
+    // Scroll to top when navigating to material selection
+    window.scrollTo(0, 0)
   }
 
   const handleBackToOrders = () => {
     setCurrentView('orders')
     setCurrentOrder(null)
-    setSelectedMaterial(null)
-    setCuttingSpecification(null)
+    setSelectedMaterials([])
+    setCuttingSpecifications([])
+    // Scroll to top when going back to orders
+    window.scrollTo(0, 0)
   }
 
   const handleBackToMaterialSelection = () => {
     setCurrentView('material-selection')
-    setSelectedMaterial(null)
-    setCuttingSpecification(null)
+    // Don't reset selectedMaterials or cutting specs - preserve them when going back
+    window.scrollTo(0, 0)
   }
 
   const handleBackToCuttingSpecification = () => {
     setCurrentView('cutting-specification')
+    window.scrollTo(0, 0)
   }
 
-  const handleMaterialSelectionComplete = (selectedMaterials: SelectedMaterial[]) => {
-    // For now, take the first selected material to proceed to cutting specification
-    // TODO: Handle multiple materials - create separate cutting spec for each
-    if (selectedMaterials.length > 0) {
-      // Convert SelectedMaterial back to MaterialSearchResult format
-      const materialResult: MaterialSearchResult = {
-        id: selectedMaterials[0].id,
-        code: selectedMaterials[0].code,
-        name: selectedMaterials[0].name,
-        productCode: '', // Would need to store this
-        availability: 'available' as const,
-        warehouse: '',
-        price: {
-          amount: selectedMaterials[0].price,
-          currency: 'EUR',
-          perUnit: '/ ks'
-        },
-        totalPrice: {
-          amount: selectedMaterials[0].totalPrice,
-          currency: 'EUR'
-        },
-        quantity: selectedMaterials[0].quantity
-      }
-      
-      setSelectedMaterial(materialResult)
+  const handleMaterialSelectionComplete = (materials: SelectedMaterial[]) => {
+    // Store all selected materials
+    setSelectedMaterials(materials)
+    
+    if (materials.length > 0) {
       setCurrentView('cutting-specification')
+      window.scrollTo(0, 0)
     }
   }
 
-  const handleCuttingSpecificationComplete = (specification: CuttingSpecification) => {
-    setCuttingSpecification(specification)
+  const handleCuttingSpecificationComplete = (specifications: CuttingSpecification[]) => {
+    // Save all cutting specifications
+    setCuttingSpecifications(specifications)
     setCurrentView('recapitulation')
+    window.scrollTo(0, 0)
   }
 
   const handleOrderSubmit = async (completeOrder: CompleteOrder) => {
@@ -85,8 +68,8 @@ function App() {
       // Reset state and go back to orders
       setCurrentView('orders')
       setCurrentOrder(null)
-      setSelectedMaterial(null)
-      setCuttingSpecification(null)
+      setSelectedMaterials([])
+      setCuttingSpecifications([])
     } catch (error) {
       console.error('Failed to submit order:', error)
       // Handle error - could show error message to user
@@ -101,25 +84,48 @@ function App() {
       {currentView === 'material-selection' && currentOrder && (
         <MaterialSelectionPage
           orderName={currentOrder.orderName}
+          initialSelectedMaterials={selectedMaterials}
           onBack={handleBackToOrders}
           onContinue={handleMaterialSelectionComplete}
         />
       )}
-      {currentView === 'cutting-specification' && currentOrder && selectedMaterial && (
+      {currentView === 'cutting-specification' && currentOrder && selectedMaterials.length > 0 && (
         <CuttingSpecificationPage
-          material={selectedMaterial}
+          materials={selectedMaterials.map(material => ({
+            id: material.id,
+            code: material.code,
+            name: material.name,
+            productCode: material.code,
+            availability: 'available' as const,
+            warehouse: 'Bratislava',
+            price: {
+              amount: material.price,
+              currency: 'EUR',
+              perUnit: '/ ks'
+            },
+            totalPrice: {
+              amount: material.totalPrice,
+              currency: 'EUR'
+            },
+            quantity: material.quantity,
+            image: material.image
+          }))}
           orderName={currentOrder.orderName}
+          existingSpecifications={cuttingSpecifications}
           onBack={handleBackToMaterialSelection}
           onContinue={handleCuttingSpecificationComplete}
         />
       )}
-      {currentView === 'recapitulation' && currentOrder && cuttingSpecification && (
+      {currentView === 'recapitulation' && currentOrder && cuttingSpecifications.length > 0 && (
         <OrderRecapitulationPage
           order={currentOrder}
-          specification={cuttingSpecification}
+          specifications={cuttingSpecifications}
           onBack={handleBackToCuttingSpecification}
           onSubmitOrder={handleOrderSubmit}
         />
+      )}
+      {currentView === 'cutting-demo' && (
+        <CuttingLayoutDemo />
       )}
     </Container>
   )

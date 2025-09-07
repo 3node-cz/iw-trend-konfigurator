@@ -56,6 +56,10 @@ export interface MaterialSearchResult {
     height: number
     thickness: number
   }
+  image?: string // Featured product image URL
+  grainDirection?: 'horizontal' | 'vertical' // Wood grain direction for visualization
+  images?: string[] // Additional product images
+  description?: string // Product description
 }
 
 export interface CollectionHierarchy {
@@ -98,6 +102,7 @@ export interface SelectedMaterial {
   price: number
   totalPrice: number
   variantId: string
+  image?: string // Add image field
 }
 
 export interface MaterialSearchParams {
@@ -131,8 +136,10 @@ export interface EdgeMaterial {
   name: string
   productCode: string
   availability: 'available' | 'unavailable' | 'limited'
-  thickness: number // in mm (0.4, 0.8, 2)
+  thickness: number // Current/default thickness in mm
+  availableThicknesses: number[] // Available thickness options in mm (e.g., [0.4, 0.8, 2])
   warehouse: string
+  image?: string // Optional edge material image
 }
 
 export interface CuttingPiece {
@@ -144,11 +151,11 @@ export interface CuttingPiece {
   glueEdge: boolean // Letokruhy
   withoutEdge: boolean // Bez orezu
   duplicate: boolean // Dupel
-  edgeAllAround: string | null // Hrana dookola
-  edgeTop: string | null // Hrana vrch
-  edgeBottom: string | null // Hrana spodok
-  edgeLeft: string | null // Hrana ľavá
-  edgeRight: string | null // Hrana pravá
+  edgeAllAround: number | null // Hrana dookola - thickness in mm (0.8, 1, 2)
+  edgeTop: number | null // Hrana vrch - thickness in mm
+  edgeBottom: number | null // Hrana spodok - thickness in mm
+  edgeLeft: number | null // Hrana ľavá - thickness in mm
+  edgeRight: number | null // Hrana pravá - thickness in mm
   notes: string // Poznámka
 }
 
@@ -157,4 +164,11 @@ export interface CuttingSpecification {
   edgeMaterial: EdgeMaterial | null
   glueType: string // PUR transparentná/bílá, etc.
   pieces: CuttingPiece[]
+}
+
+// Complete order for submission
+export interface CompleteOrder {
+  order: OrderFormData
+  specification: CuttingSpecification[]
+  submittedAt: Date
 }

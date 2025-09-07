@@ -2,15 +2,12 @@ import React, { useState, useEffect } from 'react'
 import {
   Box,
   Container,
-  Typography,
-  Button,
   Alert,
   Collapse,
   IconButton
 } from '@mui/material'
 import {
-  Close as CloseIcon,
-  Add as AddIcon
+  Close as CloseIcon
 } from '@mui/icons-material'
 import OrdersHeader from './OrdersHeader'
 import OrdersFilters from './OrdersFilters'
@@ -67,7 +64,7 @@ const OrdersPage: React.FC<OrdersPageProps> = ({ onOrderCreated }) => {
         </Alert>
       </Collapse>
 
-      <Container maxWidth="xl" sx={{ py: 3 }}>
+      <Container maxWidth={false} sx={{ maxWidth: '1920px', mx: 'auto', py: 3 }}>
         <OrdersHeader onOrderCreated={handleOrderCreated} />
         <OrdersFilters />
         <OrdersTable />

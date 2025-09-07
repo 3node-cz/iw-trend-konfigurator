@@ -17,25 +17,41 @@ import CuttingPiecesTable from './CuttingPiecesTable'
 import type { MaterialSearchResult, CuttingSpecification, CuttingPiece, EdgeMaterial } from '../types/shopify'
 
 interface CuttingSpecificationPageProps {
-  material: MaterialSearchResult
+  materials: MaterialSearchResult[]
   orderName: string
+  existingSpecifications?: CuttingSpecification[]
   onBack?: () => void
-  onContinue?: (specification: CuttingSpecification) => void
+  onContinue?: (specifications: CuttingSpecification[]) => void
 }
 
 const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
-  material,
+  materials,
   orderName,
+  existingSpecifications = [],
   onBack,
   onContinue
 }) => {
-  const [selectedEdgeMaterial, setSelectedEdgeMaterial] = useState<EdgeMaterial | null>(null)
-  const [glueType, setGlueType] = useState('PUR transparentná/bílá')
-  const [cuttingPieces, setCuttingPieces] = useState<CuttingPiece[]>([])
+  // Create state for each material's specification
+  const [materialSpecs, setMaterialSpecs] = useState<{[materialId: string]: {
+    selectedEdgeMaterial: EdgeMaterial | null
+    glueType: string
+    cuttingPieces: CuttingPiece[]
+  }}>(() => {
+    const specs: {[materialId: string]: any} = {}
+    materials.forEach(material => {
+      const existingSpec = existingSpecifications.find(spec => spec.material.id === material.id)
+      specs[material.id] = {
+        selectedEdgeMaterial: existingSpec?.edgeMaterial || null,
+        glueType: existingSpec?.glueType || 'PUR transparentná/bílá',
+        cuttingPieces: existingSpec?.pieces || []
+      }
+    })
+    return specs
+  })
 
-  const handleAddPiece = () => {
+  const handleAddPiece = (materialId: string) => {
     const newPiece: CuttingPiece = {
-      id: `piece-${Date.now()}`,
+      id: `piece-${Date.now()}-${Math.random()}`,
       partName: '',
       length: 0,
       width: 0,
@@ -50,58 +66,98 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
       edgeRight: null,
       notes: ''
     }
-    setCuttingPieces(prev => [...prev, newPiece])
+    setMaterialSpecs(prev => ({
+      ...prev,
+      [materialId]: {
+        ...prev[materialId],
+        cuttingPieces: [...prev[materialId].cuttingPieces, newPiece]
+      }
+    }))
   }
 
-  const handlePieceChange = (pieceId: string, updatedPiece: Partial<CuttingPiece>) => {
-    setCuttingPieces(prev =>
-      prev.map(piece => {
-        if (piece.id !== pieceId) return piece
-        
-        const updated = { ...piece, ...updatedPiece }
-        
-        // Handle "Hrana dookola" logic
-        if ('edgeAllAround' in updatedPiece) {
-          // When edgeAllAround is set, update all individual edges
-          if (updatedPiece.edgeAllAround) {
-            updated.edgeTop = updatedPiece.edgeAllAround
-            updated.edgeBottom = updatedPiece.edgeAllAround
-            updated.edgeLeft = updatedPiece.edgeAllAround
-            updated.edgeRight = updatedPiece.edgeAllAround
+  const handlePieceChange = (materialId: string, pieceId: string, updatedPiece: Partial<CuttingPiece>) => {
+    setMaterialSpecs(prev => ({
+      ...prev,
+      [materialId]: {
+        ...prev[materialId],
+        cuttingPieces: prev[materialId].cuttingPieces.map(piece => {
+          if (piece.id !== pieceId) return piece
+          
+          const updated = { ...piece, ...updatedPiece }
+          
+          // Handle "Hrana dookola" logic
+          if ('edgeAllAround' in updatedPiece) {
+            // When edgeAllAround is set, update all individual edges
+            if (updatedPiece.edgeAllAround) {
+              updated.edgeTop = updatedPiece.edgeAllAround
+              updated.edgeBottom = updatedPiece.edgeAllAround
+              updated.edgeLeft = updatedPiece.edgeAllAround
+              updated.edgeRight = updatedPiece.edgeAllAround
+            }
+          } else if (['edgeTop', 'edgeBottom', 'edgeLeft', 'edgeRight'].some(key => key in updatedPiece)) {
+            // When individual edge is changed, check if all edges are the same
+            const { edgeTop, edgeBottom, edgeLeft, edgeRight } = updated
+            if (edgeTop && edgeTop === edgeBottom && edgeTop === edgeLeft && edgeTop === edgeRight) {
+              // All edges are the same, set edgeAllAround
+              updated.edgeAllAround = edgeTop
+            } else {
+              // Edges are different, clear edgeAllAround
+              updated.edgeAllAround = null
+            }
           }
-        } else if (['edgeTop', 'edgeBottom', 'edgeLeft', 'edgeRight'].some(key => key in updatedPiece)) {
-          // When individual edge is changed, check if all edges are the same
-          const { edgeTop, edgeBottom, edgeLeft, edgeRight } = updated
-          if (edgeTop && edgeTop === edgeBottom && edgeTop === edgeLeft && edgeTop === edgeRight) {
-            // All edges are the same, set edgeAllAround
-            updated.edgeAllAround = edgeTop
-          } else {
-            // Edges are different, clear edgeAllAround
-            updated.edgeAllAround = null
-          }
-        }
-        
-        return updated
-      })
-    )
+          
+          return updated
+        })
+      }
+    }))
   }
 
-  const handleRemovePiece = (pieceId: string) => {
-    setCuttingPieces(prev => prev.filter(piece => piece.id !== pieceId))
+  const handleRemovePiece = (materialId: string, pieceId: string) => {
+    setMaterialSpecs(prev => ({
+      ...prev,
+      [materialId]: {
+        ...prev[materialId],
+        cuttingPieces: prev[materialId].cuttingPieces.filter(piece => piece.id !== pieceId)
+      }
+    }))
+  }
+
+  const handleEdgeMaterialChange = (materialId: string, edgeMaterial: EdgeMaterial | null) => {
+    setMaterialSpecs(prev => ({
+      ...prev,
+      [materialId]: {
+        ...prev[materialId],
+        selectedEdgeMaterial: edgeMaterial
+      }
+    }))
+  }
+
+  const handleGlueTypeChange = (materialId: string, glueType: string) => {
+    setMaterialSpecs(prev => ({
+      ...prev,
+      [materialId]: {
+        ...prev[materialId],
+        glueType
+      }
+    }))
   }
 
   const handleContinue = () => {
-    const specification: CuttingSpecification = {
+    const specifications: CuttingSpecification[] = materials.map(material => ({
       material,
-      edgeMaterial: selectedEdgeMaterial,
-      glueType,
-      pieces: cuttingPieces
-    }
-    onContinue?.(specification)
+      edgeMaterial: materialSpecs[material.id].selectedEdgeMaterial,
+      glueType: materialSpecs[material.id].glueType,
+      pieces: materialSpecs[material.id].cuttingPieces
+    }))
+    onContinue?.(specifications)
+  }
+
+  const getTotalPieces = () => {
+    return Object.values(materialSpecs).reduce((total, spec) => total + spec.cuttingPieces.length, 0)
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
+    <Container maxWidth={false} sx={{ maxWidth: '1920px', mx: 'auto', py: 3 }}>
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <Button
@@ -115,61 +171,90 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
         </Typography>
       </Box>
 
-      {/* Material and Edge Selection */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        {/* Material Info Card */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <MaterialInfoCard material={material} />
-        </Grid>
+      {/* Multiple Materials - Scrollable Cards */}
+      {materials.map((material, index) => {
+        const materialSpec = materialSpecs[material.id]
         
-        {/* Edge Selection Card */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <EdgeSelectionCard
-            selectedEdge={selectedEdgeMaterial}
-            glueType={glueType}
-            onEdgeChange={setSelectedEdgeMaterial}
-            onGlueTypeChange={setGlueType}
-          />
-        </Grid>
-      </Grid>
+        return (
+          <Box key={material.id} sx={{ mb: 4 }}>
+            {/* Material Header */}
+            <Typography variant="h5" sx={{ color: '#1976d2', fontWeight: 500, mb: 2 }}>
+              Materiál {index + 1} z {materials.length}
+            </Typography>
 
-      {/* Cutting Pieces Section */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h6">
-            Kusy na rezanie ({cuttingPieces.length})
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAddPiece}
-          >
-            Pridať kus
-          </Button>
-        </Box>
+            {/* Material and Edge Selection */}
+            <Grid container spacing={3} sx={{ mb: 3 }}>
+              {/* Material Info Card */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <MaterialInfoCard material={material} />
+              </Grid>
+              
+              {/* Edge Selection Card */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <EdgeSelectionCard
+                  selectedEdge={materialSpec.selectedEdgeMaterial}
+                  glueType={materialSpec.glueType}
+                  onEdgeChange={(edge) => handleEdgeMaterialChange(material.id, edge)}
+                  onGlueTypeChange={(glue) => handleGlueTypeChange(material.id, glue)}
+                />
+              </Grid>
+            </Grid>
 
-        <CuttingPiecesTable
-          pieces={cuttingPieces}
-          edgeMaterial={selectedEdgeMaterial}
-          onPieceChange={handlePieceChange}
-          onRemovePiece={handleRemovePiece}
-        />
-      </Paper>
+            {/* Cutting Pieces Section */}
+            <Paper sx={{ p: 3, mb: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6">
+                  Kusy na rezanie ({materialSpec.cuttingPieces.length})
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => handleAddPiece(material.id)}
+                >
+                  Pridať kus
+                </Button>
+              </Box>
+
+              <CuttingPiecesTable
+                pieces={materialSpec.cuttingPieces}
+                edgeMaterial={materialSpec.selectedEdgeMaterial}
+                onPieceChange={(pieceId, updatedPiece) => handlePieceChange(material.id, pieceId, updatedPiece)}
+                onRemovePiece={(pieceId) => handleRemovePiece(material.id, pieceId)}
+              />
+            </Paper>
+
+
+            {/* Divider between materials (except last one) */}
+            {index < materials.length - 1 && (
+              <Box sx={{ borderBottom: '2px solid #e0e0e0', mx: 2, mb: 4 }} />
+            )}
+          </Box>
+        )
+      })}
 
       {/* Action Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, position: 'sticky', bottom: 20, backgroundColor: 'white', p: 2, borderRadius: 1, boxShadow: 2 }}>
         <Button
           variant="outlined"
-          onClick={() => setCuttingPieces([])}
+          onClick={() => setMaterialSpecs(prev => {
+            const newSpecs = { ...prev }
+            Object.keys(newSpecs).forEach(materialId => {
+              newSpecs[materialId] = {
+                ...newSpecs[materialId],
+                cuttingPieces: []
+              }
+            })
+            return newSpecs
+          })}
         >
           Vymazať všetko
         </Button>
         <Button
           variant="contained"
           onClick={handleContinue}
-          disabled={cuttingPieces.length === 0}
+          disabled={getTotalPieces() === 0}
         >
-          Pokračovať ({cuttingPieces.length} kusov)
+          Pokračovať ({getTotalPieces()} kusov)
         </Button>
       </Box>
     </Container>

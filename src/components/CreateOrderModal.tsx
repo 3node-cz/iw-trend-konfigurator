@@ -5,24 +5,18 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Switch,
   FormControlLabel,
-  Box,
   Typography,
   IconButton,
-  Alert,
-  FormHelperText
+  Alert
 } from '@mui/material'
 import { Close as CloseIcon } from '@mui/icons-material'
 import Grid from '@mui/system/Grid'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { z } from 'zod'
 import { orderSchema, type OrderFormData, getFieldErrors } from '../schemas/orderSchema'
+import { FormTextField, FormSelect } from './common'
 
 interface CreateOrderModalProps {
   open: boolean
@@ -188,88 +182,57 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
           <Grid container spacing={3}>
             {/* Customer Information */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                fullWidth
+              <FormTextField
                 label="Zákazník"
                 value={formData.company}
                 onChange={handleFieldChange('company')}
-                variant="outlined"
-                size="small"
-                error={!!errors.company}
-                helperText={errors.company}
+                error={errors.company}
                 required
               />
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
-              <FormControl fullWidth size="small" error={!!errors.transferLocation}>
-                <InputLabel required>Prevádzková jednotka</InputLabel>
-                <Select
-                  value={formData.transferLocation}
-                  onChange={handleFieldChange('transferLocation')}
-                  label="Prevádzková jednotka"
-                >
-                  {locations.map((location) => (
-                    <MenuItem key={location} value={location}>
-                      {location}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {errors.transferLocation && (
-                  <FormHelperText>{errors.transferLocation}</FormHelperText>
-                )}
-              </FormControl>
+              <FormSelect
+                label="Prevádzková jednotka"
+                value={formData.transferLocation}
+                onChange={handleFieldChange('transferLocation')}
+                options={locations}
+                error={errors.transferLocation}
+                required
+              />
             </Grid>
 
             {/* Branch and Cost Center */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <FormControl fullWidth size="small" error={!!errors.costCenter}>
-                <InputLabel required>Pobočka</InputLabel>
-                <Select
-                  value={formData.costCenter}
-                  onChange={handleFieldChange('costCenter')}
-                  label="Pobočka"
-                >
-                  <MenuItem value="Bratislava">Bratislava</MenuItem>
-                  <MenuItem value="Žilina">Žilina</MenuItem>
-                  <MenuItem value="Partizánske">Partizánske</MenuItem>
-                </Select>
-                {errors.costCenter && (
-                  <FormHelperText>{errors.costCenter}</FormHelperText>
-                )}
-              </FormControl>
+              <FormSelect
+                label="Pobočka"
+                value={formData.costCenter}
+                onChange={handleFieldChange('costCenter')}
+                options={['Bratislava', 'Žilina', 'Partizánske']}
+                error={errors.costCenter}
+                required
+              />
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
-              <FormControl fullWidth size="small" error={!!errors.cuttingCenter}>
-                <InputLabel required>Nárezové centrum</InputLabel>
-                <Select
-                  value={formData.cuttingCenter}
-                  onChange={handleFieldChange('cuttingCenter')}
-                  label="Nárezové centrum"
-                >
-                  <MenuItem value="Bratislava">Bratislava</MenuItem>
-                  <MenuItem value="Žilina">Žilina</MenuItem>
-                  <MenuItem value="Partizánske">Partizánske</MenuItem>
-                </Select>
-                {errors.cuttingCenter && (
-                  <FormHelperText>{errors.cuttingCenter}</FormHelperText>
-                )}
-              </FormControl>
+              <FormSelect
+                label="Nárezové centrum"
+                value={formData.cuttingCenter}
+                onChange={handleFieldChange('cuttingCenter')}
+                options={['Bratislava', 'Žilina', 'Partizánske']}
+                error={errors.cuttingCenter}
+                required
+              />
             </Grid>
 
             {/* Order Details */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                fullWidth
+              <FormTextField
                 label="Názov zákazky"
                 value={formData.orderName}
                 onChange={handleFieldChange('orderName')}
-                variant="outlined"
-                size="small"
                 placeholder="Aricoma"
-                error={!!errors.orderName}
-                helperText={errors.orderName}
+                error={errors.orderName}
                 required
               />
             </Grid>
@@ -297,23 +260,14 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
 
             {/* Material and Delivery */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <FormControl fullWidth size="small" error={!!errors.materialType}>
-                <InputLabel required>Typ lepidla</InputLabel>
-                <Select
-                  value={formData.materialType}
-                  onChange={handleFieldChange('materialType')}
-                  label="Typ lepidla"
-                >
-                  {materialTypes.map((type) => (
-                    <MenuItem key={type} value={type}>
-                      {type}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {errors.materialType && (
-                  <FormHelperText>{errors.materialType}</FormHelperText>
-                )}
-              </FormControl>
+              <FormSelect
+                label="Typ lepidla"
+                value={formData.materialType}
+                onChange={handleFieldChange('materialType')}
+                options={materialTypes}
+                error={errors.materialType}
+                required
+              />
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
@@ -329,23 +283,14 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
-              <FormControl fullWidth size="small" error={!!errors.deliveryMethod}>
-                <InputLabel required>Spôsob dopravy</InputLabel>
-                <Select
-                  value={formData.deliveryMethod}
-                  onChange={handleFieldChange('deliveryMethod')}
-                  label="Spôsob dopravy"
-                >
-                  {deliveryMethods.map((method) => (
-                    <MenuItem key={method} value={method}>
-                      {method}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {errors.deliveryMethod && (
-                  <FormHelperText>{errors.deliveryMethod}</FormHelperText>
-                )}
-              </FormControl>
+              <FormSelect
+                label="Spôsob dopravy"
+                value={formData.deliveryMethod}
+                onChange={handleFieldChange('deliveryMethod')}
+                options={deliveryMethods}
+                error={errors.deliveryMethod}
+                required
+              />
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
@@ -362,34 +307,22 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
 
             {/* Processing Options */}
             <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth size="small" error={!!errors.processingType}>
-                <InputLabel required>Spracovanie zbytkov</InputLabel>
-                <Select
-                  value={formData.processingType}
-                  onChange={handleFieldChange('processingType')}
-                  label="Spracovanie zbytkov"
-                >
-                  {processingTypes.map((type) => (
-                    <MenuItem key={type} value={type}>
-                      {type}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {errors.processingType && (
-                  <FormHelperText>{errors.processingType}</FormHelperText>
-                )}
-              </FormControl>
+              <FormSelect
+                label="Spracovanie zbytkov"
+                value={formData.processingType}
+                onChange={handleFieldChange('processingType')}
+                options={processingTypes}
+                error={errors.processingType}
+                required
+              />
             </Grid>
 
             {/* Notes */}
             <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
+              <FormTextField
                 label="Poznámka"
                 value={formData.notes}
                 onChange={handleFieldChange('notes')}
-                variant="outlined"
-                size="small"
                 multiline
                 rows={3}
                 placeholder="Zadajte poznámku..."

@@ -13,7 +13,8 @@ import {
   Button,
   TextField,
   InputAdornment,
-  CircularProgress
+  CircularProgress,
+  Avatar
 } from '@mui/material'
 import {
   Search as SearchIcon,
@@ -21,6 +22,7 @@ import {
 } from '@mui/icons-material'
 import { searchEdgeMaterials } from '../services/shopifyApi'
 import type { EdgeMaterial, MaterialSearchResult } from '../types/shopify'
+import { AvailabilityChip } from './common'
 
 interface EdgeSelectionCardProps {
   selectedEdge: EdgeMaterial | null
@@ -38,34 +40,32 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
   const [edgeSearchQuery, setEdgeSearchQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [edgeSearchResults, setEdgeSearchResults] = useState<MaterialSearchResult[]>([])
+  const [quickEdges, setQuickEdges] = useState<MaterialSearchResult[]>([])
+  const [isLoadingQuickEdges, setIsLoadingQuickEdges] = useState(false)
 
-  // Mock edge materials data
-  const mockEdgeMaterials: EdgeMaterial[] = [
-    {
-      id: '1',
-      name: 'ABS8 H1180 ST37 Dub Halifax prírodný 23/0.8',
-      productCode: '517353',
-      availability: 'available',
-      thickness: 0.8,
-      warehouse: 'Bratislava'
-    },
-    {
-      id: '2',
-      name: 'ABS8 H1180 ST37 Dub Halifax prírodný 23/0.4',
-      productCode: '517352',
-      availability: 'available',
-      thickness: 0.4,
-      warehouse: 'Bratislava'
-    },
-    {
-      id: '3',
-      name: 'ABS8 H1180 ST37 Dub Halifax prírodný 23/2.0',
-      productCode: '517354',
-      availability: 'limited',
-      thickness: 2.0,
-      warehouse: 'Žilina'
+  // Load popular edges on component mount
+  useEffect(() => {
+    const loadQuickEdges = async () => {
+      setIsLoadingQuickEdges(true)
+      try {
+        console.log('🔍 Loading popular edge materials...')
+        const results = await searchEdgeMaterials({ 
+          query: 'abs h1180',
+          limit: 3
+        })
+        console.log('✅ Loaded', results.length, 'popular edges')
+        setQuickEdges(results)
+      } catch (error) {
+        console.error('❌ Error loading popular edges:', error)
+        // Fallback to mock data if API fails
+        setQuickEdges([])
+      } finally {
+        setIsLoadingQuickEdges(false)
+      }
     }
-  ]
+
+    loadQuickEdges()
+  }, [])
 
   const glueTypes = [
     'PUR transparentná/bílá',
@@ -74,33 +74,9 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
     'EVA čierna'
   ]
 
-  const thicknessVariants = [0.4, 0.8, 2.0]
+  // Use available thicknesses from the selected edge material
+  const thicknessVariants = selectedEdge?.availableThicknesses || [0.4, 0.8, 2.0]
 
-  const getAvailabilityColor = (availability: string) => {
-    switch (availability) {
-      case 'available':
-        return 'success'
-      case 'unavailable':
-        return 'error'
-      case 'limited':
-        return 'warning'
-      default:
-        return 'default'
-    }
-  }
-
-  const getAvailabilityText = (availability: string) => {
-    switch (availability) {
-      case 'available':
-        return 'Skladom'
-      case 'unavailable':
-        return 'Na objednávku'
-      case 'limited':
-        return 'Obmedzene'
-      default:
-        return availability
-    }
-  }
 
   // Debounced search for edge materials
   useEffect(() => {
@@ -142,14 +118,16 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
     setEdgeSearchQuery(query)
   }
 
-  // Convert MaterialSearchResult to EdgeMaterial
-  const convertToEdgeMaterial = (result: MaterialSearchResult): EdgeMaterial => ({
+  // Convert MaterialSearchResult to EdgeMaterial with image
+  const convertToEdgeMaterial = (result: MaterialSearchResult): EdgeMaterial & { image?: string } => ({
     id: result.id,
     name: result.name,
     productCode: result.productCode || result.code,
     availability: result.availability,
     thickness: 0.8, // Default thickness, could be extracted from dimensions
-    warehouse: result.warehouse
+    availableThicknesses: [0.4, 0.8, 2], // Common edge thickness variants
+    warehouse: result.warehouse,
+    image: result.image // Add image from search result
   })
 
   const handleSelectEdge = (edge: EdgeMaterial) => {
@@ -216,26 +194,46 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
                   size="small"
                   onClick={() => handleSelectEdgeFromSearch(result)}
                   sx={{ 
-                    justifyContent: 'space-between',
+                    justifyContent: 'flex-start',
                     width: '100%',
                     textAlign: 'left',
                     px: 2,
-                    py: 1
+                    py: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2
                   }}
                 >
-                  <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {/* Small edge preview image */}
+                  <Avatar
+                    src={result.image}
+                    alt={result.name}
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 1,
+                      bgcolor: '#f5f5f5',
+                      border: '1px solid #e0e0e0',
+                      flexShrink: 0
+                    }}
+                    variant="rounded"
+                  >
+                    {!result.image && '📏'}
+                  </Avatar>
+                  
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
                       {result.name}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       {result.productCode || result.code} • {result.warehouse}
                     </Typography>
                   </Box>
-                  <Chip
-                    label={getAvailabilityText(result.availability)}
+                  
+                  <AvailabilityChip
+                    availability={result.availability}
                     size="small"
-                    color={getAvailabilityColor(result.availability)}
-                    variant="outlined"
+                    sx={{ flexShrink: 0 }}
                   />
                 </Button>
               </Box>
@@ -246,25 +244,51 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
 
         {/* Selected Edge Display */}
         {selectedEdge ? (
-          <Box>
-            <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
-              {selectedEdge.name} - Egger
-            </Typography>
-            
-            <Typography variant="body2" color="primary" sx={{ fontWeight: 500, mb: 2 }}>
-              {selectedEdge.productCode}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Vyberte hranu pre materiál
             </Typography>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <Chip
-                label={getAvailabilityText(selectedEdge.availability)}
-                size="small"
-                color={getAvailabilityColor(selectedEdge.availability)}
-                variant="outlined"
-              />
-              <Typography variant="caption" color="text.secondary">
-                {selectedEdge.warehouse}
-              </Typography>
+            {/* Edge Preview Section */}
+            <Box sx={{ display: 'flex', gap: 2, mb: 2, p: 2, bgcolor: '#f8f9fa', borderRadius: 1 }}>
+              <Avatar
+                src={selectedEdge.image}
+                alt={selectedEdge.name}
+                sx={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: 1,
+                  bgcolor: '#f5f5f5',
+                  border: '1px solid #e0e0e0'
+                }}
+                variant="rounded"
+              >
+                {!selectedEdge.image && '📏'}
+              </Avatar>
+              
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5, color: '#1976d2' }}>
+                  {selectedEdge.name}
+                </Typography>
+                
+                <Typography variant="caption" color="primary" sx={{ display: 'block', mb: 0.5 }}>
+                  {selectedEdge.productCode} - Hranipex
+                </Typography>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <AvailabilityChip
+                    availability={selectedEdge.availability}
+                    size="small"
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    {selectedEdge.warehouse}
+                  </Typography>
+                </Box>
+
+                <Typography variant="caption" color="text.secondary">
+                  Hrúbka: {selectedEdge.thickness}mm
+                </Typography>
+              </Box>
             </Box>
 
             <Button
@@ -284,23 +308,29 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
               Vyberte hranu pre materiál
             </Typography>
             
-            {/* Quick Edge Selection */}
-            {mockEdgeMaterials.slice(0, 2).map((edge) => (
-              <Box key={edge.id} sx={{ mb: 1 }}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => handleSelectEdge(edge)}
-                  sx={{ 
-                    justifyContent: 'flex-start',
-                    width: '100%',
-                    textAlign: 'left'
-                  }}
-                >
-                  {edge.name}
-                </Button>
+            {/* Quick Edge Selection from API */}
+            {isLoadingQuickEdges ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                <CircularProgress size={24} />
               </Box>
-            ))}
+            ) : (
+              quickEdges.slice(0, 2).map((result) => (
+                <Box key={result.id} sx={{ mb: 1 }}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => handleSelectEdgeFromSearch(result)}
+                    sx={{ 
+                      justifyContent: 'flex-start',
+                      width: '100%',
+                      textAlign: 'left'
+                    }}
+                  >
+                    {result.name}
+                  </Button>
+                </Box>
+              ))
+            )}
 
             <Divider sx={{ my: 2 }} />
           </Box>
@@ -318,8 +348,8 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
                   key={thickness}
                   label={`${thickness}mm`}
                   size="small"
-                  variant={thickness === selectedEdge.thickness ? 'filled' : 'outlined'}
-                  color={thickness === selectedEdge.thickness ? 'primary' : 'default'}
+                  variant="outlined"
+                  color="default"
                 />
               ))}
             </Box>
