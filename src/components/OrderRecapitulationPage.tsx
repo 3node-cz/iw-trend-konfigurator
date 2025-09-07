@@ -21,8 +21,8 @@ import {
 } from '@mui/icons-material'
 import Grid from '@mui/system/Grid'
 import type { OrderFormData, CuttingSpecification, CompleteOrder } from '../types/shopify'
-import { AvailabilityChip, CuttingLayoutDiagram } from './common'
-import { GuillotineCuttingOptimizer } from '../utils/guillotineCutting'
+import { AvailabilityChip, CuttingDiagramThumbnail, CuttingDiagramDialog } from './common'
+import { OptimizedGuillotineCuttingOptimizer } from '../utils/guillotineCuttingOptimized'
 
 interface OrderRecapitulationPageProps {
   order: OrderFormData
@@ -39,17 +39,15 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [selectedDiagram, setSelectedDiagram] = useState<{layout: any, title: string} | null>(null)
 
-  // Generate cutting layouts for all materials
+  // Generate cutting layouts for all materials with multi-board support
   const generateCuttingLayouts = () => {
-    return specifications.map((specification, index) => {
-      // Debug: Log material data
-      console.log(`Material ${index + 1}:`, specification.material)
-      console.log(`Pieces:`, specification.pieces)
-      
+    const allLayouts: any[] = []
+    
+    specifications.forEach((specification, specIndex) => {
       if (specification.pieces.length === 0) {
-        console.log(`No pieces for material ${index + 1}`)
-        return null
+        return
       }
 
       // Use default dimensions if not provided (standard DTD board size)
@@ -59,28 +57,42 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
         thickness: 18  // Standard thickness
       }
 
-      console.log(`Using dimensions for material ${index + 1}:`, dimensions)
-
-      const optimizer = new GuillotineCuttingOptimizer(
+      const optimizer = new OptimizedGuillotineCuttingOptimizer(
         dimensions.width,
         dimensions.height
       )
       
-      const layout = optimizer.optimize(specification.pieces)
-      console.log(`Layout result for material ${index + 1}:`, layout)
+      // Use multi-board optimization with rotation setting
+      const multiboardResult = optimizer.optimizeMultipleBoards(specification.pieces, specification.allowRotation || false)
       
-      return {
-        materialIndex: index + 1,
-        materialName: specification.material.name,
-        layout
+      // Add each board as a separate layout
+      multiboardResult.boards.forEach((board, boardIndex) => {
+        allLayouts.push({
+          materialIndex: specIndex + 1,
+          boardNumber: boardIndex + 1,
+          materialName: specification.material.name,
+          layout: board,
+          isMultiBoard: multiboardResult.totalBoards > 1,
+          totalBoards: multiboardResult.totalBoards,
+          multiboardStats: {
+            totalPieces: multiboardResult.totalPieces,
+            totalPlacedPieces: multiboardResult.totalPlacedPieces,
+            totalUnplacedPieces: multiboardResult.totalUnplacedPieces,
+            overallEfficiency: multiboardResult.overallEfficiency
+          }
+        })
+      })
+      
+      // Log unplaced pieces warning if any
+      if (multiboardResult.unplacedPieces.length > 0) {
+        console.warn(`Material ${specIndex + 1}: ${multiboardResult.totalUnplacedPieces} pieces could not be placed`, multiboardResult.unplacedPieces)
       }
-    }).filter(Boolean)
+    })
+    
+    return allLayouts
   }
 
   const cuttingLayouts = generateCuttingLayouts()
-  
-  // Debug: Log final layouts
-  console.log('Generated cutting layouts:', cuttingLayouts)
 
   const handleSubmitOrder = async () => {
     setIsSubmitting(true)
@@ -95,7 +107,6 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
         submittedAt: new Date()
       }
       
-      console.log('Submitting complete order to Shopify:', completeOrder)
       
       // TODO: Replace with actual Shopify API call
       // await submitOrderToShopify(completeOrder)
@@ -118,17 +129,29 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     total + spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0), 0
   )
 
-  // Calculate overall efficiency and waste
+  // Calculate overall efficiency and waste for multi-board layouts
   const overallStats = cuttingLayouts.reduce(
     (acc, layoutData) => {
       if (layoutData) {
         acc.totalBoards += 1
         acc.averageEfficiency += layoutData.layout.efficiency
         acc.totalWasteArea += layoutData.layout.totalWasteArea
+        
+        // Track multi-board specific stats
+        if (layoutData.isMultiBoard && layoutData.boardNumber === 1) {
+          acc.totalMultiboardPieces += layoutData.multiboardStats.totalPieces
+          acc.totalUnplacedPieces += layoutData.multiboardStats.totalUnplacedPieces
+        }
       }
       return acc
     },
-    { totalBoards: 0, averageEfficiency: 0, totalWasteArea: 0 }
+    { 
+      totalBoards: 0, 
+      averageEfficiency: 0, 
+      totalWasteArea: 0,
+      totalMultiboardPieces: 0,
+      totalUnplacedPieces: 0
+    }
   )
 
   if (overallStats.totalBoards > 0) {
@@ -357,17 +380,93 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
         </Paper>
       ))}
 
-      {/* Cutting Layout Diagrams */}
+      {/* Cutting Layout Diagrams - Thumbnail View */}
       {cuttingLayouts.length > 0 ? (
-        cuttingLayouts.map((layoutData) => (
-          <CuttingLayoutDiagram
-            key={`layout-${layoutData!.materialIndex}`}
-            layout={layoutData!.layout}
-            title={`Plán č. ${layoutData!.materialIndex} - ${layoutData!.materialName}`}
-            maxWidth={1200}
-            maxHeight={800}
-          />
-        ))
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+            Rozrezové plány ({cuttingLayouts.length})
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Kliknite na diagram pre zobrazenie detailu
+          </Typography>
+          
+          {/* Thumbnail Grid */}
+          <Box sx={{ 
+            display: 'flex', 
+            flexWrap: 'wrap', 
+            gap: 2,
+            justifyContent: 'flex-start'
+          }}>
+            {cuttingLayouts.map((layoutData) => {
+              const title = layoutData.isMultiBoard 
+                ? `Plán ${layoutData.materialIndex}.${layoutData.boardNumber}`
+                : `Plán ${layoutData.materialIndex}`
+              
+              const fullTitle = layoutData.isMultiBoard 
+                ? `Plán č. ${layoutData.materialIndex}.${layoutData.boardNumber} - ${layoutData.materialName} (${layoutData.boardNumber}/${layoutData.totalBoards})`
+                : `Plán č. ${layoutData.materialIndex} - ${layoutData.materialName}`
+                
+              return (
+                <CuttingDiagramThumbnail
+                  key={`layout-${layoutData.materialIndex}-${layoutData.boardNumber}`}
+                  layout={layoutData.layout}
+                  title={title}
+                  onClick={() => setSelectedDiagram({ layout: layoutData.layout, title: fullTitle })}
+                />
+              )
+            })}
+          </Box>
+
+          {/* Multi-board Statistics */}
+          {cuttingLayouts.some(l => l.isMultiBoard) && (
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                Štatistiky materiálov vyžadujúcich viacero dosiek
+              </Typography>
+              {cuttingLayouts.filter(l => l.isMultiBoard && l.boardNumber === 1).map(layoutData => (
+                <Paper key={`stats-${layoutData.materialIndex}`} sx={{ p: 2, mb: 2, backgroundColor: '#f8f9fa' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                    {layoutData.materialName}
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Potrebné dosky</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {layoutData.totalBoards}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Celkom kusov</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {layoutData.multiboardStats.totalPieces}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Umiestnené kusy</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.main' }}>
+                        {layoutData.multiboardStats.totalPlacedPieces}
+                      </Typography>
+                    </Box>
+                    {layoutData.multiboardStats.totalUnplacedPieces > 0 && (
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Neumiestnené kusy</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: 'warning.main' }}>
+                          {layoutData.multiboardStats.totalUnplacedPieces}
+                        </Typography>
+                      </Box>
+                    )}
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Celková efektivita</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                        {layoutData.multiboardStats.overallEfficiency.toFixed(1)}%
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Paper>
+              ))}
+            </Box>
+          )}
+        </Paper>
       ) : (
         <Paper sx={{ p: 3, mb: 3, textAlign: 'center' }}>
           <Typography variant="h6" sx={{ mb: 2, color: 'warning.main' }}>
@@ -376,11 +475,16 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
           <Typography variant="body2" color="text.secondary">
             Rozrezové plány sa zobrazia po pridaní kusov na rezanie s rozmermi.
           </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            Debug: {cuttingLayouts.length} layouts generated from {specifications.length} materials
-          </Typography>
         </Paper>
       )}
+
+      {/* Cutting Diagram Dialog */}
+      <CuttingDiagramDialog
+        open={!!selectedDiagram}
+        layout={selectedDiagram?.layout || null}
+        title={selectedDiagram?.title || ''}
+        onClose={() => setSelectedDiagram(null)}
+      />
 
       {/* Total Summary */}
       <Paper sx={{ p: 3, mb: 3, backgroundColor: '#f0f7ff' }}>
@@ -418,6 +522,14 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
               {(overallStats.totalWasteArea / 1000000).toFixed(2)} m²
             </Typography>
           </Box>
+          {overallStats.totalUnplacedPieces > 0 && (
+            <Box>
+              <Typography variant="caption" color="text.secondary">Neumiestnené kusy</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: 'error.main' }}>
+                {overallStats.totalUnplacedPieces}
+              </Typography>
+            </Box>
+          )}
         </Box>
       </Paper>
 

@@ -164,6 +164,7 @@ export interface CuttingSpecification {
   edgeMaterial: EdgeMaterial | null
   glueType: string // PUR transparentná/bílá, etc.
   pieces: CuttingPiece[]
+  allowRotation?: boolean // Allow pieces to be rotated for better optimization
 }
 
 // Complete order for submission

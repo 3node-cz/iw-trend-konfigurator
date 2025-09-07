@@ -4,7 +4,9 @@ import {
   Container,
   Typography,
   Paper,
-  Button
+  Button,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material'
 import Grid from '@mui/system/Grid'
 import {
@@ -36,6 +38,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
     selectedEdgeMaterial: EdgeMaterial | null
     glueType: string
     cuttingPieces: CuttingPiece[]
+    allowRotation: boolean
   }}>(() => {
     const specs: {[materialId: string]: any} = {}
     materials.forEach(material => {
@@ -43,7 +46,8 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
       specs[material.id] = {
         selectedEdgeMaterial: existingSpec?.edgeMaterial || null,
         glueType: existingSpec?.glueType || 'PUR transparentná/bílá',
-        cuttingPieces: existingSpec?.pieces || []
+        cuttingPieces: existingSpec?.pieces || [],
+        allowRotation: existingSpec?.allowRotation || false
       }
     })
     return specs
@@ -142,12 +146,23 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
     }))
   }
 
+  const handleRotationToggle = (materialId: string, allowRotation: boolean) => {
+    setMaterialSpecs(prev => ({
+      ...prev,
+      [materialId]: {
+        ...prev[materialId],
+        allowRotation
+      }
+    }))
+  }
+
   const handleContinue = () => {
     const specifications: CuttingSpecification[] = materials.map(material => ({
       material,
       edgeMaterial: materialSpecs[material.id].selectedEdgeMaterial,
       glueType: materialSpecs[material.id].glueType,
-      pieces: materialSpecs[material.id].cuttingPieces
+      pieces: materialSpecs[material.id].cuttingPieces,
+      allowRotation: materialSpecs[material.id].allowRotation
     }))
     onContinue?.(specifications)
   }
@@ -199,6 +214,25 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
                 />
               </Grid>
             </Grid>
+
+            {/* Cutting Options */}
+            <Paper sx={{ p: 3, mb: 3 }}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                Možnosti rezania
+              </Typography>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={materialSpec.allowRotation}
+                    onChange={(e) => handleRotationToggle(material.id, e.target.checked)}
+                  />
+                }
+                label="Povoliť rotáciu kusov pre lepšie využitie materiálu"
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                Ak je zapnuté, algoritmus môže otočiť kusy o 90° pre efektívnejšie rozrezanie
+              </Typography>
+            </Paper>
 
             {/* Cutting Pieces Section */}
             <Paper sx={{ p: 3, mb: 3 }}>

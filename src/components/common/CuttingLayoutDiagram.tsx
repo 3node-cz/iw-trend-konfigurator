@@ -102,7 +102,7 @@ const CuttingLayoutDiagram: React.FC<CuttingLayoutDiagramProps> = ({
           {layout.placedPieces.map((piece, index) => {
             const centerX = piece.x + piece.width / 2
             const centerY = piece.y + piece.height / 2
-            const fontSize = Math.min(piece.width / 8, piece.height / 4, 12)
+            const fontSize = Math.min(piece.width / 8, piece.height / 4, 60)
             
             return (
               <g key={piece.id}>
@@ -143,8 +143,8 @@ const CuttingLayoutDiagram: React.FC<CuttingLayoutDiagramProps> = ({
                 {/* Rotation indicator */}
                 {piece.rotated && (
                   <text
-                    x={piece.x + 3}
-                    y={piece.y + fontSize + 3}
+                    x={piece.x + 15}
+                    y={piece.y + fontSize + 15}
                     fontSize={fontSize * 0.7}
                     fill="#ff6600"
                     fontWeight="600"
@@ -159,9 +159,9 @@ const CuttingLayoutDiagram: React.FC<CuttingLayoutDiagramProps> = ({
           {/* Board dimensions */}
           <text
             x={layout.boardWidth / 2}
-            y={-5}
+            y={-15}
             textAnchor="middle"
-            fontSize="12"
+            fontSize="48"
             fill="#333"
             fontWeight="600"
           >
@@ -169,13 +169,13 @@ const CuttingLayoutDiagram: React.FC<CuttingLayoutDiagramProps> = ({
           </text>
           
           <text
-            x={-5}
+            x={-15}
             y={layout.boardHeight / 2}
             textAnchor="middle"
-            fontSize="12"
+            fontSize="48"
             fill="#333"
             fontWeight="600"
-            transform={`rotate(-90, -5, ${layout.boardHeight / 2})`}
+            transform={`rotate(-90, -15, ${layout.boardHeight / 2})`}
           >
             {layout.boardHeight} mm  
           </text>
