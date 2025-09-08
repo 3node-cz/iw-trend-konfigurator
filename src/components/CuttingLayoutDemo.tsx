@@ -1,7 +1,7 @@
 import React from 'react'
 import { Container, Typography, Box } from '@mui/material'
 import CuttingLayoutDiagram from './common/CuttingLayoutDiagram'
-import { GuillotineCuttingOptimizer } from '../utils/guillotineCutting'
+import { OptimizedGuillotineCuttingOptimizer } from '../utils/guillotineCutting'
 import type { CuttingPiece } from '../types/shopify'
 
 const CuttingLayoutDemo: React.FC = () => {
@@ -62,7 +62,7 @@ const CuttingLayoutDemo: React.FC = () => {
   const boardHeight = 2070
 
   // Generate the cutting layout
-  const optimizer = new GuillotineCuttingOptimizer(boardWidth, boardHeight)
+  const optimizer = new OptimizedGuillotineCuttingOptimizer(boardWidth, boardHeight)
   const layout = optimizer.optimize(mockPieces)
 
   return (

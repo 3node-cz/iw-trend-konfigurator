@@ -22,7 +22,7 @@ import {
 import Grid from '@mui/system/Grid'
 import type { OrderFormData, CuttingSpecification, CompleteOrder } from '../types/shopify'
 import { AvailabilityChip, CuttingDiagramThumbnail, CuttingDiagramDialog } from './common'
-import { OptimizedGuillotineCuttingOptimizer } from '../utils/guillotineCuttingOptimized'
+import { useCuttingLayouts } from '../hooks/useCuttingLayouts'
 
 interface OrderRecapitulationPageProps {
   order: OrderFormData
@@ -41,58 +41,8 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
   const [submitSuccess, setSubmitSuccess] = useState(false)
   const [selectedDiagram, setSelectedDiagram] = useState<{layout: any, title: string} | null>(null)
 
-  // Generate cutting layouts for all materials with multi-board support
-  const generateCuttingLayouts = () => {
-    const allLayouts: any[] = []
-    
-    specifications.forEach((specification, specIndex) => {
-      if (specification.pieces.length === 0) {
-        return
-      }
-
-      // Use default dimensions if not provided (standard DTD board size)
-      const dimensions = specification.material.dimensions || {
-        width: 2800,   // Standard DTD board width
-        height: 2070,  // Standard DTD board height
-        thickness: 18  // Standard thickness
-      }
-
-      const optimizer = new OptimizedGuillotineCuttingOptimizer(
-        dimensions.width,
-        dimensions.height
-      )
-      
-      // Use multi-board optimization with rotation setting
-      const multiboardResult = optimizer.optimizeMultipleBoards(specification.pieces, specification.allowRotation || false)
-      
-      // Add each board as a separate layout
-      multiboardResult.boards.forEach((board, boardIndex) => {
-        allLayouts.push({
-          materialIndex: specIndex + 1,
-          boardNumber: boardIndex + 1,
-          materialName: specification.material.name,
-          layout: board,
-          isMultiBoard: multiboardResult.totalBoards > 1,
-          totalBoards: multiboardResult.totalBoards,
-          multiboardStats: {
-            totalPieces: multiboardResult.totalPieces,
-            totalPlacedPieces: multiboardResult.totalPlacedPieces,
-            totalUnplacedPieces: multiboardResult.totalUnplacedPieces,
-            overallEfficiency: multiboardResult.overallEfficiency
-          }
-        })
-      })
-      
-      // Log unplaced pieces warning if any
-      if (multiboardResult.unplacedPieces.length > 0) {
-        console.warn(`Material ${specIndex + 1}: ${multiboardResult.totalUnplacedPieces} pieces could not be placed`, multiboardResult.unplacedPieces)
-      }
-    })
-    
-    return allLayouts
-  }
-
-  const cuttingLayouts = generateCuttingLayouts()
+  // Use custom hook for cutting layouts
+  const { cuttingLayouts, overallStats } = useCuttingLayouts(specifications)
 
   const handleSubmitOrder = async () => {
     setIsSubmitting(true)
@@ -129,34 +79,6 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     total + spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0), 0
   )
 
-  // Calculate overall efficiency and waste for multi-board layouts
-  const overallStats = cuttingLayouts.reduce(
-    (acc, layoutData) => {
-      if (layoutData) {
-        acc.totalBoards += 1
-        acc.averageEfficiency += layoutData.layout.efficiency
-        acc.totalWasteArea += layoutData.layout.totalWasteArea
-        
-        // Track multi-board specific stats
-        if (layoutData.isMultiBoard && layoutData.boardNumber === 1) {
-          acc.totalMultiboardPieces += layoutData.multiboardStats.totalPieces
-          acc.totalUnplacedPieces += layoutData.multiboardStats.totalUnplacedPieces
-        }
-      }
-      return acc
-    },
-    { 
-      totalBoards: 0, 
-      averageEfficiency: 0, 
-      totalWasteArea: 0,
-      totalMultiboardPieces: 0,
-      totalUnplacedPieces: 0
-    }
-  )
-
-  if (overallStats.totalBoards > 0) {
-    overallStats.averageEfficiency /= overallStats.totalBoards
-  }
 
   if (submitSuccess) {
     return (

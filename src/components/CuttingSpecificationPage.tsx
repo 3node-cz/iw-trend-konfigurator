@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import {
   Box,
   Container,
@@ -16,7 +16,8 @@ import {
 import MaterialInfoCard from './MaterialInfoCard'
 import EdgeSelectionCard from './EdgeSelectionCard'
 import CuttingPiecesTable from './CuttingPiecesTable'
-import type { MaterialSearchResult, CuttingSpecification, CuttingPiece, EdgeMaterial } from '../types/shopify'
+import { useMaterialSpecs } from '../hooks/useMaterialSpecs'
+import type { MaterialSearchResult, CuttingSpecification } from '../types/shopify'
 
 interface CuttingSpecificationPageProps {
   materials: MaterialSearchResult[]
@@ -33,142 +34,23 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
   onBack,
   onContinue
 }) => {
-  // Create state for each material's specification
-  const [materialSpecs, setMaterialSpecs] = useState<{[materialId: string]: {
-    selectedEdgeMaterial: EdgeMaterial | null
-    glueType: string
-    cuttingPieces: CuttingPiece[]
-    allowRotation: boolean
-  }}>(() => {
-    const specs: {[materialId: string]: any} = {}
-    materials.forEach(material => {
-      const existingSpec = existingSpecifications.find(spec => spec.material.id === material.id)
-      specs[material.id] = {
-        selectedEdgeMaterial: existingSpec?.edgeMaterial || null,
-        glueType: existingSpec?.glueType || 'PUR transparentná/bílá',
-        cuttingPieces: existingSpec?.pieces || [],
-        allowRotation: existingSpec?.allowRotation || false
-      }
-    })
-    return specs
-  })
-
-  const handleAddPiece = (materialId: string) => {
-    const newPiece: CuttingPiece = {
-      id: `piece-${Date.now()}-${Math.random()}`,
-      partName: '',
-      length: 0,
-      width: 0,
-      quantity: 1,
-      glueEdge: false,
-      withoutEdge: false,
-      duplicate: false,
-      edgeAllAround: null,
-      edgeTop: null,
-      edgeBottom: null,
-      edgeLeft: null,
-      edgeRight: null,
-      notes: ''
-    }
-    setMaterialSpecs(prev => ({
-      ...prev,
-      [materialId]: {
-        ...prev[materialId],
-        cuttingPieces: [...prev[materialId].cuttingPieces, newPiece]
-      }
-    }))
-  }
-
-  const handlePieceChange = (materialId: string, pieceId: string, updatedPiece: Partial<CuttingPiece>) => {
-    setMaterialSpecs(prev => ({
-      ...prev,
-      [materialId]: {
-        ...prev[materialId],
-        cuttingPieces: prev[materialId].cuttingPieces.map(piece => {
-          if (piece.id !== pieceId) return piece
-          
-          const updated = { ...piece, ...updatedPiece }
-          
-          // Handle "Hrana dookola" logic
-          if ('edgeAllAround' in updatedPiece) {
-            // When edgeAllAround is set, update all individual edges
-            if (updatedPiece.edgeAllAround) {
-              updated.edgeTop = updatedPiece.edgeAllAround
-              updated.edgeBottom = updatedPiece.edgeAllAround
-              updated.edgeLeft = updatedPiece.edgeAllAround
-              updated.edgeRight = updatedPiece.edgeAllAround
-            }
-          } else if (['edgeTop', 'edgeBottom', 'edgeLeft', 'edgeRight'].some(key => key in updatedPiece)) {
-            // When individual edge is changed, check if all edges are the same
-            const { edgeTop, edgeBottom, edgeLeft, edgeRight } = updated
-            if (edgeTop && edgeTop === edgeBottom && edgeTop === edgeLeft && edgeTop === edgeRight) {
-              // All edges are the same, set edgeAllAround
-              updated.edgeAllAround = edgeTop
-            } else {
-              // Edges are different, clear edgeAllAround
-              updated.edgeAllAround = null
-            }
-          }
-          
-          return updated
-        })
-      }
-    }))
-  }
-
-  const handleRemovePiece = (materialId: string, pieceId: string) => {
-    setMaterialSpecs(prev => ({
-      ...prev,
-      [materialId]: {
-        ...prev[materialId],
-        cuttingPieces: prev[materialId].cuttingPieces.filter(piece => piece.id !== pieceId)
-      }
-    }))
-  }
-
-  const handleEdgeMaterialChange = (materialId: string, edgeMaterial: EdgeMaterial | null) => {
-    setMaterialSpecs(prev => ({
-      ...prev,
-      [materialId]: {
-        ...prev[materialId],
-        selectedEdgeMaterial: edgeMaterial
-      }
-    }))
-  }
-
-  const handleGlueTypeChange = (materialId: string, glueType: string) => {
-    setMaterialSpecs(prev => ({
-      ...prev,
-      [materialId]: {
-        ...prev[materialId],
-        glueType
-      }
-    }))
-  }
-
-  const handleRotationToggle = (materialId: string, allowRotation: boolean) => {
-    setMaterialSpecs(prev => ({
-      ...prev,
-      [materialId]: {
-        ...prev[materialId],
-        allowRotation
-      }
-    }))
-  }
+  // Use custom hook for material specs management
+  const {
+    materialSpecs,
+    handleEdgeMaterialChange,
+    handleGlueTypeChange,
+    handleRotationToggle,
+    handleAddPiece,
+    handlePieceChange,
+    handleRemovePiece,
+    clearAllPieces,
+    generateSpecifications,
+    getTotalPieces
+  } = useMaterialSpecs(materials, existingSpecifications)
 
   const handleContinue = () => {
-    const specifications: CuttingSpecification[] = materials.map(material => ({
-      material,
-      edgeMaterial: materialSpecs[material.id].selectedEdgeMaterial,
-      glueType: materialSpecs[material.id].glueType,
-      pieces: materialSpecs[material.id].cuttingPieces,
-      allowRotation: materialSpecs[material.id].allowRotation
-    }))
+    const specifications = generateSpecifications()
     onContinue?.(specifications)
-  }
-
-  const getTotalPieces = () => {
-    return Object.values(materialSpecs).reduce((total, spec) => total + spec.cuttingPieces.length, 0)
   }
 
   return (
@@ -270,16 +152,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, position: 'sticky', bottom: 20, backgroundColor: 'white', p: 2, borderRadius: 1, boxShadow: 2 }}>
         <Button
           variant="outlined"
-          onClick={() => setMaterialSpecs(prev => {
-            const newSpecs = { ...prev }
-            Object.keys(newSpecs).forEach(materialId => {
-              newSpecs[materialId] = {
-                ...newSpecs[materialId],
-                cuttingPieces: []
-              }
-            })
-            return newSpecs
-          })}
+          onClick={clearAllPieces}
         >
           Vymazať všetko
         </Button>
