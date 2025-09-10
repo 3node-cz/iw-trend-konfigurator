@@ -14,9 +14,14 @@ export const SHOPIFY_CONFIG = {
 } as const
 
 // Helper function to get common headers for Shopify API requests
-export const getShopifyHeaders = (useStorefront: boolean = true) => ({
-  [SHOPIFY_API.HEADERS.CONTENT_TYPE]: SHOPIFY_API.HEADERS.CONTENT_TYPE,
-  [SHOPIFY_API.HEADERS.STOREFRONT_TOKEN_HEADER]: useStorefront 
-    ? SHOPIFY_CONFIG.STOREFRONT_API_TOKEN 
-    : undefined,
-})
+export const getShopifyHeaders = (useStorefront: boolean = true) => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+  
+  if (useStorefront && SHOPIFY_CONFIG.STOREFRONT_API_TOKEN) {
+    headers['X-Shopify-Storefront-Access-Token'] = SHOPIFY_CONFIG.STOREFRONT_API_TOKEN
+  }
+  
+  return headers
+}

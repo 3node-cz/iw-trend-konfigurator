@@ -68,6 +68,8 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
   `
 
   // Search materials via Shopify Storefront API
+  console.log('DEBUG - STOREFRONT_URL:', SHOPIFY_CONFIG.STOREFRONT_URL)
+  console.log('DEBUG - Headers:', getShopifyHeaders(true))
   
   try {
     const response = await fetch(SHOPIFY_CONFIG.STOREFRONT_URL, {
@@ -153,6 +155,7 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
     
     return filteredProducts
   } catch (error) {
+    console.error('DEBUG - Full error:', error)
     throw new Error('Failed to search materials from Shopify')
   }
 }

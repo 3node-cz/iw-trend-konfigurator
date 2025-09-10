@@ -1,10 +1,12 @@
 import React from 'react'
-import { Container, ContainerProps } from '@mui/material'
+import { Container } from '@mui/material'
 import { UI_CONSTANTS } from '../../constants'
 
-interface PageContainerProps extends Omit<ContainerProps, 'maxWidth'> {
+interface PageContainerProps {
   children: React.ReactNode
   compact?: boolean
+  sx?: object
+  disableGutters?: boolean
 }
 
 /**
@@ -14,18 +16,19 @@ const PageContainer: React.FC<PageContainerProps> = ({
   children, 
   compact = false,
   sx,
+  disableGutters,
   ...props 
 }) => {
   return (
     <Container 
-      maxWidth={false} 
+      maxWidth={false}
+      disableGutters={disableGutters}
       sx={{ 
         maxWidth: UI_CONSTANTS.LAYOUT.MAX_CONTAINER_WIDTH, 
         mx: 'auto', 
         py: compact ? UI_CONSTANTS.LAYOUT.COMPACT_PADDING : UI_CONSTANTS.LAYOUT.DEFAULT_PADDING,
         ...sx 
       }}
-      {...props}
     >
       {children}
     </Container>

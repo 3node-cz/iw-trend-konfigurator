@@ -28,17 +28,12 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
       <Paper sx={{ p: 6, borderRadius: 2 }}>
         <CheckCircleIcon sx={{ fontSize: 100, color: 'success.main', mb: 3 }} />
         
-        <Typography variant="h3" sx={{ color: 'success.main', mb: 2, fontWeight: 600 }}>
+        <Typography variant="h4" sx={{ color: 'success.main', mb: 2, fontWeight: 600 }}>
           Zákazka bola úspešne pridaná do košíka!
         </Typography>
         
-        <Typography variant="h6" sx={{ mb: 1, fontWeight: 500 }}>
+        <Typography variant="h6" sx={{ mb: 8, fontWeight: 500 }}>
           "{orderName}"
-        </Typography>
-        
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}>
-          Vaša zákazka s konfiguráciou materiálov a rozrezových plánov bola úspešne pridaná do košíka v Shopify systéme. 
-          Kliknite na tlačidlo nižšie pre dokončenie objednávky a platby.
         </Typography>
         
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -77,13 +72,6 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
               Vytvoriť novú zákazku
             </Button>
           )}
-        </Box>
-        
-        <Box sx={{ mt: 4, p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
-          <Typography variant="body2" color="info.dark">
-            <strong>Ďalšie kroky:</strong> V košíku skontrolujte všetky položky a pokračujte k platbe. 
-            Rozrezové plány a špecifikácie sú uložené ako súčasť objednávky.
-          </Typography>
         </Box>
       </Paper>
     </Container>
