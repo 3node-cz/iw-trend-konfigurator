@@ -5,7 +5,6 @@ interface MaterialSpec {
   selectedEdgeMaterial: EdgeMaterial | null
   glueType: string
   cuttingPieces: CuttingPiece[]
-  allowRotation: boolean
 }
 
 export const useMaterialSpecs = (
@@ -19,8 +18,7 @@ export const useMaterialSpecs = (
       specs[material.id] = {
         selectedEdgeMaterial: existingSpec?.edgeMaterial || null,
         glueType: existingSpec?.glueType || 'PUR transparentná/bílá',
-        cuttingPieces: existingSpec?.pieces || [],
-        allowRotation: existingSpec?.allowRotation || false
+        cuttingPieces: existingSpec?.pieces || []
       }
     })
     return specs
@@ -46,15 +44,6 @@ export const useMaterialSpecs = (
     }))
   }, [])
 
-  const handleRotationToggle = useCallback((materialId: string, allowRotation: boolean) => {
-    setMaterialSpecs(prev => ({
-      ...prev,
-      [materialId]: {
-        ...prev[materialId],
-        allowRotation
-      }
-    }))
-  }, [])
 
   const handleAddPiece = useCallback((materialId: string) => {
     const newPiece: CuttingPiece = {
@@ -63,7 +52,7 @@ export const useMaterialSpecs = (
       length: 0,
       width: 0,
       quantity: 1,
-      glueEdge: false,
+      allowRotation: false,
       withoutEdge: false,
       duplicate: false,
       edgeAllAround: null,
@@ -148,8 +137,7 @@ export const useMaterialSpecs = (
       material,
       edgeMaterial: materialSpecs[material.id].selectedEdgeMaterial,
       glueType: materialSpecs[material.id].glueType,
-      pieces: materialSpecs[material.id].cuttingPieces,
-      allowRotation: materialSpecs[material.id].allowRotation
+      pieces: materialSpecs[material.id].cuttingPieces
     }))
   }, [materials, materialSpecs])
 
@@ -161,7 +149,6 @@ export const useMaterialSpecs = (
     materialSpecs,
     handleEdgeMaterialChange,
     handleGlueTypeChange,
-    handleRotationToggle,
     handleAddPiece,
     handlePieceChange,
     handleRemovePiece,

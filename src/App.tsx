@@ -4,17 +4,19 @@ import OrdersPage from './components/OrdersPage'
 import MaterialSelectionPage from './components/MaterialSelectionPage'
 import CuttingSpecificationPage from './components/CuttingSpecificationPage'
 import OrderRecapitulationPage from './components/OrderRecapitulationPage'
+import OrderSuccessPage from './components/OrderSuccessPage'
 import CuttingLayoutDemo from './components/CuttingLayoutDemo'
 import { submitOrderToShopify } from './services/shopifyApi'
 import type { SelectedMaterial, OrderFormData, CuttingSpecification, CompleteOrder } from './types/shopify'
 
-type AppView = 'orders' | 'material-selection' | 'cutting-specification' | 'recapitulation' | 'cutting-demo'
+type AppView = 'orders' | 'material-selection' | 'cutting-specification' | 'recapitulation' | 'success' | 'cutting-demo'
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('orders')
   const [currentOrder, setCurrentOrder] = useState<OrderFormData | null>(null)
   const [selectedMaterials, setSelectedMaterials] = useState<SelectedMaterial[]>([])
   const [cuttingSpecifications, setCuttingSpecifications] = useState<CuttingSpecification[]>([])
+  const [checkoutUrl, setCheckoutUrl] = useState<string>('')
 
   const handleOrderCreated = (orderData: OrderFormData) => {
     setCurrentOrder(orderData)
@@ -28,6 +30,7 @@ function App() {
     setCurrentOrder(null)
     setSelectedMaterials([])
     setCuttingSpecifications([])
+    setCheckoutUrl('')
     // Scroll to top when going back to orders
     window.scrollTo(0, 0)
   }
@@ -70,10 +73,17 @@ function App() {
       setCurrentOrder(null)
       setSelectedMaterials([])
       setCuttingSpecifications([])
+      setCheckoutUrl('')
     } catch (error) {
       console.error('Failed to submit order:', error)
       // Handle error - could show error message to user
     }
+  }
+
+  const handleOrderSuccess = (url: string, orderName: string) => {
+    setCheckoutUrl(url)
+    setCurrentView('success')
+    window.scrollTo(0, 0)
   }
 
   return (
@@ -122,6 +132,14 @@ function App() {
           specifications={cuttingSpecifications}
           onBack={handleBackToCuttingSpecification}
           onSubmitOrder={handleOrderSubmit}
+          onOrderSuccess={handleOrderSuccess}
+        />
+      )}
+      {currentView === 'success' && currentOrder && checkoutUrl && (
+        <OrderSuccessPage
+          checkoutUrl={checkoutUrl}
+          orderName={currentOrder.orderName}
+          onCreateNewOrder={handleBackToOrders}
         />
       )}
       {currentView === 'cutting-demo' && (

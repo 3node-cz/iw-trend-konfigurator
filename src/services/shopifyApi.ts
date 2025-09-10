@@ -1,11 +1,8 @@
-import type { MaterialSearchParams, MaterialSearchResult, CompleteOrder } from '../types/shopify'
+import type { MaterialSearchParams, MaterialSearchResult, CompleteOrder, CuttingSpecification, CuttingPiece } from '../types/shopify'
 
 
-// Frontend-safe Shopify configuration (Storefront API only)
-const SHOPIFY_STOREFRONT_CONFIG = {
-  storeDomain: import.meta.env.VITE_SHOPIFY_STORE_DOMAIN || 'your-store.myshopify.com',
-  storefrontAccessToken: import.meta.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN || ''
-}
+import { SHOPIFY_CONFIG, getShopifyHeaders } from '../config/shopify'
+import { SHOPIFY_API } from '../constants'
 
 // ⚠️ NEVER put Admin API credentials in frontend!
 // Admin API calls should go through your backend API
@@ -70,17 +67,12 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
     }
   `
 
-  // Debug log to see what we're searching for
-  console.log('Searching materials with query:', params.query)
-  console.log('Using store domain:', SHOPIFY_STOREFRONT_CONFIG.storeDomain)
+  // Search materials via Shopify Storefront API
   
   try {
-    const response = await fetch(`https://${SHOPIFY_STOREFRONT_CONFIG.storeDomain}/api/2023-10/graphql.json`, {
+    const response = await fetch(SHOPIFY_CONFIG.STOREFRONT_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Storefront-Access-Token': SHOPIFY_STOREFRONT_CONFIG.storefrontAccessToken
-      },
+      headers: getShopifyHeaders(true),
       body: JSON.stringify({
         query,
         variables: {
@@ -96,25 +88,22 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
 
     const data = await response.json()
     
-    // Debug log the response
-    console.log('Shopify API response:', data)
-    
     // Check for GraphQL errors
     if (data.errors) {
-      console.error('GraphQL errors:', data.errors)
       throw new Error(data.errors[0]?.message || 'GraphQL error')
     }
     
     // Validate data structure
     if (!data.data?.products?.edges) {
-      console.error('Invalid API response structure:', data)
       throw new Error('Invalid response from Shopify API')
     }
     
-    // Transform Shopify response to our MaterialSearchResult format
-    return data.data.products.edges.map((edge: any) => {
+    // Transform Shopify response to our MaterialSearchResult format  
+    const allProducts = data.data.products.edges.map((edge: any) => {
       const product = edge.node
       const variant = product.variants.edges[0]?.node
+      
+      // Extract variant data for processing
       
       // Extract metafields (filter out null fields)
       const metafields = product.metafields
@@ -126,10 +115,11 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
 
       return {
         id: product.id,
+        variantId: variant?.id, // Add variant ID for cart operations
         code: metafields.product_code || product.handle,
         name: product.title,
         productCode: metafields.product_code || '',
-        availability: metafields.availability || 'available',
+        availability: variant?.availableForSale ? 'available' : 'unavailable',
         warehouse: metafields.warehouse || 'Bratislava',
         price: {
           amount: parseFloat(variant?.price.amount || '0'),
@@ -146,24 +136,39 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
         description: product.description
       } as MaterialSearchResult
     })
+
+    // Apply filtering based on params
+    let filteredProducts = allProducts
+    
+    // Filter by availability (default: available only)
+    const showAvailableOnly = params.availableOnly !== false // Default to true
+    if (showAvailableOnly) {
+      filteredProducts = allProducts.filter((product: MaterialSearchResult) => product.availability === 'available')
+    }
+    
+    // Apply limit if specified
+    if (params.limit && params.limit > 0) {
+      filteredProducts = filteredProducts.slice(0, params.limit)
+    }
+    
+    return filteredProducts
   } catch (error) {
-    console.error('Error searching materials:', error)
     throw new Error('Failed to search materials from Shopify')
   }
 }
 
 // Submit complete order to Shopify (Admin API)
 export const submitOrderToShopify = async (completeOrder: CompleteOrder): Promise<any> => {
-  const { order, specification: specifications } = completeOrder
+  const { order, specifications } = completeOrder
 
   // Prepare order data for Shopify
   const shopifyOrder = {
     order: {
       email: 'orders@iwtrend.sk', // Default email or from order
-      line_items: specifications.flatMap((specification, index) => {
+      line_items: specifications.flatMap((specification: CuttingSpecification, index: number) => {
         const materialLineItem = {
           variant_id: specification.material.id,
-          quantity: specification.pieces.reduce((sum, piece) => sum + piece.quantity, 0),
+          quantity: specification.pieces.reduce((sum: number, piece: CuttingPiece) => sum + piece.quantity, 0),
           properties: [
             {
               name: 'Názov zákazky',
@@ -235,12 +240,8 @@ export const submitOrderToShopify = async (completeOrder: CompleteOrder): Promis
   try {
     // NOTE: This function currently won't work because Admin API access is not configured
     // Admin API calls should go through your backend server, not frontend
-    console.warn('⚠️ Admin API calls should be handled by backend server')
-    console.log('Order would be submitted:', shopifyOrder)
-    
     throw new Error('Order submission must be implemented on backend server for security')
   } catch (error) {
-    console.error('Error submitting order to Shopify:', error)
     throw new Error('Failed to submit order to Shopify')
   }
 }
@@ -268,12 +269,9 @@ export const getCollectionHierarchy = async (): Promise<any> => {
   `
 
   try {
-    const response = await fetch(`https://${SHOPIFY_STOREFRONT_CONFIG.storeDomain}/api/2023-10/graphql.json`, {
+    const response = await fetch(SHOPIFY_CONFIG.STOREFRONT_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Storefront-Access-Token': SHOPIFY_STOREFRONT_CONFIG.storefrontAccessToken
-      },
+      headers: getShopifyHeaders(true),
       body: JSON.stringify({ query })
     })
 
@@ -289,8 +287,6 @@ export const getCollectionHierarchy = async (): Promise<any> => {
 // Search edge materials using the main search API (more efficient)
 export const searchEdgeMaterials = async (params: MaterialSearchParams): Promise<MaterialSearchResult[]> => {
   try {
-    console.log('🔍 Searching edge materials with query:', params.query)
-    
     // Use the main search but add edge-specific search terms
     const edgeQuery = `${params.query} hrana OR ${params.query} edge OR ${params.query} abs`
     
@@ -313,11 +309,9 @@ export const searchEdgeMaterials = async (params: MaterialSearchParams): Promise
       )
     })
     
-    console.log('✅ Found', edgeResults.length, 'edge materials from', results.length, 'total results')
     return edgeResults
     
   } catch (error) {
-    console.error('❌ Error searching edge materials:', error)
     throw new Error('Failed to search edge materials from Shopify')
   }
 }

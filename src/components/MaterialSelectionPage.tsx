@@ -32,6 +32,7 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
   const [selectedMaterials, setSelectedMaterials] = useState<SelectedMaterial[]>(initialSelectedMaterials)
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [showingAvailableOnly, setShowingAvailableOnly] = useState(true)
 
   const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query) // Track the current search query
@@ -45,10 +46,11 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
     try {
       console.log('🔍 Starting material search for:', query)
       
-      // Use the real Shopify API
+      // Use the real Shopify API with filtering
       const results = await searchMaterials({ 
         query: query,
-        limit: 20
+        availableOnly: showingAvailableOnly,
+        limit: showingAvailableOnly ? 10 : undefined // 10 for available only, unlimited for all
       })
       
       console.log('✅ Search completed. Found', results.length, 'results')
@@ -59,7 +61,28 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [showingAvailableOnly])
+
+  const handleShowAll = useCallback(async () => {
+    setShowingAvailableOnly(false)
+    // Re-search with current query but showing all products
+    if (searchQuery.length >= 2) {
+      setIsLoading(true)
+      try {
+        const results = await searchMaterials({ 
+          query: searchQuery,
+          availableOnly: false,
+          limit: undefined
+        })
+        console.log('✅ Show all completed. Found', results.length, 'results')
+        setSearchResults(results)
+      } catch (error) {
+        console.error('❌ Show all error:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+  }, [searchQuery])
 
   const handleAddMaterial = (material: MaterialSearchResult) => {
     // Check if material is already selected
@@ -132,6 +155,36 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
               Vymazať výsledky
             </Button>
           </Box>
+
+          {/* Show All Button - only when showing available products and we have results */}
+          {showingAvailableOnly && searchResults.length >= 10 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={handleShowAll}
+                disabled={isLoading}
+                sx={{ 
+                  borderRadius: 3,
+                  textTransform: 'none',
+                  px: 3
+                }}
+              >
+                Zobraziť všetky produkty (vrátane nedostupných)
+              </Button>
+            </Box>
+          )}
+
+          {/* Results summary */}
+          {searchResults.length > 0 && (
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              {showingAvailableOnly ? 
+                `Zobrazených ${searchResults.length} dostupných produktov` : 
+                `Zobrazených ${searchResults.length} produktov celkom`
+              }
+            </Typography>
+          )}
+
           <MaterialResultsTable
             results={searchResults}
             onAddMaterial={handleAddMaterial}

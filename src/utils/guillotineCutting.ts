@@ -93,7 +93,7 @@ export class OptimizedGuillotineCuttingOptimizer {
   }
 
   // Multi-board optimization - main entry point
-  optimizeMultipleBoards(pieces: CuttingPiece[], allowRotation = false): MultiboardCuttingResult {
+  optimizeMultipleBoards(pieces: CuttingPiece[]): MultiboardCuttingResult {
     const allBoards: CuttingLayout[] = []
     let remainingPieces = [...pieces]
     let boardNumber = 1
@@ -101,7 +101,7 @@ export class OptimizedGuillotineCuttingOptimizer {
 
     while (remainingPieces.length > 0) {
       // Try to optimize current board
-      const layout = this.optimize(remainingPieces, allowRotation)
+      const layout = this.optimize(remainingPieces)
       layout.boardNumber = boardNumber
 
       // If no pieces were placed, we can't fit any more
@@ -164,7 +164,7 @@ export class OptimizedGuillotineCuttingOptimizer {
   }
 
   // Single board optimization (existing method)
-  optimize(pieces: CuttingPiece[], allowRotation = false): CuttingLayout {
+  optimize(pieces: CuttingPiece[]): CuttingLayout {
     this.placedPieces = []
     this.cutLines = []
     this.cutCounter = 0
@@ -172,7 +172,7 @@ export class OptimizedGuillotineCuttingOptimizer {
     this.freeRectangles = [{ x: 0, y: 0, width: this.boardWidth, height: this.boardHeight }]
 
     // Phase 1: Create piece groups for identical pieces
-    const pieceGroups = this.createPieceGroups(pieces, allowRotation)
+    const pieceGroups = this.createPieceGroups(pieces)
     
     // Phase 2: Sort groups by priority (large groups first, then by area)
     const sortedGroups = this.sortGroupsForOptimalCutting(pieceGroups)
@@ -212,7 +212,7 @@ export class OptimizedGuillotineCuttingOptimizer {
   }
 
   // Create groups for identical pieces
-  private createPieceGroups(pieces: CuttingPiece[], allowRotation = false): PieceGroup[] {
+  private createPieceGroups(pieces: CuttingPiece[]): PieceGroup[] {
     const groupMap = new Map<string, PieceGroup>()
 
     for (const piece of pieces) {
@@ -229,7 +229,7 @@ export class OptimizedGuillotineCuttingOptimizer {
         
         // Calculate optimal grid layout for this piece type
         const { gridWidth, gridHeight, rotated } = this.calculateOptimalGrid(
-          width, height, piece.quantity, this.boardWidth, this.boardHeight, allowRotation
+          width, height, piece.quantity, this.boardWidth, this.boardHeight, piece.allowRotation
         )
         
         const finalWidth = rotated ? height : width
@@ -359,7 +359,7 @@ export class OptimizedGuillotineCuttingOptimizer {
         remainingQuantity -= piecesToPlace
       } else {
         // If we can't place the group, try placing individual pieces
-        const individualPiece = this.placeSinglePiece(group.piece, `${group.piece.id}_${this.groupCounter++}`, false)
+        const individualPiece = this.placeSinglePiece(group.piece, `${group.piece.id}_${this.groupCounter++}`)
         if (individualPiece) {
           this.placedPieces.push(individualPiece)
           remainingQuantity -= 1
@@ -427,7 +427,7 @@ export class OptimizedGuillotineCuttingOptimizer {
   }
 
   // Fallback: place a single piece (same as original algorithm)
-  private placeSinglePiece(piece: CuttingPiece, uniqueId: string, allowRotation = false): PlacedPiece | null {
+  private placeSinglePiece(piece: CuttingPiece, uniqueId: string): PlacedPiece | null {
     const width = piece.length
     const height = piece.width
 
@@ -448,7 +448,7 @@ export class OptimizedGuillotineCuttingOptimizer {
     }
 
     // Try rotated orientation only if allowed
-    if (allowRotation && piece.length !== piece.width) {
+    if (piece.allowRotation && piece.length !== piece.width) {
       for (let i = 0; i < this.freeRectangles.length; i++) {
         const rect = this.freeRectangles[i]
         if (rect.width >= height && rect.height >= width) {

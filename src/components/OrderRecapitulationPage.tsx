@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Box,
   Container,
@@ -21,56 +21,71 @@ import {
 } from '@mui/icons-material'
 import Grid from '@mui/system/Grid'
 import type { OrderFormData, CuttingSpecification, CompleteOrder } from '../types/shopify'
-import { AvailabilityChip, CuttingDiagramThumbnail, CuttingDiagramDialog } from './common'
-import { useCuttingLayouts } from '../hooks/useCuttingLayouts'
+import { AvailabilityChip, CuttingDiagramThumbnail, CuttingDiagramDialog, OrderCalculationsSummary } from './common'
+import { useCuttingLayouts, useOrderCalculations } from '../hooks'
+import { useOrderSubmission } from '../hooks/useOrderSubmission'
 
 interface OrderRecapitulationPageProps {
   order: OrderFormData
   specifications: CuttingSpecification[]
   onBack?: () => void
   onSubmitOrder?: (completeOrder: CompleteOrder) => void
+  onOrderSuccess?: (checkoutUrl: string, orderName: string) => void
 }
 
 const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
   order,
   specifications,
   onBack,
-  onSubmitOrder
+  onSubmitOrder,
+  onOrderSuccess
 }) => {
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
   const [selectedDiagram, setSelectedDiagram] = useState<{layout: any, title: string} | null>(null)
 
-  // Use custom hook for cutting layouts
+  // Use custom hooks for cutting layouts and order calculations
   const { cuttingLayouts, overallStats } = useCuttingLayouts(specifications)
+  const orderCalculations = useOrderCalculations(specifications)
+  
+  // Use order submission hook
+  const { 
+    isSubmitting, 
+    error: submissionError, 
+    success: submissionSuccess,
+    checkoutUrl,
+    submitOrder, 
+    clearError,
+    resetSuccess 
+  } = useOrderSubmission()
+
+  // Watch for successful submission and redirect to success page
+  useEffect(() => {
+    if (submissionSuccess && checkoutUrl && onOrderSuccess) {
+      onOrderSuccess(checkoutUrl, order.orderName)
+    }
+  }, [submissionSuccess, checkoutUrl, onOrderSuccess, order.orderName])
 
   const handleSubmitOrder = async () => {
-    setIsSubmitting(true)
+    // Clear any previous errors
+    if (submissionError) {
+      clearError()
+    }
     
     try {
-      // Simulate API call to Shopify
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
       const completeOrder: CompleteOrder = {
         order,
-        specification: specifications,
+        specifications,
+        cuttingLayouts,
+        orderCalculations,
         submittedAt: new Date()
       }
       
-      
-      // TODO: Replace with actual Shopify API call
-      // await submitOrderToShopify(completeOrder)
-      
-      setSubmitSuccess(true)
-      setTimeout(() => {
-        onSubmitOrder?.(completeOrder)
-      }, 1500)
+      // Submit to Shopify cart 
+      await submitOrder(completeOrder)
       
     } catch (error) {
       console.error('Order submission failed:', error)
-      // TODO: Handle submission error
-    } finally {
-      setIsSubmitting(false)
+      // Error is handled by the useOrderSubmission hook
     }
   }
 
@@ -119,12 +134,12 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
       <Grid container spacing={3}>
         {/* Order Information */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+          <Paper sx={{ p: 2, mb: 3 }}>
+            <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600 }}>
               Informácie o zákazke
             </Typography>
             
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Box>
                 <Typography variant="caption" color="text.secondary">Zákazník</Typography>
                 <Typography variant="body1" sx={{ fontWeight: 500 }}>{order.company}</Typography>
@@ -164,12 +179,12 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
 
         {/* Materials Summary */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+          <Paper sx={{ p: 2, mb: 3 }}>
+            <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600 }}>
               Materiály ({specifications.length})
             </Typography>
             
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {specifications.map((specification, index) => (
                 <Box key={specification.material.id} sx={{ 
                   p: 2, 
@@ -230,12 +245,12 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
 
       {/* Cutting Pieces Summary */}
       {specifications.map((specification, specIndex) => (
-        <Paper key={specification.material.id} sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+        <Paper key={specification.material.id} sx={{ p: 2, mb: 3 }}>
+          <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600 }}>
             Kusy na rezanie - Materiál {specIndex + 1} ({specification.pieces.length} položiek, {specification.pieces.reduce((sum, piece) => sum + piece.quantity, 0)} kusov)
           </Typography>
           
-          <Box sx={{ mb: 2, p: 2, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+          <Box sx={{ mb: 1.5, p: 1.5, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
               {specification.material.name}
             </Typography>
@@ -252,7 +267,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
                   <TableCell sx={{ fontWeight: 600 }}>Názov dielca</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Rozmery (D×Š)</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Počet</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Letokruhy</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Rotácia</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Bez orezu</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Dupel</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Hrany</TableCell>
@@ -274,7 +289,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
                       </Typography>
                     </TableCell>
                     <TableCell>{piece.quantity}</TableCell>
-                    <TableCell>{piece.glueEdge ? '✓' : '—'}</TableCell>
+                    <TableCell>{piece.allowRotation ? '✓' : '—'}</TableCell>
                     <TableCell>{piece.withoutEdge ? '✓' : '—'}</TableCell>
                     <TableCell>{piece.duplicate ? '✓' : '—'}</TableCell>
                     <TableCell>
@@ -301,6 +316,9 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
           </TableContainer>
         </Paper>
       ))}
+
+      {/* Order Calculations Summary */}
+      <OrderCalculationsSummary calculations={orderCalculations} />
 
       {/* Cutting Layout Diagrams - Thumbnail View */}
       {cuttingLayouts.length > 0 ? (
@@ -452,8 +470,57 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
               </Typography>
             </Box>
           )}
+          {orderCalculations.totals.totalEdgeLength > 0 && (
+            <Box>
+              <Typography variant="caption" color="text.secondary">Hranový materiál</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: 'info.main' }}>
+                {orderCalculations.totals.totalEdgeLength.toFixed(2)} m
+              </Typography>
+            </Box>
+          )}
+          <Box>
+            <Typography variant="caption" color="text.secondary">Náklady na rezanie</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: 'secondary.main' }}>
+              {orderCalculations.totals.totalCuttingCost.toFixed(2)} €
+            </Typography>
+          </Box>
         </Box>
       </Paper>
+
+      {/* Error Display */}
+      {submissionError && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={clearError}>
+          {submissionError}
+        </Alert>
+      )}
+
+      {/* Success Display */}
+      {submissionSuccess && checkoutUrl && (
+        <Alert 
+          severity="success" 
+          sx={{ mb: 3 }} 
+          onClose={resetSuccess}
+          action={
+            <Button 
+              color="inherit" 
+              size="small" 
+              href={checkoutUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ textTransform: 'none' }}
+            >
+              Otvoriť košík →
+            </Button>
+          }
+        >
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
+            ✅ Zákazka bola úspešne pridaná do košíka!
+          </Typography>
+          <Typography variant="body2">
+            Váš košík je pripravený v Shopify systéme. Kliknite na tlačidlo pre dokončenie objednávky.
+          </Typography>
+        </Alert>
+      )}
 
       {/* Action Buttons */}
       <Paper sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

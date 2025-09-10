@@ -39,7 +39,7 @@ export const useCuttingLayouts = (specifications: CuttingSpecification[]) => {
       )
       
       // Use multi-board optimization with rotation setting
-      const multiboardResult = optimizer.optimizeMultipleBoards(specification.pieces, specification.allowRotation || false)
+      const multiboardResult = optimizer.optimizeMultipleBoards(specification.pieces)
       
       // Add each board as a separate layout
       multiboardResult.boards.forEach((board, boardIndex) => {

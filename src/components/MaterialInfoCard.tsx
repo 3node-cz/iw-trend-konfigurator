@@ -8,7 +8,7 @@ import {
   Avatar
 } from '@mui/material'
 import type { MaterialSearchResult } from '../types/shopify'
-import { AvailabilityChip, WoodGrainVisualization } from './common'
+import { AvailabilityChip } from './common'
 
 interface MaterialInfoCardProps {
   material: MaterialSearchResult
@@ -110,24 +110,6 @@ const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
             </Box>
           )}
 
-          {/* Wood Grain Direction */}
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-              Smer vlákien dreva
-            </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
-              <WoodGrainVisualization 
-                width={120}
-                height={80}
-                grainDirection={material.grainDirection || 'horizontal'}
-                showLabels={false}
-                showArrows={false}
-              />
-            </Box>
-            <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', display: 'block' }}>
-              {material.grainDirection === 'vertical' ? 'Vertikálne vlákna' : 'Horizontálne vlákna'}
-            </Typography>
-          </Box>
 
           {/* Price */}
           <Box>

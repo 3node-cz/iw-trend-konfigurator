@@ -35,6 +35,7 @@ export interface ProductVariant {
 
 export interface MaterialSearchResult {
   id: string
+  variantId?: string // Shopify ProductVariant ID for cart operations
   code: string // "H1180"
   name: string // "DTD_H1180 ST37 Dub Halifax prírodný 2800/2070/18.6"
   productCode: string // "275048"
@@ -109,6 +110,7 @@ export interface MaterialSearchParams {
   query: string
   collection?: string
   availability?: 'available' | 'all'
+  availableOnly?: boolean // When false, shows all products including unavailable
   warehouse?: string
   limit?: number
 }
@@ -148,7 +150,7 @@ export interface CuttingPiece {
   length: number // in mm
   width: number // in mm
   quantity: number
-  glueEdge: boolean // Letokruhy
+  allowRotation: boolean // Povoliť rotáciu (pôvodne Letokruhy)
   withoutEdge: boolean // Bez orezu
   duplicate: boolean // Dupel
   edgeAllAround: number | null // Hrana dookola - thickness in mm (0.8, 1, 2)
@@ -164,12 +166,13 @@ export interface CuttingSpecification {
   edgeMaterial: EdgeMaterial | null
   glueType: string // PUR transparentná/bílá, etc.
   pieces: CuttingPiece[]
-  allowRotation?: boolean // Allow pieces to be rotated for better optimization
 }
 
 // Complete order for submission
 export interface CompleteOrder {
   order: OrderFormData
-  specification: CuttingSpecification[]
+  specifications: CuttingSpecification[]
+  cuttingLayouts?: any[] // From useCuttingLayouts hook
+  orderCalculations?: any // From useOrderCalculations hook
   submittedAt: Date
 }

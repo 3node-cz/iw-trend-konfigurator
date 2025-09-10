@@ -4,9 +4,7 @@ import {
   Container,
   Typography,
   Paper,
-  Button,
-  FormControlLabel,
-  Checkbox
+  Button
 } from '@mui/material'
 import Grid from '@mui/system/Grid'
 import {
@@ -39,7 +37,6 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
     materialSpecs,
     handleEdgeMaterialChange,
     handleGlueTypeChange,
-    handleRotationToggle,
     handleAddPiece,
     handlePieceChange,
     handleRemovePiece,
@@ -97,24 +94,6 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
               </Grid>
             </Grid>
 
-            {/* Cutting Options */}
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                Možnosti rezania
-              </Typography>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={materialSpec.allowRotation}
-                    onChange={(e) => handleRotationToggle(material.id, e.target.checked)}
-                  />
-                }
-                label="Povoliť rotáciu kusov pre lepšie využitie materiálu"
-              />
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                Ak je zapnuté, algoritmus môže otočiť kusy o 90° pre efektívnejšie rozrezanie
-              </Typography>
-            </Paper>
 
             {/* Cutting Pieces Section */}
             <Paper sx={{ p: 3, mb: 3 }}>

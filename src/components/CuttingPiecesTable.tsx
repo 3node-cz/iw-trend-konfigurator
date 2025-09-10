@@ -119,14 +119,14 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       )
     }),
 
-    // Letokruhy
-    columnHelper.accessor('glueEdge', {
-      header: 'Letokruhy',
+    // Povoliť rotáciu
+    columnHelper.accessor('allowRotation', {
+      header: 'Rotácia',
       size: 80,
       cell: ({ row, getValue }) => (
         <Switch
           checked={getValue()}
-          onChange={(e) => handlePieceChange(row.original.id, { glueEdge: e.target.checked })}
+          onChange={(e) => handlePieceChange(row.original.id, { allowRotation: e.target.checked })}
         />
       )
     }),

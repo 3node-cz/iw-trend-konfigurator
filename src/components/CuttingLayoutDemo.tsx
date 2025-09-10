@@ -13,7 +13,7 @@ const CuttingLayoutDemo: React.FC = () => {
       length: 2000, // mm
       width: 600,   // mm
       quantity: 2,
-      glueEdge: false,
+      allowRotation: false,
       withoutEdge: false,
       duplicate: false,
       edgeAllAround: null,
@@ -29,7 +29,7 @@ const CuttingLayoutDemo: React.FC = () => {
       length: 650,
       width: 400,
       quantity: 1,
-      glueEdge: false,
+      allowRotation: false,
       withoutEdge: false,
       duplicate: false,
       edgeAllAround: null,
@@ -45,7 +45,7 @@ const CuttingLayoutDemo: React.FC = () => {
       length: 550,
       width: 350,
       quantity: 5,
-      glueEdge: false,
+      allowRotation: false,
       withoutEdge: false,
       duplicate: false,
       edgeAllAround: null,
