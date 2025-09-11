@@ -22,6 +22,7 @@ import {
 import Grid from '@mui/system/Grid'
 import type { OrderFormData, CuttingSpecification, CompleteOrder } from '../types/shopify'
 import { AvailabilityChip, CuttingDiagramThumbnail, CuttingDiagramDialog, OrderCalculationsSummary } from './common'
+import OrderInvoiceTable from './OrderInvoiceTable'
 import { useCuttingLayouts, useOrderCalculations } from '../hooks'
 import { useOrderSubmission } from '../hooks/useOrderSubmission'
 
@@ -177,148 +178,14 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
           </Paper>
         </Grid>
 
-        {/* Materials Summary */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Paper sx={{ p: 2, mb: 3 }}>
-            <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600 }}>
-              Materiály ({specifications.length})
-            </Typography>
-            
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              {specifications.map((specification, index) => (
-                <Box key={specification.material.id} sx={{ 
-                  p: 2, 
-                  border: '1px solid #e0e0e0', 
-                  borderRadius: 1,
-                  backgroundColor: '#fafafa'
-                }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                    Materiál {index + 1}
-                  </Typography>
-                  
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">Materiál</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>{specification.material.name}</Typography>
-                    <Typography variant="caption" color="primary">{specification.material.productCode}</Typography>
-                  </Box>
-                  
-                  {specification.material.dimensions && (
-                    <Box sx={{ mt: 1 }}>
-                      <Typography variant="caption" color="text.secondary">Rozmery: </Typography>
-                      <Typography variant="caption">
-                        {specification.material.dimensions.width} × {specification.material.dimensions.height} × {specification.material.dimensions.thickness} mm
-                      </Typography>
-                    </Box>
-                  )}
-                  
-                  <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <AvailabilityChip
-                      availability={specification.material.availability}
-                      size="small"
-                    />
-                  </Box>
-                  
-                  {specification.edgeMaterial && (
-                    <Box sx={{ mt: 1 }}>
-                      <Typography variant="caption" color="text.secondary">Hrana: </Typography>
-                      <Typography variant="caption">{specification.edgeMaterial.name} ({specification.edgeMaterial.thickness}mm)</Typography>
-                    </Box>
-                  )}
-                  
-                  <Box sx={{ mt: 1 }}>
-                    <Typography variant="caption" color="text.secondary">Lepidlo: </Typography>
-                    <Typography variant="caption">{specification.glueType}</Typography>
-                  </Box>
-                  
-                  <Box sx={{ mt: 1 }}>
-                    <Typography variant="caption" color="text.secondary">Kusov: </Typography>
-                    <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                      {specification.pieces.reduce((sum, piece) => sum + piece.quantity, 0)}
-                    </Typography>
-                  </Box>
-                </Box>
-              ))}
-            </Box>
-          </Paper>
-        </Grid>
       </Grid>
 
-      {/* Cutting Pieces Summary */}
-      {specifications.map((specification, specIndex) => (
-        <Paper key={specification.material.id} sx={{ p: 2, mb: 3 }}>
-          <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600 }}>
-            Kusy na rezanie - Materiál {specIndex + 1} ({specification.pieces.length} položiek, {specification.pieces.reduce((sum, piece) => sum + piece.quantity, 0)} kusov)
-          </Typography>
-          
-          <Box sx={{ mb: 1.5, p: 1.5, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-              {specification.material.name}
-            </Typography>
-            <Typography variant="body2" color="primary">
-              {specification.material.productCode}
-            </Typography>
-          </Box>
-          
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                  <TableCell sx={{ fontWeight: 600 }}>#</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Názov dielca</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Rozmery (D×Š)</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Počet</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Rotácia</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Bez orezu</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Dupel</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Hrany</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Poznámka</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {specification.pieces.map((piece, index) => (
-                  <TableRow key={piece.id} hover>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {piece.partName || '—'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {piece.length} × {piece.width} mm
-                      </Typography>
-                    </TableCell>
-                    <TableCell>{piece.quantity}</TableCell>
-                    <TableCell>{piece.allowRotation ? '✓' : '—'}</TableCell>
-                    <TableCell>{piece.withoutEdge ? '✓' : '—'}</TableCell>
-                    <TableCell>{piece.duplicate ? '✓' : '—'}</TableCell>
-                    <TableCell>
-                      <Typography variant="caption">
-                        {piece.edgeAllAround ? (
-                          `Dookola: ${piece.edgeAllAround}`
-                        ) : (
-                          [
-                            piece.edgeTop && `V: ${piece.edgeTop}`,
-                            piece.edgeBottom && `S: ${piece.edgeBottom}`,
-                            piece.edgeLeft && `Ľ: ${piece.edgeLeft}`,
-                            piece.edgeRight && `P: ${piece.edgeRight}`
-                          ].filter(Boolean).join(', ') || '—'
-                        )}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="caption">{piece.notes || '—'}</Typography>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-      ))}
-
-      {/* Order Calculations Summary */}
-      <OrderCalculationsSummary calculations={orderCalculations} />
+      {/* Order Invoice Table */}
+      <OrderInvoiceTable 
+        specifications={specifications}
+        cuttingLayouts={cuttingLayouts}
+        orderCalculations={orderCalculations}
+      />
 
       {/* Cutting Layout Diagrams - Thumbnail View */}
       {cuttingLayouts.length > 0 ? (

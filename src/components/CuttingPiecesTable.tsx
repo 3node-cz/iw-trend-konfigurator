@@ -19,7 +19,8 @@ import {
   Switch
 } from '@mui/material'
 import {
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  Visibility as VisibilityIcon
 } from '@mui/icons-material'
 import type { CuttingPiece, EdgeMaterial } from '../types/shopify'
 import { DebouncedTextInput, DebouncedNumberInput, EdgeThicknessSelect, HeaderWithHint, EdgeOrientationHint } from './common'
@@ -29,6 +30,7 @@ interface CuttingPiecesTableProps {
   edgeMaterial: EdgeMaterial | null
   onPieceChange: (pieceId: string, updatedPiece: Partial<CuttingPiece>) => void
   onRemovePiece: (pieceId: string) => void
+  onPreviewPiece?: (piece: CuttingPiece) => void
 }
 
 const columnHelper = createColumnHelper<CuttingPiece>()
@@ -37,7 +39,8 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   pieces,
   edgeMaterial,
   onPieceChange,
-  onRemovePiece
+  onRemovePiece,
+  onPreviewPiece
 }) => {
   // Edge thickness selection - no longer need to create options from edgeMaterial
 
@@ -49,6 +52,10 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   const handleRemovePiece = useCallback((pieceId: string) => {
     onRemovePiece(pieceId)
   }, [onRemovePiece])
+
+  const handlePreviewPiece = useCallback((piece: CuttingPiece) => {
+    onPreviewPiece?.(piece)
+  }, [onPreviewPiece])
 
   const columns = useMemo<ColumnDef<CuttingPiece, any>[]>(() => [
     // Row number
@@ -269,17 +276,30 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       id: 'actions',
       header: 'Akcie',
       cell: ({ row }) => (
-        <IconButton
-          size="small"
-          color="error"
-          onClick={() => handleRemovePiece(row.original.id)}
-        >
-          <DeleteIcon />
-        </IconButton>
+        <Box sx={{ display: 'flex', gap: 0.5 }}>
+          {onPreviewPiece && (
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => handlePreviewPiece(row.original)}
+              title="Náhľad dielca"
+            >
+              <VisibilityIcon />
+            </IconButton>
+          )}
+          <IconButton
+            size="small"
+            color="error"
+            onClick={() => handleRemovePiece(row.original.id)}
+            title="Odstrániť dielec"
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Box>
       ),
-      size: 70
+      size: onPreviewPiece ? 110 : 70
     })
-  ], [edgeMaterial, handlePieceChange, handleRemovePiece])
+  ], [edgeMaterial, handlePieceChange, handleRemovePiece, handlePreviewPiece, onPreviewPiece])
 
   const table = useReactTable({
     data: pieces,

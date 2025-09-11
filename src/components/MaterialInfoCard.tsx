@@ -66,37 +66,6 @@ const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
         <Divider sx={{ my: 2 }} />
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {/* Local Warehouse Availability */}
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-              Dostupnosť lokálneho skladu
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <AvailabilityChip
-                availability={material.availability}
-                size="small"
-              />
-              <Typography variant="caption" color="text.secondary">
-                {material.warehouse}
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Central Warehouse Availability */}
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-              Dostupnosť centrálneho skladu
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <AvailabilityChip
-                availability={material.availability}
-                size="small"
-              />
-              <Typography variant="caption" color="text.secondary">
-                Nitra
-              </Typography>
-            </Box>
-          </Box>
 
           {/* Dimensions */}
           {material.dimensions && (

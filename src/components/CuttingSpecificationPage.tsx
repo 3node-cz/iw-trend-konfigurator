@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Box,
   Container,
@@ -14,8 +14,9 @@ import {
 import MaterialInfoCard from './MaterialInfoCard'
 import EdgeSelectionCard from './EdgeSelectionCard'
 import CuttingPiecesTable from './CuttingPiecesTable'
+import PiecePreviewDialog from './PiecePreviewDialog'
 import { useMaterialSpecs } from '../hooks/useMaterialSpecs'
-import type { MaterialSearchResult, CuttingSpecification } from '../types/shopify'
+import type { MaterialSearchResult, CuttingSpecification, CuttingPiece } from '../types/shopify'
 
 interface CuttingSpecificationPageProps {
   materials: MaterialSearchResult[]
@@ -32,6 +33,10 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
   onBack,
   onContinue
 }) => {
+  // State for piece preview dialog
+  const [previewPiece, setPreviewPiece] = useState<CuttingPiece | null>(null)
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+
   // Use custom hook for material specs management
   const {
     materialSpecs,
@@ -48,6 +53,16 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
   const handleContinue = () => {
     const specifications = generateSpecifications()
     onContinue?.(specifications)
+  }
+
+  const handlePreviewPiece = (piece: CuttingPiece) => {
+    setPreviewPiece(piece)
+    setIsPreviewOpen(true)
+  }
+
+  const handleClosePreview = () => {
+    setIsPreviewOpen(false)
+    setPreviewPiece(null)
   }
 
   return (
@@ -115,6 +130,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
                 edgeMaterial={materialSpec.selectedEdgeMaterial}
                 onPieceChange={(pieceId, updatedPiece) => handlePieceChange(material.id, pieceId, updatedPiece)}
                 onRemovePiece={(pieceId) => handleRemovePiece(material.id, pieceId)}
+                onPreviewPiece={handlePreviewPiece}
               />
             </Paper>
 
@@ -143,6 +159,13 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
           Pokračovať ({getTotalPieces()} kusov)
         </Button>
       </Box>
+
+      {/* Piece Preview Dialog */}
+      <PiecePreviewDialog
+        open={isPreviewOpen}
+        piece={previewPiece}
+        onClose={handleClosePreview}
+      />
     </Container>
   )
 }
