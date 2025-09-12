@@ -92,14 +92,16 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
     const totalPieces = specifications.reduce((sum, spec) => 
       sum + spec.pieces.reduce((pieceSum, piece) => pieceSum + piece.quantity, 0), 0
     )
+    const actualCuts = orderCalculations.totals?.totalCuts || totalPieces // Use actual cuts or fallback to pieces
+    
     
     orderItems.push({
       id: 'cutting-service',
       name: 'Rezanie materiálov',
       code: 'CUTTING',
-      quantity: totalPieces,
+      quantity: actualCuts,
       unit: 'rezov',
-      unitPrice: totalCuttingCost / totalPieces,
+      unitPrice: totalCuttingCost / actualCuts,
       totalPrice: totalCuttingCost,
       type: 'cutting'
     })

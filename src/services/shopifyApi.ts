@@ -7,11 +7,11 @@ import { SHOPIFY_API } from '../constants'
 // ⚠️ NEVER put Admin API credentials in frontend!
 // Admin API calls should go through your backend API
 
-// Shopify Storefront API for searching materials
+// Shopify Storefront API for searching materials (back to targeted search approach)
 export const searchMaterials = async (params: MaterialSearchParams): Promise<MaterialSearchResult[]> => {
   const query = `
-    query searchProducts($query: String!, $first: Int) {
-      products(query: $query, first: $first) {
+    query searchProducts($query: String!, $first: Int, $sortKey: ProductSortKeys, $reverse: Boolean) {
+      products(query: $query, first: $first, sortKey: $sortKey, reverse: $reverse) {
         edges {
           node {
             id
@@ -67,10 +67,15 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
     }
   `
 
-  // Search materials via Shopify Storefront API
-  console.log('DEBUG - STOREFRONT_URL:', SHOPIFY_CONFIG.STOREFRONT_URL)
-  console.log('DEBUG - Headers:', getShopifyHeaders(true))
+  // Use 250 limit and sort by relevance first, then by availability
+  const showAvailableOnly = params.availableOnly !== false
   
+  // Build search query with collection filter if specified
+  let searchQuery = params.query
+  if (params.collection) {
+    searchQuery = `${params.query} AND collection:${params.collection}`
+  }
+
   try {
     const response = await fetch(SHOPIFY_CONFIG.STOREFRONT_URL, {
       method: 'POST',
@@ -78,8 +83,10 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
       body: JSON.stringify({
         query,
         variables: {
-          query: params.query,
-          first: params.limit || 20
+          query: searchQuery,
+          first: 250,
+          sortKey: "RELEVANCE", // Sort by search relevance first
+          reverse: false
         }
       })
     })
@@ -90,12 +97,10 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
 
     const data = await response.json()
     
-    // Check for GraphQL errors
     if (data.errors) {
       throw new Error(data.errors[0]?.message || 'GraphQL error')
     }
     
-    // Validate data structure
     if (!data.data?.products?.edges) {
       throw new Error('Invalid response from Shopify API')
     }
@@ -105,9 +110,6 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
       const product = edge.node
       const variant = product.variants.edges[0]?.node
       
-      // Extract variant data for processing
-      
-      // Extract metafields (filter out null fields)
       const metafields = product.metafields
         .filter((field: any) => field !== null && field.key)
         .reduce((acc: any, field: any) => {
@@ -117,7 +119,7 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
 
       return {
         id: product.id,
-        variantId: variant?.id, // Add variant ID for cart operations
+        variantId: variant?.id,
         code: metafields.product_code || product.handle,
         name: product.title,
         productCode: metafields.product_code || '',
@@ -139,23 +141,47 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
       } as MaterialSearchResult
     })
 
+    console.log(`DEBUG - Received ${allProducts.length} products from Shopify for query: "${searchQuery}"`)
+    
     // Apply filtering based on params
     let filteredProducts = allProducts
     
-    // Filter by availability (default: available only)
-    const showAvailableOnly = params.availableOnly !== false // Default to true
+    // Sort by availability first (available products at the top)
+    allProducts.sort((a: MaterialSearchResult, b: MaterialSearchResult) => {
+      // Available products first
+      if (a.availability === 'available' && b.availability !== 'available') return -1
+      if (a.availability !== 'available' && b.availability === 'available') return 1
+      
+      // Then by relevance (keep original order from Shopify for same availability)
+      return 0
+    })
+
+    // Filter by availability (client-side since GraphQL filter doesn't work reliably)
     if (showAvailableOnly) {
-      filteredProducts = allProducts.filter((product: MaterialSearchResult) => product.availability === 'available')
+      filteredProducts = allProducts.filter((product: MaterialSearchResult) => 
+        product.availability === 'available'
+      )
+      console.log(`DEBUG - After availability filter: ${filteredProducts.length} available products`)
+    } else {
+      // If showing all products, they're already sorted by availability
+      filteredProducts = allProducts
     }
     
-    // Apply limit if specified
+    // Filter by warehouse if specified
+    if (params.warehouse) {
+      filteredProducts = filteredProducts.filter((product: MaterialSearchResult) => 
+        product.warehouse === params.warehouse
+      )
+    }
+    
+    // Apply limit to get the exact number of results requested
     if (params.limit && params.limit > 0) {
       filteredProducts = filteredProducts.slice(0, params.limit)
     }
     
     return filteredProducts
   } catch (error) {
-    console.error('DEBUG - Full error:', error)
+    console.error('DEBUG - Search error:', error)
     throw new Error('Failed to search materials from Shopify')
   }
 }
@@ -287,32 +313,16 @@ export const getCollectionHierarchy = async (): Promise<any> => {
 }
 
 
-// Search edge materials using the main search API (more efficient)
+// Search edge materials using collection filter (much more efficient)
 export const searchEdgeMaterials = async (params: MaterialSearchParams): Promise<MaterialSearchResult[]> => {
   try {
-    // Use the main search but add edge-specific search terms
-    const edgeQuery = `${params.query} hrana OR ${params.query} edge OR ${params.query} abs`
-    
+    // Search directly in the "hrany" collection - much more efficient than complex queries
     const results = await searchMaterials({
-      query: edgeQuery,
-      limit: params.limit || 10
+      ...params,
+      collection: "hrany"  // Filter to edges collection
     })
     
-    // Filter results to only include edge-related products
-    const edgeResults = results.filter((result) => {
-      const lowerTitle = result.name.toLowerCase()
-      const lowerCode = result.code.toLowerCase()
-      
-      return (
-        lowerTitle.includes('hrana') ||
-        lowerTitle.includes('edge') ||
-        lowerTitle.includes('abs') ||
-        lowerCode.includes('hr') ||
-        lowerCode.includes('edge')
-      )
-    })
-    
-    return edgeResults
+    return results
     
   } catch (error) {
     throw new Error('Failed to search edge materials from Shopify')

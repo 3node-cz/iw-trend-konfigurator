@@ -75,6 +75,7 @@ export const useCuttingLayouts = (specifications: CuttingSpecification[]) => {
           acc.totalBoards += 1
           acc.averageEfficiency += layoutData.layout.efficiency
           acc.totalWasteArea += layoutData.layout.totalWasteArea
+          acc.totalCuts += layoutData.layout.cutLines?.length || 0
           
           // Track multi-board specific stats
           if (layoutData.isMultiBoard && layoutData.boardNumber === 1) {
@@ -88,6 +89,7 @@ export const useCuttingLayouts = (specifications: CuttingSpecification[]) => {
         totalBoards: 0, 
         averageEfficiency: 0, 
         totalWasteArea: 0,
+        totalCuts: 0,
         totalMultiboardPieces: 0,
         totalUnplacedPieces: 0
       }

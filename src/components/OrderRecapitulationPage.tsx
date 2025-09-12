@@ -46,7 +46,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
 
   // Use custom hooks for cutting layouts and order calculations
   const { cuttingLayouts, overallStats } = useCuttingLayouts(specifications)
-  const orderCalculations = useOrderCalculations(specifications)
+  const orderCalculations = useOrderCalculations(specifications, cuttingLayouts)
   
   // Use order submission hook
   const { 

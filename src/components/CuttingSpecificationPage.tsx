@@ -35,6 +35,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
 }) => {
   // State for piece preview dialog
   const [previewPiece, setPreviewPiece] = useState<CuttingPiece | null>(null)
+  const [previewMaterial, setPreviewMaterial] = useState<MaterialSearchResult | null>(null)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
 
   // Use custom hook for material specs management
@@ -55,14 +56,16 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
     onContinue?.(specifications)
   }
 
-  const handlePreviewPiece = (piece: CuttingPiece) => {
+  const handlePreviewPiece = (piece: CuttingPiece, material: MaterialSearchResult) => {
     setPreviewPiece(piece)
+    setPreviewMaterial(material)
     setIsPreviewOpen(true)
   }
 
   const handleClosePreview = () => {
     setIsPreviewOpen(false)
     setPreviewPiece(null)
+    setPreviewMaterial(null)
   }
 
   return (
@@ -130,7 +133,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
                 edgeMaterial={materialSpec.selectedEdgeMaterial}
                 onPieceChange={(pieceId, updatedPiece) => handlePieceChange(material.id, pieceId, updatedPiece)}
                 onRemovePiece={(pieceId) => handleRemovePiece(material.id, pieceId)}
-                onPreviewPiece={handlePreviewPiece}
+                onPreviewPiece={(piece) => handlePreviewPiece(piece, material)}
               />
             </Paper>
 
@@ -164,6 +167,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
       <PiecePreviewDialog
         open={isPreviewOpen}
         piece={previewPiece}
+        material={previewMaterial || undefined}
         onClose={handleClosePreview}
       />
     </Container>

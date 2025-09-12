@@ -165,6 +165,18 @@ export class OptimizedGuillotineCuttingOptimizer {
 
   // Single board optimization (existing method)
   optimize(pieces: CuttingPiece[]): CuttingLayout {
+    // Expand pieces by quantity (1 piece with quantity 10 = 10 individual pieces)
+    const expandedPieces: CuttingPiece[] = []
+    pieces.forEach(piece => {
+      for (let i = 0; i < piece.quantity; i++) {
+        expandedPieces.push({
+          ...piece,
+          id: `${piece.id}_${i}`,
+          quantity: 1
+        })
+      }
+    })
+    
     this.placedPieces = []
     this.cutLines = []
     this.cutCounter = 0
@@ -172,7 +184,7 @@ export class OptimizedGuillotineCuttingOptimizer {
     this.freeRectangles = [{ x: 0, y: 0, width: this.boardWidth, height: this.boardHeight }]
 
     // Phase 1: Create piece groups for identical pieces
-    const pieceGroups = this.createPieceGroups(pieces)
+    const pieceGroups = this.createPieceGroups(expandedPieces)
     
     // Phase 2: Sort groups by priority (large groups first, then by area)
     const sortedGroups = this.sortGroupsForOptimalCutting(pieceGroups)

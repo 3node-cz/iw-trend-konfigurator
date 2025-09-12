@@ -337,24 +337,6 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
         )}
 
         {/* Thickness Variants */}
-        {selectedEdge && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-              Varianty hrúbky ({selectedEdge.thickness}mm vybrané)
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {thicknessVariants.map((thickness) => (
-                <Chip
-                  key={thickness}
-                  label={`${thickness}mm`}
-                  size="small"
-                  variant="outlined"
-                  color="default"
-                />
-              ))}
-            </Box>
-          </Box>
-        )}
 
         {/* Glue Type */}
         <FormControl fullWidth size="small">

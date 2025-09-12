@@ -56,12 +56,13 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
   ]
 
   const deliveryMethods = [
-    'Démos odvoz'
+    'Náš odvoz',
+    'Osobný odber'
   ]
 
   const processingTypes = [
     'Formátovať',
-    'Ukládať',
+    'Uskladniť',
     'Zlikvidovať'
   ]
 

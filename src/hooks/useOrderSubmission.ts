@@ -103,10 +103,11 @@ export const useOrderSubmission = () => {
         throw new Error(`Tieto materiály nie sú skladom a nemožno ich objednať: ${materialNames}`)
       }
 
-      // Get variant IDs for all materials
-      const lines = await Promise.all(specsWithPieces.map(async (spec, specIndex) => {
+      // Get variant IDs for all materials and create cart lines
+      const allLines = []
+      
+      for (const [specIndex, spec] of specsWithPieces.entries()) {
         // Calculate how many boards are needed based on cutting layouts
-        // Find cutting layouts for this material specification
         const materialLayouts = completeOrder.cuttingLayouts?.filter(layout => 
           layout.materialIndex === specIndex + 1
         ) || []
@@ -114,13 +115,12 @@ export const useOrderSubmission = () => {
         // Use the number of boards from cutting layouts, or 1 as fallback
         const boardsNeeded = materialLayouts.length > 0 ? materialLayouts.length : 1
         
-        // Get the correct variant ID (either from material data or fetch it)
-        const merchandiseId = spec.material.variantId || await getVariantIdFromProduct(spec.material.id)
+        // Get the correct variant ID for the board material
+        const boardMerchandiseId = spec.material.variantId || await getVariantIdFromProduct(spec.material.id)
         
-        // Prepare cart line item for this material specification
-        
-        return {
-          merchandiseId,
+        // Add board material line item
+        allLines.push({
+          merchandiseId: boardMerchandiseId,
           quantity: boardsNeeded,
           attributes: [
             {
@@ -133,8 +133,50 @@ export const useOrderSubmission = () => {
               }),
             },
           ],
+        })
+
+        // Add edge material line item if present
+        if (spec.edgeMaterial && spec.pieces.length > 0) {
+          // Calculate total edge length needed (same logic as OrderInvoiceTable)
+          const totalEdgeLength = spec.pieces.reduce((sum, piece) => {
+            let pieceEdgeLength = 0
+            if (piece.edgeAllAround) {
+              pieceEdgeLength = ((piece.length + piece.width) * 2) * piece.quantity / 1000 // Convert to meters
+            } else {
+              const edges = [piece.edgeTop, piece.edgeBottom, piece.edgeLeft, piece.edgeRight]
+              edges.forEach(edge => {
+                if (edge) {
+                  // Simplified edge length calculation
+                  pieceEdgeLength += (piece.length + piece.width) / 2 * piece.quantity / 1000
+                }
+              })
+            }
+            return sum + pieceEdgeLength
+          }, 0)
+
+          if (totalEdgeLength > 0) {
+            // Get the correct variant ID for the edge material
+            const edgeMerchandiseId = spec.edgeMaterial.variantId || await getVariantIdFromProduct(spec.edgeMaterial.id)
+            
+            allLines.push({
+              merchandiseId: edgeMerchandiseId,
+              quantity: Math.ceil(totalEdgeLength), // Round up to whole meters
+              attributes: [
+                {
+                  key: '_edge_specification',
+                  value: JSON.stringify({
+                    edgeMaterial: spec.edgeMaterial,
+                    totalEdgeLength: totalEdgeLength,
+                    relatedMaterial: spec.material.name,
+                  }),
+                },
+              ],
+            })
+          }
         }
-      }))
+      }
+      
+      const lines = allLines
 
       // 4. Add items to cart with order data as attributes
       const result = await addToCartSF({

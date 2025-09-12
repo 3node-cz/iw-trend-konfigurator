@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import type { CuttingSpecification } from '../types/shopify'
+import type { CuttingLayoutData } from './useCuttingLayouts'
 import { 
   calculateMaterialEdgeConsumption, 
   calculateCuttingCosts,
@@ -17,11 +18,13 @@ export interface OrderCalculations {
     totalCuttingCost: number // Total cutting cost in EUR
     totalPieces: number // Total number of pieces
     totalMaterials: number // Number of different materials
+    totalCuts: number // Total number of actual cuts needed
   }
 }
 
 export const useOrderCalculations = (
   specifications: CuttingSpecification[],
+  cuttingLayouts: CuttingLayoutData[] = [],
   cuttingCostConfig: CuttingCostConfig = DEFAULT_CUTTING_COSTS
 ): OrderCalculations => {
   
@@ -78,6 +81,12 @@ export const useOrderCalculations = (
     
     const totalMaterials = specifications.length
     
+    // Calculate total cuts from cutting layouts
+    const totalCuts = cuttingLayouts.reduce(
+      (sum, layout) => sum + (layout.layout.cutLines?.length || 0), 0
+    )
+    
+    
     return {
       edgeConsumption,
       cuttingCosts,
@@ -85,10 +94,11 @@ export const useOrderCalculations = (
         totalEdgeLength,
         totalCuttingCost,
         totalPieces,
-        totalMaterials
+        totalMaterials,
+        totalCuts
       }
     }
-  }, [specifications, cuttingCostConfig])
+  }, [specifications, cuttingLayouts, cuttingCostConfig])
   
   return calculations
 }

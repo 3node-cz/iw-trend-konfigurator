@@ -10,18 +10,20 @@ import {
   IconButton
 } from '@mui/material'
 import { Close as CloseIcon } from '@mui/icons-material'
-import type { CuttingPiece } from '../types/shopify'
-import PieceShapePreview from './PieceShapePreview'
+import type { CuttingPiece, MaterialSearchResult } from '../types/shopify'
+import AdvancedPiecePreview from './AdvancedPiecePreview'
 
 interface PiecePreviewDialogProps {
   open: boolean
   piece: CuttingPiece | null
+  material?: MaterialSearchResult
   onClose: () => void
 }
 
 const PiecePreviewDialog: React.FC<PiecePreviewDialogProps> = ({
   open,
   piece,
+  material,
   onClose
 }) => {
   if (!piece) return null
@@ -50,7 +52,30 @@ const PiecePreviewDialog: React.FC<PiecePreviewDialogProps> = ({
         <Box sx={{ textAlign: 'center', py: 4 }}>
           {/* Piece shape preview */}
           <Box sx={{ mb: 3 }}>
-            <PieceShapePreview piece={piece} containerSize={400} />
+            <AdvancedPiecePreview 
+              piece={piece} 
+              containerSize={400}
+              backgroundImage={material?.image}
+              backgroundOpacity={0.3}
+            />
+          </Box>
+          
+          {/* Piece dimensions */}
+          <Box sx={{ mb: 2, p: 2, backgroundColor: 'grey.50', borderRadius: 1 }}>
+            <Typography variant="h6" sx={{ mb: 1, color: 'primary.main' }}>
+              Rozmery
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 4, justifyContent: 'center', alignItems: 'center' }}>
+              <Typography variant="body1">
+                <strong>Dĺžka:</strong> {piece.length} mm
+              </Typography>
+              <Typography variant="body1">
+                <strong>Šírka:</strong> {piece.width} mm
+              </Typography>
+              <Typography variant="body1">
+                <strong>Množstvo:</strong> {piece.quantity} ks
+              </Typography>
+            </Box>
           </Box>
           
           {/* Piece information */}
