@@ -37,11 +37,11 @@ export const dummySavedOrders: SavedOrder[] = [
             allowRotation: false,
             withoutEdge: false,
             duplicate: false,
-            edgeAllAround: 2,
-            edgeTop: null,
-            edgeBottom: null,
-            edgeLeft: null,
-            edgeRight: null,
+            edgeAllAround: 2, // All edges same - should auto-set edgeAllAround
+            edgeTop: 2,
+            edgeBottom: 2,
+            edgeLeft: 2,
+            edgeRight: 2,
             notes: ''
           },
           {
@@ -53,7 +53,7 @@ export const dummySavedOrders: SavedOrder[] = [
             allowRotation: true,
             withoutEdge: false,
             duplicate: false,
-            edgeAllAround: null,
+            edgeAllAround: null, // Only some edges - should not set edgeAllAround
             edgeTop: 2,
             edgeBottom: null,
             edgeLeft: 2,
@@ -107,7 +107,7 @@ export const dummySavedOrders: SavedOrder[] = [
             allowRotation: false,
             withoutEdge: false,
             duplicate: false,
-            edgeAllAround: null,
+            edgeAllAround: null, // Only top and bottom edges - should not set edgeAllAround
             edgeTop: 2,
             edgeBottom: 2,
             edgeLeft: null,
@@ -161,12 +161,12 @@ export const dummySavedOrders: SavedOrder[] = [
             allowRotation: false,
             withoutEdge: false,
             duplicate: false,
-            edgeAllAround: 2,
-            edgeTop: null,
-            edgeBottom: null,
-            edgeLeft: null,
-            edgeRight: null,
-            notes: 'Svetlý dub pre horné skrinky'
+            edgeAllAround: null, // Each edge different - should not set edgeAllAround
+            edgeTop: 0.8,
+            edgeBottom: 2,
+            edgeLeft: 0.8,
+            edgeRight: 2,
+            notes: 'Svetlý dub pre horné skrinky - rôzne hrúbky hrán'
           }
         ]
       },
@@ -184,12 +184,12 @@ export const dummySavedOrders: SavedOrder[] = [
             allowRotation: false,
             withoutEdge: false,
             duplicate: false,
-            edgeAllAround: 2,
-            edgeTop: null,
-            edgeBottom: null,
-            edgeLeft: null,
-            edgeRight: null,
-            notes: 'Bielený dub pre spodné skrinky'
+            edgeAllAround: 0.8, // All edges same (0.8) - should auto-set edgeAllAround
+            edgeTop: 0.8,
+            edgeBottom: 0.8,
+            edgeLeft: 0.8,
+            edgeRight: 0.8,
+            notes: 'Bielený dub pre spodné skrinky - tenké hrany'
           }
         ]
       },
@@ -207,12 +207,12 @@ export const dummySavedOrders: SavedOrder[] = [
             allowRotation: false,
             withoutEdge: false,
             duplicate: false,
-            edgeAllAround: null,
+            edgeAllAround: null, // Only some edges - should not set edgeAllAround
             edgeTop: 2,
             edgeBottom: null,
             edgeLeft: 2,
             edgeRight: 2,
-            notes: 'Tmavý dub pre pracovnú plochu'
+            notes: 'Tmavý dub pre pracovnú plochu - hrana iba z troch strán'
           },
           {
             id: 'piece_4d',
@@ -223,12 +223,12 @@ export const dummySavedOrders: SavedOrder[] = [
             allowRotation: true,
             withoutEdge: false,
             duplicate: false,
-            edgeAllAround: null,
-            edgeTop: 2,
+            edgeAllAround: null, // No edges - should not set edgeAllAround
+            edgeTop: null,
             edgeBottom: null,
             edgeLeft: null,
             edgeRight: null,
-            notes: 'Nastaviteľné police'
+            notes: 'Nastaviteľné police - bez hrán'
           }
         ]
       }
@@ -335,12 +335,12 @@ export const dummySavedOrders: SavedOrder[] = [
             allowRotation: false,
             withoutEdge: false,
             duplicate: true,
-            edgeAllAround: 2,
-            edgeTop: null,
-            edgeBottom: null,
-            edgeLeft: null,
-            edgeRight: null,
-            notes: 'Bezpečnostné hrany'
+            edgeAllAround: 2, // All edges same - should auto-set edgeAllAround
+            edgeTop: 2,
+            edgeBottom: 2,
+            edgeLeft: 2,
+            edgeRight: 2,
+            notes: 'Bezpečnostné hrany - všetky rovnaké'
           },
           {
             id: 'piece_8',
@@ -351,12 +351,12 @@ export const dummySavedOrders: SavedOrder[] = [
             allowRotation: true,
             withoutEdge: false,
             duplicate: false,
-            edgeAllAround: null,
-            edgeTop: 2,
+            edgeAllAround: null, // Mixed edges - should not set edgeAllAround
+            edgeTop: 0.8,
             edgeBottom: null,
             edgeLeft: 2,
-            edgeRight: 2,
-            notes: ''
+            edgeRight: 0.8,
+            notes: 'Rôzne hrúbky hrán podľa potreby'
           }
         ]
       }

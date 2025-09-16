@@ -29,17 +29,12 @@ export const calculatePieceEdgeConsumption = (piece: CuttingPiece): EdgeConsumpt
     }
   }
   
-  // Handle "edge all around" (dookola)
-  if (piece.edgeAllAround && piece.edgeAllAround > 0) {
-    const perimeter = 2 * (piece.length + piece.width)
-    addEdgeLength(piece.edgeAllAround, perimeter * piece.quantity)
-  } else {
-    // Handle individual edges
-    addEdgeLength(piece.edgeTop, piece.length * piece.quantity)
-    addEdgeLength(piece.edgeBottom, piece.length * piece.quantity)
-    addEdgeLength(piece.edgeLeft, piece.width * piece.quantity)
-    addEdgeLength(piece.edgeRight, piece.width * piece.quantity)
-  }
+  // Always use individual edges for calculation since edgeAllAround is now reactive
+  // If edgeAllAround was set, the individual edges will have been updated accordingly
+  addEdgeLength(piece.edgeTop, piece.length * piece.quantity)
+  addEdgeLength(piece.edgeBottom, piece.length * piece.quantity)  
+  addEdgeLength(piece.edgeLeft, piece.width * piece.quantity)
+  addEdgeLength(piece.edgeRight, piece.width * piece.quantity)
   
   // Convert to EdgeConsumption array
   return Array.from(consumptionMap.entries()).map(([thickness, totalLength]) => ({

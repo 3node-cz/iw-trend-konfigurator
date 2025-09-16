@@ -79,21 +79,6 @@ const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
             </Box>
           )}
 
-
-          {/* Price */}
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-              Základná cena za MJ
-            </Typography>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              {Number(material.price.amount).toFixed(4)} EUR {material.price.perUnit}
-            </Typography>
-            {material.discountInfo && (
-              <Typography variant="caption" color="text.secondary">
-                {material.discountInfo}
-              </Typography>
-            )}
-          </Box>
         </Box>
       </CardContent>
     </Card>

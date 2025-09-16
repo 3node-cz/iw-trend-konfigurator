@@ -42,12 +42,44 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   onRemovePiece,
   onPreviewPiece
 }) => {
-  // Edge thickness selection - no longer need to create options from edgeMaterial
+  // Helper function to check if all edges have the same value
+  const getEdgeAllAroundValue = useCallback((piece: CuttingPiece): number | null => {
+    const { edgeTop, edgeBottom, edgeLeft, edgeRight } = piece
+    
+    // Only set edgeAllAround if all four edges have the same value (including null)
+    if (edgeTop === edgeBottom && edgeBottom === edgeLeft && edgeLeft === edgeRight) {
+      return edgeTop
+    }
+    return null
+  }, [])
 
-  // Memoized change handlers to prevent unnecessary re-renders
+  // Enhanced change handler with reactive edge logic
   const handlePieceChange = useCallback((pieceId: string, updates: Partial<CuttingPiece>) => {
-    onPieceChange(pieceId, updates)
-  }, [onPieceChange])
+    const piece = pieces.find(p => p.id === pieceId)
+    if (!piece) return
+
+    let finalUpdates = { ...updates }
+
+    // Handle edgeAllAround changes - set all individual edges
+    if ('edgeAllAround' in updates) {
+      const edgeAllAroundValue = updates.edgeAllAround
+      finalUpdates = {
+        ...finalUpdates,
+        edgeTop: edgeAllAroundValue,
+        edgeBottom: edgeAllAroundValue,
+        edgeLeft: edgeAllAroundValue,
+        edgeRight: edgeAllAroundValue
+      }
+    }
+    // Handle individual edge changes - update edgeAllAround reactively
+    else if (['edgeTop', 'edgeBottom', 'edgeLeft', 'edgeRight'].some(key => key in updates)) {
+      const updatedPiece = { ...piece, ...finalUpdates }
+      const newEdgeAllAround = getEdgeAllAroundValue(updatedPiece)
+      finalUpdates.edgeAllAround = newEdgeAllAround
+    }
+
+    onPieceChange(pieceId, finalUpdates)
+  }, [onPieceChange, pieces, getEdgeAllAroundValue])
 
   const handleRemovePiece = useCallback((pieceId: string) => {
     onRemovePiece(pieceId)
@@ -57,6 +89,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
     onPreviewPiece?.(piece)
   }, [onPreviewPiece])
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const columns = useMemo<ColumnDef<CuttingPiece, any>[]>(() => [
     // Row number
     columnHelper.display({

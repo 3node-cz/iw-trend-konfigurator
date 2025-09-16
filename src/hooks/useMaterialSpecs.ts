@@ -82,26 +82,8 @@ export const useMaterialSpecs = (
           
           const updated = { ...piece, ...updatedPiece }
           
-          // Handle "Hrana dookola" logic
-          if ('edgeAllAround' in updatedPiece) {
-            // When edgeAllAround is set, update all individual edges
-            if (updatedPiece.edgeAllAround) {
-              updated.edgeTop = updatedPiece.edgeAllAround
-              updated.edgeBottom = updatedPiece.edgeAllAround
-              updated.edgeLeft = updatedPiece.edgeAllAround
-              updated.edgeRight = updatedPiece.edgeAllAround
-            }
-          } else if (['edgeTop', 'edgeBottom', 'edgeLeft', 'edgeRight'].some(key => key in updatedPiece)) {
-            // When individual edge is changed, check if all edges are the same
-            const { edgeTop, edgeBottom, edgeLeft, edgeRight } = updated
-            if (edgeTop && edgeTop === edgeBottom && edgeTop === edgeLeft && edgeTop === edgeRight) {
-              // All edges are the same, set edgeAllAround
-              updated.edgeAllAround = edgeTop
-            } else {
-              // Edges are different, clear edgeAllAround
-              updated.edgeAllAround = null
-            }
-          }
+          // Note: The edge logic is now handled in CuttingPiecesTable component
+          // This hook just applies the updates as-is
           
           return updated
         })

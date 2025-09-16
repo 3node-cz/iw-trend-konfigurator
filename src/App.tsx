@@ -8,16 +8,31 @@ import OrderSuccessPage from './components/OrderSuccessPage'
 import CuttingLayoutDemo from './components/CuttingLayoutDemo'
 import { submitOrderToShopify } from './services/shopifyApi'
 import { loadOrderConfiguration } from './services/orderLoader'
-import type { SelectedMaterial, OrderFormData, CuttingSpecification, CompleteOrder } from './types/shopify'
+import type {
+  SelectedMaterial,
+  OrderFormData,
+  CuttingSpecification,
+  CompleteOrder,
+} from './types/shopify'
 import type { SavedOrder } from './types/savedOrder'
 
-type AppView = 'orders' | 'material-selection' | 'cutting-specification' | 'recapitulation' | 'success' | 'cutting-demo'
+type AppView =
+  | 'orders'
+  | 'material-selection'
+  | 'cutting-specification'
+  | 'recapitulation'
+  | 'success'
+  | 'cutting-demo'
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('orders')
   const [currentOrder, setCurrentOrder] = useState<OrderFormData | null>(null)
-  const [selectedMaterials, setSelectedMaterials] = useState<SelectedMaterial[]>([])
-  const [cuttingSpecifications, setCuttingSpecifications] = useState<CuttingSpecification[]>([])
+  const [selectedMaterials, setSelectedMaterials] = useState<
+    SelectedMaterial[]
+  >([])
+  const [cuttingSpecifications, setCuttingSpecifications] = useState<
+    CuttingSpecification[]
+  >([])
   const [checkoutUrl, setCheckoutUrl] = useState<string>('')
 
   const handleOrderCreated = (orderData: OrderFormData) => {
@@ -51,14 +66,16 @@ function App() {
   const handleMaterialSelectionComplete = (materials: SelectedMaterial[]) => {
     // Store all selected materials
     setSelectedMaterials(materials)
-    
+
     if (materials.length > 0) {
       setCurrentView('cutting-specification')
       window.scrollTo(0, 0)
     }
   }
 
-  const handleCuttingSpecificationComplete = (specifications: CuttingSpecification[]) => {
+  const handleCuttingSpecificationComplete = (
+    specifications: CuttingSpecification[],
+  ) => {
     // Save all cutting specifications
     setCuttingSpecifications(specifications)
     setCurrentView('recapitulation')
@@ -69,7 +86,7 @@ function App() {
     try {
       // Submit order to Shopify
       await submitOrderToShopify(completeOrder)
-      
+
       // Reset state and go back to orders
       setCurrentView('orders')
       setCurrentOrder(null)
@@ -87,20 +104,26 @@ function App() {
 
     try {
       // Load configuration and fetch fresh material data
-      const { orderInfo, specifications } = await loadOrderConfiguration(savedOrder)
+      const { orderInfo, specifications } = await loadOrderConfiguration(
+        savedOrder,
+      )
 
       // Set the loaded configuration into app state
       setCurrentOrder(orderInfo)
-      setSelectedMaterials(specifications.map(spec => ({
-        id: spec.material.id,
-        code: spec.material.code,
-        name: spec.material.name,
-        quantity: spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0),
-        price: spec.material.price.amount,
-        totalPrice: spec.material.price.amount * spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0),
-        variantId: spec.material.variantId || spec.material.id,
-        image: spec.material.image
-      })))
+      setSelectedMaterials(
+        specifications.map((spec) => ({
+          id: spec.material.id,
+          code: spec.material.code,
+          name: spec.material.name,
+          quantity: spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0),
+          price: spec.material.price.amount,
+          totalPrice:
+            spec.material.price.amount *
+            spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0),
+          variantId: spec.material.variantId || spec.material.id,
+          image: spec.material.image,
+        })),
+      )
       setCuttingSpecifications(specifications)
 
       // Navigate directly to order recap/summary
@@ -119,9 +142,12 @@ function App() {
   }
 
   return (
-    <Container maxWidth={false} disableGutters>
+    <Container
+      maxWidth={false}
+      disableGutters
+    >
       {currentView === 'orders' && (
-        <OrdersPage 
+        <OrdersPage
           onOrderCreated={handleOrderCreated}
           onLoadConfiguration={handleLoadConfiguration}
         />
@@ -134,42 +160,46 @@ function App() {
           onContinue={handleMaterialSelectionComplete}
         />
       )}
-      {currentView === 'cutting-specification' && currentOrder && selectedMaterials.length > 0 && (
-        <CuttingSpecificationPage
-          materials={selectedMaterials.map(material => ({
-            id: material.id,
-            code: material.code,
-            name: material.name,
-            productCode: material.code,
-            availability: 'available' as const,
-            warehouse: 'Bratislava',
-            price: {
-              amount: material.price,
-              currency: 'EUR',
-              perUnit: '/ ks'
-            },
-            totalPrice: {
-              amount: material.totalPrice,
-              currency: 'EUR'
-            },
-            quantity: material.quantity,
-            image: material.image
-          }))}
-          orderName={currentOrder.orderName}
-          existingSpecifications={cuttingSpecifications}
-          onBack={handleBackToMaterialSelection}
-          onContinue={handleCuttingSpecificationComplete}
-        />
-      )}
-      {currentView === 'recapitulation' && currentOrder && cuttingSpecifications.length > 0 && (
-        <OrderRecapitulationPage
-          order={currentOrder}
-          specifications={cuttingSpecifications}
-          onBack={handleBackToCuttingSpecification}
-          onSubmitOrder={handleOrderSubmit}
-          onOrderSuccess={handleOrderSuccess}
-        />
-      )}
+      {currentView === 'cutting-specification' &&
+        currentOrder &&
+        selectedMaterials.length > 0 && (
+          <CuttingSpecificationPage
+            materials={selectedMaterials.map((material) => ({
+              id: material.id,
+              code: material.code,
+              name: material.name,
+              productCode: material.code,
+              availability: 'available' as const,
+              warehouse: 'Bratislava',
+              price: {
+                amount: material.price,
+                currency: 'EUR',
+                perUnit: '/ ks',
+              },
+              totalPrice: {
+                amount: material.totalPrice,
+                currency: 'EUR',
+              },
+              quantity: material.quantity,
+              image: material.image,
+            }))}
+            orderName={currentOrder.orderName}
+            existingSpecifications={cuttingSpecifications}
+            onBack={handleBackToMaterialSelection}
+            onContinue={handleCuttingSpecificationComplete}
+          />
+        )}
+      {currentView === 'recapitulation' &&
+        currentOrder &&
+        cuttingSpecifications.length > 0 && (
+          <OrderRecapitulationPage
+            order={currentOrder}
+            specifications={cuttingSpecifications}
+            onBack={handleBackToCuttingSpecification}
+            onSubmitOrder={handleOrderSubmit}
+            onOrderSuccess={handleOrderSuccess}
+          />
+        )}
       {currentView === 'success' && currentOrder && checkoutUrl && (
         <OrderSuccessPage
           checkoutUrl={checkoutUrl}
@@ -177,9 +207,7 @@ function App() {
           onCreateNewOrder={handleBackToOrders}
         />
       )}
-      {currentView === 'cutting-demo' && (
-        <CuttingLayoutDemo />
-      )}
+      {currentView === 'cutting-demo' && <CuttingLayoutDemo />}
     </Container>
   )
 }

@@ -23,7 +23,7 @@ const EdgeThicknessSelect: React.FC<EdgeThicknessSelectProps> = ({
   return (
     <FormControl sx={{ minWidth }}>
       <Select
-        value={value || ''}
+        value={value?.toString() || ''}
         onChange={(e) => {
           const selectedValue = e.target.value
           onChange(selectedValue ? Number(selectedValue) : null)
@@ -35,7 +35,7 @@ const EdgeThicknessSelect: React.FC<EdgeThicknessSelectProps> = ({
           <em>—</em>
         </MenuItem>
         {thicknessOptions.map((thickness) => (
-          <MenuItem key={thickness} value={thickness}>
+          <MenuItem key={thickness} value={thickness.toString()}>
             {thickness}
           </MenuItem>
         ))}

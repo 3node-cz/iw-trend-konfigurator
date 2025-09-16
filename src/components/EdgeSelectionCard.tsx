@@ -280,10 +280,6 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
                     {selectedEdge.warehouse}
                   </Typography>
                 </Box>
-
-                <Typography variant="caption" color="text.secondary">
-                  Hrúbka: {selectedEdge.thickness}mm
-                </Typography>
               </Box>
             </Box>
 

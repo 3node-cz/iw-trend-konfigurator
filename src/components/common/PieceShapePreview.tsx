@@ -1,8 +1,9 @@
 import React from 'react'
 import { Box } from '@mui/material'
 import type { CuttingPiece } from '../../types/shopify'
-import type { PieceGeometry, EdgeConfig } from '../../types/geometry'
+import type { PieceGeometry } from '../../types/geometry'
 import { SVGPathGenerator, createGeometryFromPiece } from '../../utils/svgPathGenerator'
+import { getEdgeColor, getEdgeStrokeWidth } from '../../utils/edgeColors'
 
 interface PieceShapePreviewProps {
   piece: CuttingPiece
@@ -61,13 +62,13 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
   const patternId = `pattern-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
   const clipId = `clip-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
   
-  // Extract edge configuration from piece
-  const edgeConfig: EdgeConfig = {
-    top: piece.edgeAllAround || piece.edgeTop || undefined,
-    right: piece.edgeAllAround || piece.edgeRight || undefined,
-    bottom: piece.edgeAllAround || piece.edgeBottom || undefined,
-    left: piece.edgeAllAround || piece.edgeLeft || undefined,
-    allAround: piece.edgeAllAround || undefined
+  // Extract individual edge thicknesses (numbers, not strings)
+  // Priority: individual edge first, then edgeAllAround as fallback, then null
+  const edgeThicknesses = {
+    top: piece.edgeTop !== null ? piece.edgeTop : (piece.edgeAllAround || null),
+    right: piece.edgeRight !== null ? piece.edgeRight : (piece.edgeAllAround || null),
+    bottom: piece.edgeBottom !== null ? piece.edgeBottom : (piece.edgeAllAround || null),
+    left: piece.edgeLeft !== null ? piece.edgeLeft : (piece.edgeAllAround || null),
   }
 
   return (
@@ -138,53 +139,53 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
           {showEdges && (
             <>
               {/* Top edge */}
-              {edgeConfig.top && (
+              {edgeThicknesses.top && (
                 <line
                   x1={0}
                   y1={-6}
                   x2={displayWidth}
                   y2={-6}
-                  stroke="#ff9800"
-                  strokeWidth="4"
+                  stroke={getEdgeColor(edgeThicknesses.top)}
+                  strokeWidth={getEdgeStrokeWidth(edgeThicknesses.top)}
                   strokeLinecap="round"
                 />
               )}
               
               {/* Right edge */}
-              {edgeConfig.right && (
+              {edgeThicknesses.right && (
                 <line
                   x1={displayWidth + 6}
                   y1={0}
                   x2={displayWidth + 6}
                   y2={displayHeight}
-                  stroke="#ff9800"
-                  strokeWidth="4"
+                  stroke={getEdgeColor(edgeThicknesses.right)}
+                  strokeWidth={getEdgeStrokeWidth(edgeThicknesses.right)}
                   strokeLinecap="round"
                 />
               )}
               
               {/* Bottom edge */}
-              {edgeConfig.bottom && (
+              {edgeThicknesses.bottom && (
                 <line
                   x1={0}
                   y1={displayHeight + 6}
                   x2={displayWidth}
                   y2={displayHeight + 6}
-                  stroke="#ff9800"
-                  strokeWidth="4"
+                  stroke={getEdgeColor(edgeThicknesses.bottom)}
+                  strokeWidth={getEdgeStrokeWidth(edgeThicknesses.bottom)}
                   strokeLinecap="round"
                 />
               )}
               
               {/* Left edge */}
-              {edgeConfig.left && (
+              {edgeThicknesses.left && (
                 <line
                   x1={-6}
                   y1={0}
                   x2={-6}
                   y2={displayHeight}
-                  stroke="#ff9800"
-                  strokeWidth="4"
+                  stroke={getEdgeColor(edgeThicknesses.left)}
+                  strokeWidth={getEdgeStrokeWidth(edgeThicknesses.left)}
                   strokeLinecap="round"
                 />
               )}

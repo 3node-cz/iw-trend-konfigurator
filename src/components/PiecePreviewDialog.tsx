@@ -35,9 +35,16 @@ const PiecePreviewDialog: React.FC<PiecePreviewDialogProps> = ({
       maxWidth="md"
       fullWidth
     >
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <DialogTitle
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <Typography variant="h6">
-          Náhľad dielca: {piece.partName || `Dielec ${piece.length}×${piece.width}`}
+          Náhľad dielca:{' '}
+          {piece.partName || `Dielec ${piece.length}×${piece.width}`}
         </Typography>
         <IconButton
           onClick={onClose}
@@ -47,25 +54,37 @@ const PiecePreviewDialog: React.FC<PiecePreviewDialogProps> = ({
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      
+
       <DialogContent>
         <Box sx={{ textAlign: 'center', py: 4 }}>
           {/* Piece shape preview */}
           <Box sx={{ mb: 3 }}>
-            <PieceShapePreview 
-              piece={piece} 
+            <PieceShapePreview
+              piece={piece}
               containerSize={600}
               backgroundImage={material?.image}
               backgroundOpacity={0.3}
             />
           </Box>
-          
+
           {/* Piece dimensions */}
-          <Box sx={{ mb: 2, p: 2, backgroundColor: 'grey.50', borderRadius: 1 }}>
-            <Typography variant="h6" sx={{ mb: 1, color: 'primary.main' }}>
+          <Box
+            sx={{ mb: 2, p: 2, backgroundColor: 'grey.50', borderRadius: 1 }}
+          >
+            <Typography
+              variant="h6"
+              sx={{ mb: 1, color: 'primary.main' }}
+            >
               Rozmery
             </Typography>
-            <Box sx={{ display: 'flex', gap: 4, justifyContent: 'center', alignItems: 'center' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 4,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
               <Typography variant="body1">
                 <strong>Dĺžka:</strong> {piece.length} mm
               </Typography>
@@ -77,25 +96,33 @@ const PiecePreviewDialog: React.FC<PiecePreviewDialogProps> = ({
               </Typography>
             </Box>
           </Box>
-          
+
           {/* Piece information */}
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, justifyContent: 'center' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 3,
+              justifyContent: 'center',
+            }}
+          >
             {piece.allowRotation && (
-              <Typography variant="body2" sx={{ color: 'success.main' }}>
+              <Typography
+                variant="body2"
+                sx={{ color: 'success.main' }}
+              >
                 <strong>Rotácia:</strong> Povolená
-              </Typography>
-            )}
-            {piece.notes && (
-              <Typography variant="body2">
-                <strong>Poznámka:</strong> {piece.notes}
               </Typography>
             )}
           </Box>
         </Box>
       </DialogContent>
-      
+
       <DialogActions>
-        <Button onClick={onClose} variant="outlined">
+        <Button
+          onClick={onClose}
+          variant="outlined"
+        >
           Zavrieť
         </Button>
       </DialogActions>
