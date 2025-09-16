@@ -11,7 +11,7 @@ import {
 } from '@mui/material'
 import { Close as CloseIcon } from '@mui/icons-material'
 import type { CuttingPiece, MaterialSearchResult } from '../types/shopify'
-import AdvancedPiecePreview from './AdvancedPiecePreview'
+import PieceShapePreview from './common/PieceShapePreview'
 
 interface PiecePreviewDialogProps {
   open: boolean
@@ -52,9 +52,9 @@ const PiecePreviewDialog: React.FC<PiecePreviewDialogProps> = ({
         <Box sx={{ textAlign: 'center', py: 4 }}>
           {/* Piece shape preview */}
           <Box sx={{ mb: 3 }}>
-            <AdvancedPiecePreview 
+            <PieceShapePreview 
               piece={piece} 
-              containerSize={400}
+              containerSize={600}
               backgroundImage={material?.image}
               backgroundOpacity={0.3}
             />

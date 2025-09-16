@@ -9,7 +9,8 @@ import {
   FormControlLabel,
   Typography,
   IconButton,
-  Alert
+  Alert,
+  TextField
 } from '@mui/material'
 import { Close as CloseIcon } from '@mui/icons-material'
 import Grid from '@mui/system/Grid'
@@ -26,19 +27,16 @@ interface CreateOrderModalProps {
 
 const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOrderCreated }) => {
   const [formData, setFormData] = useState<OrderFormData>({
-    company: 'IW TREND, s.r.o',
+    orderName: '',
+    deliveryDate: null,
     transferLocation: '',
     costCenter: '',
     cuttingCenter: '',
-    orderName: '',
-    deliveryDate: null,
-    materialType: '',
     deliveryMethod: '',
     processingType: '',
-    withoutEdges: false,
-    bandingFree: false,
-    palettePayment: false,
-    notes: ''
+    notes: '',
+    discountPercentage: 0,
+    company: 'IW TREND, s.r.o'
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -50,10 +48,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
     'CEN - IW TREND, s.r.o., Pri majerí 6, Bratislava'
   ]
 
-  const materialTypes = [
-    'PUR biela',
-    'PUR transparentná/biela'
-  ]
 
   const deliveryMethods = [
     'Náš odvoz',
@@ -138,9 +132,12 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
         cuttingCenter: city
       }))
     } else {
+      // Handle number fields specially
+      const processedValue = field === 'discountPercentage' ? parseFloat(value) || 0 : value
+      
       setFormData(prev => ({
         ...prev,
-        [field]: value
+        [field]: processedValue
       }))
     }
   }
@@ -259,30 +256,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
               />
             </Grid>
 
-            {/* Material and Delivery */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <FormSelect
-                label="Typ lepidla"
-                value={formData.materialType}
-                onChange={handleFieldChange('materialType')}
-                options={materialTypes}
-                error={errors.materialType}
-                required
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.withoutEdges}
-                    onChange={handleCheckboxChange('withoutEdges')}
-                  />
-                }
-                label="Bez orezu"
-              />
-            </Grid>
-
+            {/* Delivery and Processing */}
             <Grid size={{ xs: 12, md: 6 }}>
               <FormSelect
                 label="Spôsob dopravy"
@@ -295,26 +269,36 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.palettePayment}
-                    onChange={handleCheckboxChange('palettePayment')}
-                  />
-                }
-                label="Zabaliť na paletách"
-              />
-            </Grid>
-
-            {/* Processing Options */}
-            <Grid size={{ xs: 12 }}>
               <FormSelect
-                label="Spracovanie zbytkov"
+                label="Spracovania odpadu"
                 value={formData.processingType}
                 onChange={handleFieldChange('processingType')}
                 options={processingTypes}
                 error={errors.processingType}
                 required
+              />
+            </Grid>
+
+            {/* Customer Discount - Read-only, comes from customer data */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                label="Zľava zákazníka (%)"
+                type="number"
+                value={formData.discountPercentage.toString()}
+                onChange={handleFieldChange('discountPercentage')}
+                error={!!errors.discountPercentage}
+                helperText={errors.discountPercentage || "Zľava sa načítava automaticky z údajov zákazníka"}
+                size="small"
+                fullWidth
+                InputProps={{
+                  readOnly: true
+                }}
+                sx={{
+                  '& .MuiInputBase-input': {
+                    backgroundColor: '#f5f5f5',
+                    color: 'text.secondary'
+                  }
+                }}
               />
             </Grid>
 

@@ -1,46 +1,57 @@
 import React from 'react'
-import { Box, Typography } from '@mui/material'
-import type { CuttingPiece } from '../types/shopify'
-import type { PieceGeometry, EdgeConfig } from '../types/geometry'
-import { SVGPathGenerator, createGeometryFromPiece } from '../utils/svgPathGenerator'
+import { Box } from '@mui/material'
+import type { CuttingPiece } from '../../types/shopify'
+import type { PieceGeometry, EdgeConfig } from '../../types/geometry'
+import { SVGPathGenerator, createGeometryFromPiece } from '../../utils/svgPathGenerator'
 
-interface AdvancedPiecePreviewProps {
+interface PieceShapePreviewProps {
   piece: CuttingPiece
   geometry?: PieceGeometry
   containerSize?: number
-  showDimensions?: boolean
-  showEdges?: boolean
-  interactive?: boolean
+  containerWidth?: number
+  containerHeight?: number
   backgroundImage?: string
   backgroundOpacity?: number
+  showBackground?: boolean
+  showEdges?: boolean
+  showRotationIndicator?: boolean
 }
 
-const AdvancedPiecePreview: React.FC<AdvancedPiecePreviewProps> = ({
+const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
   piece,
   geometry: customGeometry,
   containerSize = 400,
-  showDimensions = false,
-  showEdges = true,
-  interactive = false,
+  containerWidth,
+  containerHeight,
   backgroundImage,
-  backgroundOpacity = 0.8
+  backgroundOpacity = 0.8,
+  showBackground = true,
+  showEdges = true,
+  showRotationIndicator = true
 }) => {
   // Use custom geometry or create default from piece
   const geometry = customGeometry || createGeometryFromPiece(piece)
   
-  // Calculate scale to fit container with padding for labels
-  const labelSpace = showDimensions ? 40 : 10
+  // Determine actual container dimensions
+  const actualWidth = containerWidth || containerSize
+  const actualHeight = containerHeight || containerSize
+  
+  // Calculate scale to fit container with padding
+  const padding = 10
   const maxDimension = Math.max(geometry.width, geometry.height)
-  const availableSpace = containerSize - (labelSpace * 2)
-  const scale = availableSpace / maxDimension
+  const availableWidth = actualWidth - (padding * 2)
+  const availableHeight = actualHeight - (padding * 2)
+  const scaleX = availableWidth / geometry.width
+  const scaleY = availableHeight / geometry.height
+  const scale = Math.min(scaleX, scaleY, availableWidth / maxDimension, availableHeight / maxDimension)
   
   // Calculate actual display dimensions
   const displayWidth = geometry.width * scale
   const displayHeight = geometry.height * scale
   
   // Center the piece in the container
-  const offsetX = (containerSize - displayWidth) / 2
-  const offsetY = (containerSize - displayHeight) / 2
+  const offsetX = (actualWidth - displayWidth) / 2
+  const offsetY = (actualHeight - displayHeight) / 2
   
   // Generate SVG path
   const pathGenerator = new SVGPathGenerator(geometry, scale)
@@ -62,16 +73,16 @@ const AdvancedPiecePreview: React.FC<AdvancedPiecePreviewProps> = ({
   return (
     <Box
       sx={{
-        width: containerSize,
-        height: containerSize,
+        width: actualWidth,
+        height: actualHeight,
         position: 'relative',
         mx: 'auto'
       }}
     >
       <svg
-        width={containerSize}
-        height={containerSize}
-        viewBox={`0 0 ${containerSize} ${containerSize}`}
+        width={actualWidth}
+        height={actualHeight}
+        viewBox={`0 0 ${actualWidth} ${actualHeight}`}
         style={{
           position: 'absolute',
           top: 0,
@@ -80,7 +91,7 @@ const AdvancedPiecePreview: React.FC<AdvancedPiecePreviewProps> = ({
       >
         {/* SVG Definitions for patterns and clipping */}
         <defs>
-          {backgroundImage && (
+          {showBackground && backgroundImage && (
             <>
               {/* Pattern definition for background image */}
               <pattern
@@ -114,10 +125,10 @@ const AdvancedPiecePreview: React.FC<AdvancedPiecePreviewProps> = ({
           {/* Main piece shape */}
           <path
             d={piecePath}
-            fill={backgroundImage ? `url(#${patternId})` : "#ffffff"}
+            fill={showBackground && backgroundImage ? `url(#${patternId})` : "#ffffff"}
             stroke="#1976d2"
             strokeWidth="2"
-            clipPath={backgroundImage ? `url(#${clipId})` : undefined}
+            clipPath={showBackground && backgroundImage ? `url(#${clipId})` : undefined}
             style={{
               filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.1))'
             }}
@@ -180,40 +191,10 @@ const AdvancedPiecePreview: React.FC<AdvancedPiecePreviewProps> = ({
             </>
           )}
         </g>
-        
-        {/* Dimension labels */}
-        {showDimensions && (
-          <>
-            {/* Width label (top) */}
-            <text
-              x={offsetX + displayWidth / 2}
-              y={offsetY - 10}
-              textAnchor="middle"
-              fontSize="12"
-              fill="#666"
-              fontWeight="500"
-            >
-              {geometry.width} mm
-            </text>
-            
-            {/* Height label (left, rotated) */}
-            <text
-              x={offsetX - 20}
-              y={offsetY + displayHeight / 2}
-              textAnchor="middle"
-              fontSize="12"
-              fill="#666"
-              fontWeight="500"
-              transform={`rotate(-90, ${offsetX - 20}, ${offsetY + displayHeight / 2})`}
-            >
-              {geometry.height} mm
-            </text>
-          </>
-        )}
       </svg>
 
       {/* Rotation indicator */}
-      {piece.allowRotation && (
+      {showRotationIndicator && piece.allowRotation && (
         <Box
           sx={{
             position: 'absolute',
@@ -239,4 +220,4 @@ const AdvancedPiecePreview: React.FC<AdvancedPiecePreviewProps> = ({
   )
 }
 
-export default AdvancedPiecePreview
+export default PieceShapePreview

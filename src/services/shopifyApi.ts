@@ -4,11 +4,13 @@ import type { MaterialSearchParams, MaterialSearchResult, CompleteOrder, Cutting
 import { SHOPIFY_CONFIG, getShopifyHeaders } from '../config/shopify'
 import { SHOPIFY_API } from '../constants'
 
+
 // ⚠️ NEVER put Admin API credentials in frontend!
 // Admin API calls should go through your backend API
 
 // Shopify Storefront API for searching materials (back to targeted search approach)
 export const searchMaterials = async (params: MaterialSearchParams): Promise<MaterialSearchResult[]> => {
+  // Use single query with collection filtering in the search string
   const query = `
     query searchProducts($query: String!, $first: Int, $sortKey: ProductSortKeys, $reverse: Boolean) {
       products(query: $query, first: $first, sortKey: $sortKey, reverse: $reverse) {
@@ -67,14 +69,11 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
     }
   `
 
-  // Use 250 limit and sort by relevance first, then by availability
-  const showAvailableOnly = params.availableOnly !== false
+  // Always show all products, regardless of availability
+  const showAvailableOnly = false
   
-  // Build search query with collection filter if specified
-  let searchQuery = params.query
-  if (params.collection) {
-    searchQuery = `${params.query} AND collection:${params.collection}`
-  }
+  // Build search query - keep it simple for now
+  const searchQuery = params.query
 
   try {
     const response = await fetch(SHOPIFY_CONFIG.STOREFRONT_URL, {
@@ -101,6 +100,7 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
       throw new Error(data.errors[0]?.message || 'GraphQL error')
     }
     
+    // Handle single query response structure
     if (!data.data?.products?.edges) {
       throw new Error('Invalid response from Shopify API')
     }
@@ -116,6 +116,7 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
           acc[field.key] = field.value
           return acc
         }, {})
+
 
       return {
         id: product.id,
@@ -141,13 +142,50 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
       } as MaterialSearchResult
     })
 
-    console.log(`DEBUG - Received ${allProducts.length} products from Shopify for query: "${searchQuery}"`)
+    // Removed debug logging for production
     
     // Apply filtering based on params
     let filteredProducts = allProducts
     
+    // Apply collection-based filtering (client-side)
+    if (params.collection) {
+      filteredProducts = allProducts.filter((product: MaterialSearchResult) => {
+        if (params.collection === 'dekorativne-plosne-materialy') {
+          // Filter for board materials - exclude products that look like edges
+          const name = product.name.toLowerCase()
+          const productCode = product.productCode?.toLowerCase() || ''
+          
+          // Exclude obvious edge materials (ABS, PVC edges, etc.)
+          const isEdgeMaterial = name.includes('abs') || 
+                               name.includes('pvc') || 
+                               name.includes('hrana') ||
+                               name.includes('edge') ||
+                               productCode.includes('abs') ||
+                               productCode.includes('pvc')
+          
+          return !isEdgeMaterial
+        } else if (params.collection === 'hrany') {
+          // Filter for edge materials - include only products that look like edges
+          const name = product.name.toLowerCase()
+          const productCode = product.productCode?.toLowerCase() || ''
+          
+          // Include edge materials (ABS, PVC edges, etc.)
+          const isEdgeMaterial = name.includes('abs') || 
+                               name.includes('pvc') || 
+                               name.includes('hrana') ||
+                               name.includes('edge') ||
+                               productCode.includes('abs') ||
+                               productCode.includes('pvc')
+          
+          return isEdgeMaterial
+        }
+        return true
+      })
+      // Collection filtering applied
+    }
+    
     // Sort by availability first (available products at the top)
-    allProducts.sort((a: MaterialSearchResult, b: MaterialSearchResult) => {
+    filteredProducts.sort((a: MaterialSearchResult, b: MaterialSearchResult) => {
       // Available products first
       if (a.availability === 'available' && b.availability !== 'available') return -1
       if (a.availability !== 'available' && b.availability === 'available') return 1
@@ -158,13 +196,10 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
 
     // Filter by availability (client-side since GraphQL filter doesn't work reliably)
     if (showAvailableOnly) {
-      filteredProducts = allProducts.filter((product: MaterialSearchResult) => 
+      filteredProducts = filteredProducts.filter((product: MaterialSearchResult) => 
         product.availability === 'available'
       )
       console.log(`DEBUG - After availability filter: ${filteredProducts.length} available products`)
-    } else {
-      // If showing all products, they're already sorted by availability
-      filteredProducts = allProducts
     }
     
     // Filter by warehouse if specified

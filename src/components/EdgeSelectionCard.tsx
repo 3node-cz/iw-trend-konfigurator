@@ -23,6 +23,7 @@ import {
 import { searchEdgeMaterials } from '../services/shopifyApi'
 import type { EdgeMaterial, MaterialSearchResult } from '../types/shopify'
 import { AvailabilityChip } from './common'
+import { GLUE_TYPES } from '../constants'
 
 interface EdgeSelectionCardProps {
   selectedEdge: EdgeMaterial | null
@@ -67,12 +68,7 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
     loadQuickEdges()
   }, [])
 
-  const glueTypes = [
-    'PUR transparentná/bílá',
-    'PUR čierna',
-    'EVA transparentná',
-    'EVA čierna'
-  ]
+  const glueTypes = GLUE_TYPES
 
   // Use available thicknesses from the selected edge material
   const thicknessVariants = selectedEdge?.availableThicknesses || [0.4, 0.8, 2.0]

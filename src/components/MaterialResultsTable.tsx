@@ -90,7 +90,7 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
             <TableHead>
               <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
                 <TableCell sx={{ fontWeight: 600 }}>Názov</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Kód</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Rozmery</TableCell>
                 <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>
                   Dostupnosť lokálneho skladu
                 </TableCell>
@@ -131,8 +131,11 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                   </TableCell>
                   
                   <TableCell>
-                    <Typography variant="body2" color="primary" sx={{ fontWeight: 500 }}>
-                      {material.productCode}
+                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                      {material.dimensions 
+                        ? `${material.dimensions.width}×${material.dimensions.height}×${material.dimensions.thickness} mm`
+                        : '-'
+                      }
                     </Typography>
                   </TableCell>
                   

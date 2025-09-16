@@ -59,9 +59,9 @@ export const EDGE_KEYWORDS = {
 // Glue Types
 export const GLUE_TYPES = [
   'PUR transparentná/bílá',
-  'PUR hnědá',
+  'PUR čierna',
   'EVA transparentná',
-  'EVA barevná',
+  'EVA čierna',
 ] as const
 
 // Processing Types  

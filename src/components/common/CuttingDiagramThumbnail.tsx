@@ -25,13 +25,33 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
   const svgWidth = layout.boardWidth * scale
   const svgHeight = layout.boardHeight * scale
 
-  // Color palette for different pieces
-  const pieceColors = [
+  // Color palette for different rows/groups
+  const rowColors = [
     '#E3F2FD', '#F3E5F5', '#E8F5E8', '#FFF3E0', '#FCE4EC', 
     '#E0F2F1', '#F1F8E9', '#FFF8E1', '#E8EAF6', '#FFEBEE'
   ]
 
-  const getPieceColor = (index: number) => pieceColors[index % pieceColors.length]
+  // Create a mapping from row/group identifier to color index
+  const getRowIdentifier = (piece: any) => {
+    // Use groupId if available (for grouped pieces)
+    if (piece.groupId) {
+      return piece.groupId
+    }
+    // Fallback to piece name for row grouping (extract base name without numbers)
+    return piece.name.replace(/\s*\d+$/, '').trim()
+  }
+
+  // Get unique row identifiers and assign colors
+  const uniqueRows = [...new Set(layout.placedPieces.map(getRowIdentifier))]
+  const rowColorMap = new Map()
+  uniqueRows.forEach((rowId, index) => {
+    rowColorMap.set(rowId, rowColors[index % rowColors.length])
+  })
+
+  const getPieceColor = (piece: any) => {
+    const rowId = getRowIdentifier(piece)
+    return rowColorMap.get(rowId) || rowColors[0]
+  }
 
   return (
     <Paper 
@@ -113,12 +133,12 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
           {/* Pieces - simplified for thumbnail */}
           {layout.placedPieces.map((piece, index) => (
             <rect
-              key={piece.id}
+              key={`${piece.id}_${index}`}
               x={piece.x}
               y={piece.y}
               width={piece.width}
               height={piece.height}
-              fill={getPieceColor(index)}
+              fill={getPieceColor(piece)}
               stroke="#333"
               strokeWidth="2"
             />

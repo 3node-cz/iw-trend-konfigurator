@@ -17,6 +17,7 @@ export { default as CuttingLayoutDiagram } from './CuttingLayoutDiagram'
 export { default as CuttingDiagramThumbnail } from './CuttingDiagramThumbnail'
 export { default as CuttingDiagramDialog } from './CuttingDiagramDialog'
 export { default as OrderCalculationsSummary } from './OrderCalculationsSummary'
+export { default as PieceShapePreview } from './PieceShapePreview'
 
 // UI layout components
 export { default as PageContainer } from '../ui/PageContainer'

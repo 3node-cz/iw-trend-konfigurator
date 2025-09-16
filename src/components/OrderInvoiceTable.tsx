@@ -10,7 +10,7 @@ import {
   Typography,
   Box
 } from '@mui/material'
-import type { CuttingSpecification, OrderCalculations } from '../types/shopify'
+import type { CuttingSpecification, OrderCalculations, OrderFormData } from '../types/shopify'
 
 interface OrderItem {
   id: string
@@ -27,13 +27,23 @@ interface OrderInvoiceTableProps {
   specifications: CuttingSpecification[]
   cuttingLayouts: any[]
   orderCalculations: OrderCalculations
+  order: OrderFormData // Add order data to access discount
 }
 
 const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
   specifications,
   cuttingLayouts,
-  orderCalculations
+  orderCalculations,
+  order
 }) => {
+  // Helper function to apply customer discount
+  const applyDiscount = (price: number): number => {
+    if (order.discountPercentage > 0) {
+      return price * (1 - order.discountPercentage / 100)
+    }
+    return price
+  }
+
   // Generate order items from specifications and calculations
   const orderItems: OrderItem[] = []
   let itemCounter = 1
@@ -42,14 +52,17 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
   specifications.forEach((spec, specIndex) => {
     const boardsNeeded = cuttingLayouts.filter(layout => layout.materialIndex === specIndex + 1).length || 1
     
+    const originalUnitPrice = spec.material.price?.amount || 0
+    const discountedUnitPrice = applyDiscount(originalUnitPrice)
+    
     orderItems.push({
       id: `material-${specIndex}`,
       name: spec.material.name,
       code: spec.material.productCode || spec.material.code || '',
       quantity: boardsNeeded,
       unit: 'ks',
-      unitPrice: spec.material.price?.amount || 0,
-      totalPrice: (spec.material.price?.amount || 0) * boardsNeeded,
+      unitPrice: discountedUnitPrice,
+      totalPrice: discountedUnitPrice * boardsNeeded,
       type: 'material'
     })
 
@@ -72,14 +85,17 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
       }, 0)
 
       if (totalEdgeLength > 0) {
+        const originalEdgeUnitPrice = spec.edgeMaterial.price?.amount || 0
+        const discountedEdgeUnitPrice = applyDiscount(originalEdgeUnitPrice)
+        
         orderItems.push({
           id: `edge-${specIndex}`,
           name: `${spec.edgeMaterial.name}`,
           code: spec.edgeMaterial.code || '',
           quantity: Math.ceil(totalEdgeLength),
           unit: 'm',
-          unitPrice: spec.edgeMaterial.price?.amount || 0,
-          totalPrice: Math.ceil(totalEdgeLength) * (spec.edgeMaterial.price?.amount || 0),
+          unitPrice: discountedEdgeUnitPrice,
+          totalPrice: Math.ceil(totalEdgeLength) * discountedEdgeUnitPrice,
           type: 'edge'
         })
       }
@@ -95,19 +111,29 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
     const actualCuts = orderCalculations.totals?.totalCuts || totalPieces // Use actual cuts or fallback to pieces
     
     
+    const discountedCuttingCost = applyDiscount(totalCuttingCost)
+    
     orderItems.push({
       id: 'cutting-service',
       name: 'Rezanie materiálov',
       code: 'CUTTING',
       quantity: actualCuts,
       unit: 'rezov',
-      unitPrice: totalCuttingCost / actualCuts,
-      totalPrice: totalCuttingCost,
+      unitPrice: discountedCuttingCost / actualCuts,
+      totalPrice: discountedCuttingCost,
       type: 'cutting'
     })
   }
 
   const grandTotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0)
+  const totalWithoutDiscount = orderItems.reduce((sum, item) => {
+    // Calculate what the price would be without discount
+    const originalPrice = order.discountPercentage > 0 ? 
+      item.totalPrice / (1 - order.discountPercentage / 100) : 
+      item.totalPrice
+    return sum + originalPrice
+  }, 0)
+  const totalDiscountAmount = totalWithoutDiscount - grandTotal
 
   return (
     <Paper sx={{ mt: 3 }}>
@@ -115,6 +141,22 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
           Položky objednávky
         </Typography>
+        {order.discountPercentage > 0 && (
+          <Box sx={{ 
+            mb: 2, 
+            p: 1.5, 
+            backgroundColor: 'success.light', 
+            borderRadius: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
+          }}>
+            <Typography variant="body2" sx={{ color: 'success.dark', fontWeight: 500 }}>
+              ✓ Aplikovaná zľava zákazníka: {order.discountPercentage}% 
+              (úspora: {totalDiscountAmount.toFixed(2)} €)
+            </Typography>
+          </Box>
+        )}
       </Box>
       
       <TableContainer>

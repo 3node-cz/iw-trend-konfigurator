@@ -96,12 +96,7 @@ export const useOrderSubmission = () => {
       // 3. Create cart lines - one for each material specification with cutting pieces
       const specsWithPieces = completeOrder.specifications.filter(spec => spec.pieces.length > 0)
       
-      // Check for unavailable materials before processing
-      const unavailableMaterials = specsWithPieces.filter(spec => spec.material.availability === 'unavailable')
-      if (unavailableMaterials.length > 0) {
-        const materialNames = unavailableMaterials.map(spec => spec.material.name).join(', ')
-        throw new Error(`Tieto materiály nie sú skladom a nemožno ich objednať: ${materialNames}`)
-      }
+      // Allow all materials to be ordered regardless of availability status
 
       // Get variant IDs for all materials and create cart lines
       const allLines = []

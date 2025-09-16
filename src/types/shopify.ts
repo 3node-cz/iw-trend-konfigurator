@@ -115,32 +115,25 @@ export interface MaterialSearchParams {
   limit?: number
 }
 
-// Order form data
-export interface OrderFormData {
-  company: string
-  transferLocation: string
-  costCenter: string
-  cuttingCenter: string
-  orderName: string
-  deliveryDate: Date | null
-  materialType: string
-  deliveryMethod: string
-  processingType: string
-  withoutEdges: boolean
-  bandingFree: boolean
-  palettePayment: boolean
-  notes: string
-}
+// Order form data - re-export from schema
+export type { OrderFormData } from '../schemas/orderSchema'
 
 // Cutting specification interfaces
 export interface EdgeMaterial {
   id: string
+  variantId?: string // Shopify ProductVariant ID for cart operations
+  code?: string // Material code
   name: string
   productCode: string
   availability: 'available' | 'unavailable' | 'limited'
   thickness: number // Current/default thickness in mm
   availableThicknesses: number[] // Available thickness options in mm (e.g., [0.4, 0.8, 2])
   warehouse: string
+  price?: {
+    amount: number
+    currency: string
+    perUnit: string
+  }
   image?: string // Optional edge material image
 }
 
@@ -168,11 +161,24 @@ export interface CuttingSpecification {
   pieces: CuttingPiece[]
 }
 
+// Order calculations interface
+export interface OrderCalculations {
+  edgeConsumption: any[] // MaterialEdgeConsumption[]
+  cuttingCosts: any[] // CuttingCostBreakdown[]
+  totals: {
+    totalEdgeLength: number // Total edge length in meters across all materials
+    totalCuttingCost: number // Total cutting cost in EUR
+    totalPieces: number // Total number of pieces
+    totalMaterials: number // Number of different materials
+    totalCuts: number // Total number of actual cuts needed
+  }
+}
+
 // Complete order for submission
 export interface CompleteOrder {
-  order: OrderFormData
+  order: any // OrderFormData from schemas - avoid circular dependency
   specifications: CuttingSpecification[]
   cuttingLayouts?: any[] // From useCuttingLayouts hook
-  orderCalculations?: any // From useOrderCalculations hook
+  orderCalculations?: OrderCalculations // From useOrderCalculations hook
   submittedAt: Date
 }

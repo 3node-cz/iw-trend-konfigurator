@@ -13,12 +13,17 @@ import OrdersHeader from './OrdersHeader'
 import OrdersFilters from './OrdersFilters'
 import OrdersTable from './OrdersTable'
 import type { OrderFormData } from '../types/shopify'
+import type { SavedOrder } from '../types/savedOrder'
 
 interface OrdersPageProps {
   onOrderCreated?: (orderData: OrderFormData) => void
+  onLoadConfiguration?: (order: SavedOrder) => void // Navigate to order summary with loaded config
 }
 
-const OrdersPage: React.FC<OrdersPageProps> = ({ onOrderCreated }) => {
+const OrdersPage: React.FC<OrdersPageProps> = ({ 
+  onOrderCreated, 
+  onLoadConfiguration 
+}) => {
   const [showAlert, setShowAlert] = useState(false)
   const [alertMessage, setAlertMessage] = useState('')
 
@@ -30,6 +35,12 @@ const OrdersPage: React.FC<OrdersPageProps> = ({ onOrderCreated }) => {
     
     // Call the parent callback
     onOrderCreated?.(orderData)
+  }
+
+  const handleDeleteOrder = (order: SavedOrder) => {
+    // For now, just show an alert
+    setAlertMessage(`Zákazka ${order.orderNumber} bola označená na zmazanie`)
+    setShowAlert(true)
   }
 
   // Auto-hide alert after 5 seconds
@@ -67,7 +78,10 @@ const OrdersPage: React.FC<OrdersPageProps> = ({ onOrderCreated }) => {
       <Container maxWidth={false} sx={{ maxWidth: '1920px', mx: 'auto', py: 3 }}>
         <OrdersHeader onOrderCreated={handleOrderCreated} />
         <OrdersFilters />
-        <OrdersTable />
+        <OrdersTable 
+          onLoadConfiguration={onLoadConfiguration}
+          onDeleteOrder={handleDeleteOrder}
+        />
       </Container>
     </Box>
   )

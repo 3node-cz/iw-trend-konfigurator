@@ -4,10 +4,16 @@ const REQUIRED_FIELD_MESSAGE = 'Toto pole je povinné'
 const MIN_LENGTH_MESSAGE = 'Minimálne 2 znaky'
 
 export const orderSchema = z.object({
-  company: z.string()
+  // Essential order information
+  orderName: z.string()
     .min(1, REQUIRED_FIELD_MESSAGE)
     .min(2, MIN_LENGTH_MESSAGE),
   
+  deliveryDate: z.date().nullable().refine(date => date !== null, {
+    message: REQUIRED_FIELD_MESSAGE
+  }),
+  
+  // Location and logistics
   transferLocation: z.string()
     .min(1, REQUIRED_FIELD_MESSAGE),
   
@@ -17,17 +23,6 @@ export const orderSchema = z.object({
   cuttingCenter: z.string()
     .min(1, REQUIRED_FIELD_MESSAGE),
   
-  orderName: z.string()
-    .min(1, REQUIRED_FIELD_MESSAGE)
-    .min(2, MIN_LENGTH_MESSAGE),
-  
-  deliveryDate: z.date().nullable().refine(date => date !== null, {
-    message: REQUIRED_FIELD_MESSAGE
-  }),
-  
-  materialType: z.string()
-    .min(1, REQUIRED_FIELD_MESSAGE),
-  
   deliveryMethod: z.string()
     .min(1, REQUIRED_FIELD_MESSAGE),
   
@@ -35,10 +30,14 @@ export const orderSchema = z.object({
     .min(1, REQUIRED_FIELD_MESSAGE),
   
   // Optional fields
-  withoutEdges: z.boolean().default(false),
-  bandingFree: z.boolean().default(false),
-  palettePayment: z.boolean().default(false),
-  notes: z.string().optional().default('')
+  notes: z.string().optional().default(''),
+  discountPercentage: z.number()
+    .min(0, 'Zľava nemôže byť záporná')
+    .max(100, 'Zľava nemôže byť vyššia ako 100%')
+    .default(0),
+  
+  // Company is always the same, make it optional with default
+  company: z.string().default('IW TREND, s.r.o')
 })
 
 // Infer TypeScript type from schema

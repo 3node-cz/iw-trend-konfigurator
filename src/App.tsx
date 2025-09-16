@@ -7,7 +7,9 @@ import OrderRecapitulationPage from './components/OrderRecapitulationPage'
 import OrderSuccessPage from './components/OrderSuccessPage'
 import CuttingLayoutDemo from './components/CuttingLayoutDemo'
 import { submitOrderToShopify } from './services/shopifyApi'
+import { loadOrderConfiguration } from './services/orderLoader'
 import type { SelectedMaterial, OrderFormData, CuttingSpecification, CompleteOrder } from './types/shopify'
+import type { SavedOrder } from './types/savedOrder'
 
 type AppView = 'orders' | 'material-selection' | 'cutting-specification' | 'recapitulation' | 'success' | 'cutting-demo'
 
@@ -80,6 +82,36 @@ function App() {
     }
   }
 
+  const handleLoadConfiguration = async (savedOrder: SavedOrder) => {
+    console.log('🚀 Loading saved order configuration:', savedOrder.orderNumber)
+
+    try {
+      // Load configuration and fetch fresh material data
+      const { orderInfo, specifications } = await loadOrderConfiguration(savedOrder)
+
+      // Set the loaded configuration into app state
+      setCurrentOrder(orderInfo)
+      setSelectedMaterials(specifications.map(spec => ({
+        id: spec.material.id,
+        code: spec.material.code,
+        name: spec.material.name,
+        quantity: spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0),
+        price: spec.material.price.amount,
+        totalPrice: spec.material.price.amount * spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0),
+        variantId: spec.material.variantId || spec.material.id,
+        image: spec.material.image
+      })))
+      setCuttingSpecifications(specifications)
+
+      // Navigate directly to order recap/summary
+      setCurrentView('recapitulation')
+      window.scrollTo(0, 0)
+    } catch (error) {
+      console.error('❌ Error loading configuration:', error)
+      // Could show error message to user here
+    }
+  }
+
   const handleOrderSuccess = (url: string, orderName: string) => {
     setCheckoutUrl(url)
     setCurrentView('success')
@@ -89,7 +121,10 @@ function App() {
   return (
     <Container maxWidth={false} disableGutters>
       {currentView === 'orders' && (
-        <OrdersPage onOrderCreated={handleOrderCreated} />
+        <OrdersPage 
+          onOrderCreated={handleOrderCreated}
+          onLoadConfiguration={handleLoadConfiguration}
+        />
       )}
       {currentView === 'material-selection' && currentOrder && (
         <MaterialSelectionPage

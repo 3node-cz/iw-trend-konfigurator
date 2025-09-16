@@ -50,7 +50,8 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
       const results = await searchMaterials({ 
         query: query,
         availableOnly: showingAvailableOnly,
-        limit: showingAvailableOnly ? 10 : undefined // 10 for available only, unlimited for all
+        limit: showingAvailableOnly ? 10 : undefined, // 10 for available only, unlimited for all
+        collection: 'dekorativne-plosne-materialy' // Filter to board materials only
       })
       
       console.log('✅ Search completed. Found', results.length, 'results')
@@ -72,7 +73,8 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
         const results = await searchMaterials({ 
           query: searchQuery,
           availableOnly: false,
-          limit: undefined
+          limit: undefined,
+          collection: 'dekorativne-plosne-materialy' // Filter to board materials only
         })
         console.log('✅ Show all completed. Found', results.length, 'results')
         setSearchResults(results)

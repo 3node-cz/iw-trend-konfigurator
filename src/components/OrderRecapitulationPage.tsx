@@ -95,6 +95,17 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     total + spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0), 0
   )
 
+  // Check for unavailable products
+  const unavailableProducts = specifications.reduce((acc, spec) => {
+    if (spec.material.availability === 'unavailable') {
+      acc.push(`${spec.material.name} (materiál)`)
+    }
+    if (spec.edgeMaterial && spec.edgeMaterial.availability === 'unavailable') {
+      acc.push(`${spec.edgeMaterial.name} (hrana)`)
+    }
+    return acc
+  }, [] as string[])
+
 
   if (submitSuccess) {
     return (
@@ -185,6 +196,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
         specifications={specifications}
         cuttingLayouts={cuttingLayouts}
         orderCalculations={orderCalculations}
+        order={order}
       />
 
       {/* Cutting Layout Diagrams - Thumbnail View */}
@@ -385,6 +397,31 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
           </Typography>
           <Typography variant="body2">
             Váš košík je pripravený v Shopify systéme. Kliknite na tlačidlo pre dokončenie objednávky.
+          </Typography>
+        </Alert>
+      )}
+
+      {/* Unavailable Products Warning */}
+      {unavailableProducts.length > 0 && (
+        <Alert 
+          severity="warning" 
+          sx={{ mb: 2 }}
+        >
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+            ⚠️ Pozor: Niektoré produkty nie sú momentálne skladom
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            Tieto produkty budú dodané na objednávku:
+          </Typography>
+          <ul style={{ margin: 0, paddingLeft: '20px' }}>
+            {unavailableProducts.map((product, index) => (
+              <li key={index}>
+                <Typography variant="body2">{product}</Typography>
+              </li>
+            ))}
+          </ul>
+          <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
+            Dodacia lehota bude predĺžená podľa dostupnosti materiálov.
           </Typography>
         </Alert>
       )}
