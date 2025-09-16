@@ -21,6 +21,7 @@ import {
 } from '@mui/icons-material'
 import Grid from '@mui/system/Grid'
 import type { OrderFormData, CuttingSpecification, CompleteOrder } from '../types/shopify'
+import type { CuttingLayout } from '../utils/guillotineCutting'
 import { AvailabilityChip, CuttingDiagramThumbnail, CuttingDiagramDialog, OrderCalculationsSummary } from './common'
 import OrderInvoiceTable from './OrderInvoiceTable'
 import { useCuttingLayouts, useOrderCalculations } from '../hooks'
@@ -42,7 +43,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
   onOrderSuccess
 }) => {
   const [submitSuccess, setSubmitSuccess] = useState(false)
-  const [selectedDiagram, setSelectedDiagram] = useState<{layout: any, title: string} | null>(null)
+  const [selectedDiagram, setSelectedDiagram] = useState<{layout: CuttingLayout, title: string, globalPieceTypes?: string[]} | null>(null)
 
   // Use custom hooks for cutting layouts and order calculations
   const { cuttingLayouts, overallStats } = useCuttingLayouts(specifications)
@@ -209,32 +210,50 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
             Kliknite na diagram pre zobrazenie detailu
           </Typography>
           
-          {/* Thumbnail Grid */}
-          <Box sx={{ 
-            display: 'flex', 
-            flexWrap: 'wrap', 
-            gap: 2,
-            justifyContent: 'flex-start'
-          }}>
-            {cuttingLayouts.map((layoutData) => {
-              const title = layoutData.isMultiBoard 
-                ? `Plán ${layoutData.materialIndex}.${layoutData.boardNumber}`
-                : `Plán ${layoutData.materialIndex}`
-              
-              const fullTitle = layoutData.isMultiBoard 
-                ? `Plán č. ${layoutData.materialIndex}.${layoutData.boardNumber} - ${layoutData.materialName} (${layoutData.boardNumber}/${layoutData.totalBoards})`
-                : `Plán č. ${layoutData.materialIndex} - ${layoutData.materialName}`
-                
-              return (
-                <CuttingDiagramThumbnail
-                  key={`layout-${layoutData.materialIndex}-${layoutData.boardNumber}`}
-                  layout={layoutData.layout}
-                  title={title}
-                  onClick={() => setSelectedDiagram({ layout: layoutData.layout, title: fullTitle })}
-                />
+          {/* Calculate global piece types for consistent coloring across all diagrams */}
+          {(() => {
+            const globalPieceTypes = [...new Set(
+              specifications.flatMap(spec => 
+                spec.pieces.map(piece => piece.partName || piece.id)
               )
-            })}
-          </Box>
+            )]
+            
+            return (
+              <>
+                {/* Thumbnail Grid */}
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexWrap: 'wrap', 
+                  gap: 2,
+                  justifyContent: 'flex-start'
+                }}>
+                  {cuttingLayouts.map((layoutData) => {
+                    const title = layoutData.isMultiBoard 
+                      ? `${layoutData.materialIndex}.${layoutData.boardNumber}`
+                      : `${layoutData.materialIndex}`
+                    
+                    const fullTitle = layoutData.isMultiBoard 
+                      ? `Plán č. ${layoutData.materialIndex}.${layoutData.boardNumber} - ${layoutData.materialName} (${layoutData.boardNumber}/${layoutData.totalBoards})`
+                      : `Plán č. ${layoutData.materialIndex} - ${layoutData.materialName}`
+                      
+                    return (
+                      <CuttingDiagramThumbnail
+                        key={`layout-${layoutData.materialIndex}-${layoutData.boardNumber}`}
+                        layout={layoutData.layout}
+                        title={title}
+                        globalPieceTypes={globalPieceTypes}
+                        onClick={() => setSelectedDiagram({ 
+                          layout: layoutData.layout, 
+                          title: fullTitle,
+                          globalPieceTypes 
+                        })}
+                      />
+                    )
+                  })}
+                </Box>
+              </>
+            )
+          })()}
 
           {/* Multi-board Statistics */}
           {cuttingLayouts.some(l => l.isMultiBoard) && (
@@ -302,6 +321,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
         open={!!selectedDiagram}
         layout={selectedDiagram?.layout || null}
         title={selectedDiagram?.title || ''}
+        globalPieceTypes={selectedDiagram?.globalPieceTypes}
         onClose={() => setSelectedDiagram(null)}
       />
 

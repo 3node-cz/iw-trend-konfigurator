@@ -103,18 +103,56 @@ async function fetchMaterialById(materialId: string): Promise<MaterialSearchResu
 
     if (results.length === 0) {
       console.warn(`Material not found for ID ${materialId}, falling back to mock data`)
-      // Return a mock material for demonstration
-      return {
-        id: materialId,
-        code: 'H1180',
-        name: 'EGG 18 LDTD H1180 ST37 Dub Halifax prírodný',
-        productCode: '275048',
-        availability: 'available' as const,
-        warehouse: 'Bratislava',
-        price: { amount: 107.14, currency: 'EUR', perUnit: '/ ks' },
-        dimensions: { width: 2800, height: 2070, thickness: 18 },
-        image: '/images/materials/h1180.jpg'
+      
+      // Return different mock materials based on ID for testing
+      const mockMaterials: Record<string, {
+        id: string;
+        code: string;
+        name: string;
+        productCode: string;
+        availability: 'available';
+        warehouse: string;
+        price: { amount: number; currency: string; perUnit: string };
+        dimensions: { width: number; height: number; thickness: number };
+        image: string;
+      }> = {
+        'gid://shopify/Product/15514382139774': {
+          id: materialId,
+          code: 'H1180',
+          name: 'EGG 18,6 LDTD H1180 ST37 Dub Halifax prírodný',
+          productCode: '275048',
+          availability: 'available' as const,
+          warehouse: 'Bratislava',
+          price: { amount: 103.39, currency: 'EUR', perUnit: '/ ks' },
+          dimensions: { width: 2800, height: 2070, thickness: 18.6 },
+          image: '/images/materials/h1180.jpg'
+        },
+        'gid://shopify/Product/15514382140000': {
+          id: materialId,
+          code: 'H3311',
+          name: 'EGG 18,6 LDTD H3311 TM28 Dub Cuneo bielený',
+          productCode: '275051',
+          availability: 'available' as const,
+          warehouse: 'Bratislava',
+          price: { amount: 96.43, currency: 'EUR', perUnit: '/ ks' },
+          dimensions: { width: 2800, height: 2070, thickness: 18.6 },
+          image: '/images/materials/h3311.jpg'
+        },
+        'gid://shopify/Product/15514382141000': {
+          id: materialId,
+          code: 'H1303',
+          name: 'EGG 18,6 LDTD H1303 ST12 Dub Belmont hnedý',
+          productCode: '275055',
+          availability: 'available' as const,
+          warehouse: 'Bratislava',
+          price: { amount: 89.75, currency: 'EUR', perUnit: '/ ks' },
+          dimensions: { width: 2800, height: 2070, thickness: 18.6 },
+          image: '/images/materials/h1303.jpg'
+        }
       }
+      
+      // Return specific mock material or default to H1180
+      return mockMaterials[materialId] || mockMaterials['gid://shopify/Product/15514382139774']
     }
 
     return results[0]

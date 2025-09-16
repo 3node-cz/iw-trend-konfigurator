@@ -7,13 +7,15 @@ interface CuttingLayoutDiagramProps {
   title?: string
   maxWidth?: number
   maxHeight?: number
+  globalPieceTypes?: string[] // Optional: piece types from all layouts for consistent coloring
 }
 
 const CuttingLayoutDiagram: React.FC<CuttingLayoutDiagramProps> = ({ 
   layout, 
   title = "Rozrez materiálu",
   maxWidth = 800,
-  maxHeight = 600
+  maxHeight = 600,
+  globalPieceTypes
 }) => {
   // Calculate scale to fit the diagram
   const scaleX = maxWidth / layout.boardWidth
@@ -23,32 +25,28 @@ const CuttingLayoutDiagram: React.FC<CuttingLayoutDiagramProps> = ({
   const svgWidth = layout.boardWidth * scale
   const svgHeight = layout.boardHeight * scale
 
-  // Color palette for different rows/groups
+  // Color palette for different piece types (use brighter, more distinct colors)
   const rowColors = [
-    '#E3F2FD', '#F3E5F5', '#E8F5E8', '#FFF3E0', '#FCE4EC', 
-    '#E0F2F1', '#F1F8E9', '#FFF8E1', '#E8EAF6', '#FFEBEE'
+    '#E3F2FD', // Light blue
+    '#F3E5F5', // Light purple  
+    '#E8F5E8', // Light green
+    '#FFF3E0', // Light orange
+    '#FCE4EC', // Light pink
+    '#E0F2F1', // Light teal
+    '#F1F8E9', // Light lime
+    '#FFF8E1', // Light yellow
+    '#E8EAF6', // Light indigo
+    '#FFEBEE'  // Light red
   ]
 
-  // Create a mapping from row/group identifier to color index
-  const getRowIdentifier = (piece: any) => {
-    // Use groupId if available (for grouped pieces)
-    if (piece.groupId) {
-      return piece.groupId
-    }
-    // Fallback to piece name for row grouping (extract base name without numbers)
-    return piece.name.replace(/\s*\d+$/, '').trim()
-  }
-
-  // Get unique row identifiers and assign colors
-  const uniqueRows = [...new Set(layout.placedPieces.map(getRowIdentifier))]
-  const rowColorMap = new Map()
-  uniqueRows.forEach((rowId, index) => {
-    rowColorMap.set(rowId, rowColors[index % rowColors.length])
-  })
-
-  const getPieceColor = (piece: any) => {
-    const rowId = getRowIdentifier(piece)
-    return rowColorMap.get(rowId) || rowColors[0]
+  // Use global piece types if provided, otherwise calculate from current layout
+  const uniquePieceTypes = globalPieceTypes || [...new Set(layout.placedPieces.map(p => p.originalPiece.partName || p.originalPiece.id))]
+  
+  const getPieceColor = (piece: { originalPiece: { partName?: string; id: string } }) => {
+    const pieceType = piece.originalPiece.partName || piece.originalPiece.id
+    const typeIndex = uniquePieceTypes.indexOf(pieceType)
+    const color = rowColors[typeIndex % rowColors.length]
+    return color
   }
 
   return (
@@ -119,13 +117,13 @@ const CuttingLayoutDiagram: React.FC<CuttingLayoutDiagramProps> = ({
           ))}
 
           {/* Pieces */}
-          {layout.placedPieces.map((piece) => {
+          {layout.placedPieces.map((piece, index) => {
             const centerX = piece.x + piece.width / 2
             const centerY = piece.y + piece.height / 2
             const fontSize = Math.min(piece.width / 8, piece.height / 4, 60)
             
             return (
-              <g key={piece.id}>
+              <g key={`${piece.id}_${index}`}>
                 {/* Piece rectangle */}
                 <rect
                   x={piece.x}

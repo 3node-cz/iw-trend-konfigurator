@@ -165,6 +165,11 @@ export class OptimizedGuillotineCuttingOptimizer {
 
   // Single board optimization (existing method)
   optimize(pieces: CuttingPiece[]): CuttingLayout {
+    // Reset state for new optimization
+    this.placedPieces = []
+    this.cutLines = []
+    this.cutCounter = 0
+
     // Expand pieces by quantity (1 piece with quantity 10 = 10 individual pieces)
     const expandedPieces: CuttingPiece[] = []
     pieces.forEach(piece => {

@@ -6,12 +6,14 @@ interface CuttingDiagramThumbnailProps {
   layout: CuttingLayout
   title: string
   onClick: () => void
+  globalPieceTypes?: string[] // Optional: piece types from all layouts for consistent coloring
 }
 
 const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({ 
   layout, 
   title,
-  onClick
+  onClick,
+  globalPieceTypes
 }) => {
   // Small thumbnail size
   const thumbnailWidth = 200
@@ -25,32 +27,19 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
   const svgWidth = layout.boardWidth * scale
   const svgHeight = layout.boardHeight * scale
 
-  // Color palette for different rows/groups
+  // Color palette for different piece types
   const rowColors = [
     '#E3F2FD', '#F3E5F5', '#E8F5E8', '#FFF3E0', '#FCE4EC', 
     '#E0F2F1', '#F1F8E9', '#FFF8E1', '#E8EAF6', '#FFEBEE'
   ]
 
-  // Create a mapping from row/group identifier to color index
-  const getRowIdentifier = (piece: any) => {
-    // Use groupId if available (for grouped pieces)
-    if (piece.groupId) {
-      return piece.groupId
-    }
-    // Fallback to piece name for row grouping (extract base name without numbers)
-    return piece.name.replace(/\s*\d+$/, '').trim()
-  }
-
-  // Get unique row identifiers and assign colors
-  const uniqueRows = [...new Set(layout.placedPieces.map(getRowIdentifier))]
-  const rowColorMap = new Map()
-  uniqueRows.forEach((rowId, index) => {
-    rowColorMap.set(rowId, rowColors[index % rowColors.length])
-  })
-
-  const getPieceColor = (piece: any) => {
-    const rowId = getRowIdentifier(piece)
-    return rowColorMap.get(rowId) || rowColors[0]
+  // Use global piece types if provided, otherwise calculate from current layout
+  const uniquePieceTypes = globalPieceTypes || [...new Set(layout.placedPieces.map(p => p.originalPiece.partName || p.originalPiece.id))]
+  
+  const getPieceColor = (piece: { originalPiece: { partName?: string; id: string } }) => {
+    const pieceType = piece.originalPiece.partName || piece.originalPiece.id
+    const typeIndex = uniquePieceTypes.indexOf(pieceType)
+    return rowColors[typeIndex % rowColors.length]
   }
 
   return (

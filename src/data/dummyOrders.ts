@@ -147,102 +147,153 @@ export const dummySavedOrders: SavedOrder[] = [
       company: 'IW TREND, s.r.o'
     } as OrderFormData,
     specifications: [
+      // Material 1: Real Shopify material
       {
-        materialId: 'gid://shopify/Product/15514382139774', // H1180 Dub Halifax
+        materialId: 'gid://shopify/Product/15514941194622',
         edgeMaterialId: 'gid://shopify/Product/15514434371966', // ABS hrana
         glueType: 'PUR transparentná/bílá',
         pieces: [
           {
-            id: 'piece_4a',
+            id: 'piece_1_1',
             partName: 'Vrchné dvierka',
             length: 720,
             width: 400,
-            quantity: 8,
-            allowRotation: false,
-            withoutEdge: false,
-            duplicate: false,
-            edgeAllAround: null, // Each edge different - should not set edgeAllAround
-            edgeTop: 0.8,
-            edgeBottom: 2,
-            edgeLeft: 0.8,
-            edgeRight: 2,
-            notes: 'Svetlý dub pre horné skrinky - rôzne hrúbky hrán'
-          }
-        ]
-      },
-      {
-        materialId: 'gid://shopify/Product/15514382139774', // H1180 Dub Halifax (using same for simplicity)
-        edgeMaterialId: 'gid://shopify/Product/15514434371966', // ABS hrana
-        glueType: 'PUR transparentná/bílá',
-        pieces: [
-          {
-            id: 'piece_4b',
-            partName: 'Spodné dvierka',
-            length: 720,
-            width: 600,
             quantity: 6,
             allowRotation: false,
             withoutEdge: false,
             duplicate: false,
-            edgeAllAround: 0.8, // All edges same (0.8) - should auto-set edgeAllAround
+            edgeAllAround: 2, // All edges with 2mm
+            edgeTop: 2,
+            edgeBottom: 2,
+            edgeLeft: 2,
+            edgeRight: 2,
+            notes: 'Svetlý dub pre horné skrinky'
+          },
+          {
+            id: 'piece_1_2',
+            partName: 'Bočnice skriniek',
+            length: 720,
+            width: 320,
+            quantity: 8,
+            allowRotation: false,
+            withoutEdge: false,
+            duplicate: false,
+            edgeAllAround: null, // Different edges
+            edgeTop: 2,
+            edgeBottom: null, // No bottom edge
+            edgeLeft: 1,
+            edgeRight: 1,
+            notes: 'Bočnice pre horné skrinky - bez spodnej hrany'
+          }
+        ]
+      },
+      // Material 2: Real Shopify material
+      {
+        materialId: 'gid://shopify/Product/15514941129086',
+        edgeMaterialId: 'gid://shopify/Product/15514434372000', // Different edge material
+        glueType: 'PUR transparentná/bílá',
+        pieces: [
+          {
+            id: 'piece_2_1',
+            partName: 'Spodné dvierka',
+            length: 720,
+            width: 600,
+            quantity: 4,
+            allowRotation: false,
+            withoutEdge: false,
+            duplicate: false,
+            edgeAllAround: 0.8, // All edges with 0.8mm
             edgeTop: 0.8,
             edgeBottom: 0.8,
             edgeLeft: 0.8,
             edgeRight: 0.8,
-            notes: 'Bielený dub pre spodné skrinky - tenké hrany'
+            notes: 'Bielený dub pre spodné skrinky'
+          },
+          {
+            id: 'piece_2_2',
+            partName: 'Zásuvky',
+            length: 680,
+            width: 480,
+            quantity: 3,
+            allowRotation: true,
+            withoutEdge: false,
+            duplicate: false,
+            edgeAllAround: null, // Only front edge
+            edgeTop: 2,
+            edgeBottom: null,
+            edgeLeft: null,
+            edgeRight: null,
+            notes: 'Čela zásuviek - len predná hrana'
           }
         ]
       },
+      // Material 3: Real Shopify material - some pieces without edges
       {
-        materialId: 'gid://shopify/Product/15514382139774', // H1180 Dub Halifax (using same for simplicity)
-        edgeMaterialId: 'gid://shopify/Product/15514434371966', // ABS hrana
+        materialId: 'gid://shopify/Product/15514940834174',
+        edgeMaterialId: null, // No edge material for some pieces
         glueType: 'PUR transparentná/bílá',
         pieces: [
           {
-            id: 'piece_4c',
+            id: 'piece_3_1',
             partName: 'Pracovná doska',
             length: 2400,
             width: 600,
             quantity: 2,
             allowRotation: false,
-            withoutEdge: false,
+            withoutEdge: true, // No edges at all
             duplicate: false,
-            edgeAllAround: null, // Only some edges - should not set edgeAllAround
-            edgeTop: 2,
+            edgeAllAround: null,
+            edgeTop: null,
             edgeBottom: null,
-            edgeLeft: 2,
-            edgeRight: 2,
-            notes: 'Tmavý dub pre pracovnú plochu - hrana iba z troch strán'
+            edgeLeft: null,
+            edgeRight: null,
+            notes: 'Tmavý dub pre pracovnú plochu - bez hrán'
           },
           {
-            id: 'piece_4d',
+            id: 'piece_3_2',
             partName: 'Police',
             length: 800,
             width: 400,
-            quantity: 10,
+            quantity: 8,
             allowRotation: true,
-            withoutEdge: false,
+            withoutEdge: true, // No edges
             duplicate: false,
-            edgeAllAround: null, // No edges - should not set edgeAllAround
+            edgeAllAround: null,
             edgeTop: null,
             edgeBottom: null,
             edgeLeft: null,
             edgeRight: null,
             notes: 'Nastaviteľné police - bez hrán'
+          },
+          {
+            id: 'piece_3_3',
+            partName: 'Zadné steny',
+            length: 720,
+            width: 300,
+            quantity: 6,
+            allowRotation: false,
+            withoutEdge: true, // No edges needed for back panels
+            duplicate: false,
+            edgeAllAround: null,
+            edgeTop: null,
+            edgeBottom: null,
+            edgeLeft: null,
+            edgeRight: null,
+            notes: 'Zadné steny skriniek - bez hrán'
           }
         ]
       }
     ],
     summary: {
       totalMaterials: 3,
-      totalPieces: 26,
-      totalBoards: 5,
-      estimatedCost: 1847.50,
+      totalPieces: 37, // Updated count: 6+8+4+3+2+8+6 = 37
+      totalBoards: 8, // Estimated boards needed
+      estimatedCost: 2150.00, // Updated cost
       currency: 'EUR',
       materialNames: [
-        'EGG 18 LDTD H1180 ST37 Dub Halifax prírodný',
-        'EGG 18 LDTD H3311 TM28 Dub Cuneo bielený',
-        'EGG 18 LDTD H1303 ST12 Dub Belmont hnedý'
+        'EGG 18 LDTD H1180 ST37 Dub Halifax prírodný', // Light oak with edges
+        'EGG 18 LDTD H3311 TM28 Dub Cuneo bielený',     // White oak with edges  
+        'EGG 18 LDTD H1303 ST12 Dub Belmont hnedý'      // Dark oak without edges
       ]
     }
   },

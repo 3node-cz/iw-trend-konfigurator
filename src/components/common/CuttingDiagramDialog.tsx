@@ -20,13 +20,15 @@ interface CuttingDiagramDialogProps {
   layout: CuttingLayout | null
   title: string
   onClose: () => void
+  globalPieceTypes?: string[] // Optional: piece types from all layouts for consistent coloring
 }
 
 const CuttingDiagramDialog: React.FC<CuttingDiagramDialogProps> = ({
   open,
   layout,
   title,
-  onClose
+  onClose,
+  globalPieceTypes
 }) => {
   const handleDownload = () => {
     if (!layout) return
@@ -70,6 +72,7 @@ const CuttingDiagramDialog: React.FC<CuttingDiagramDialogProps> = ({
             title=""
             maxWidth={1000}
             maxHeight={700}
+            globalPieceTypes={globalPieceTypes}
           />
         )}
       </DialogContent>
