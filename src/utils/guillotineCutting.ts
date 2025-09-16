@@ -70,9 +70,9 @@ interface PieceGroup {
   width: number
   height: number
   rotated: boolean
-  gridWidth: number  // pieces per row
+  gridWidth: number // pieces per row
   gridHeight: number // pieces per column
-  totalWidth: number  // total width of the group
+  totalWidth: number // total width of the group
   totalHeight: number // total height of the group
 }
 
@@ -89,7 +89,9 @@ export class OptimizedGuillotineCuttingOptimizer {
   constructor(boardWidth: number, boardHeight: number) {
     this.boardWidth = boardWidth
     this.boardHeight = boardHeight
-    this.freeRectangles = [{ x: 0, y: 0, width: boardWidth, height: boardHeight }]
+    this.freeRectangles = [
+      { x: 0, y: 0, width: boardWidth, height: boardHeight },
+    ]
   }
 
   // Multi-board optimization - main entry point
@@ -119,17 +121,19 @@ export class OptimizedGuillotineCuttingOptimizer {
       }
 
       // Update remaining pieces
-      remainingPieces = remainingPieces.map(piece => {
-        const key = `${piece.length}x${piece.width}`
-        const placedCount = placedPiecesCount.get(key) || 0
-        const newQuantity = Math.max(0, piece.quantity - placedCount)
-        placedPiecesCount.set(key, Math.max(0, placedCount - piece.quantity))
-        
-        return {
-          ...piece,
-          quantity: newQuantity
-        }
-      }).filter(piece => piece.quantity > 0)
+      remainingPieces = remainingPieces
+        .map((piece) => {
+          const key = `${piece.length}x${piece.width}`
+          const placedCount = placedPiecesCount.get(key) || 0
+          const newQuantity = Math.max(0, piece.quantity - placedCount)
+          placedPiecesCount.set(key, Math.max(0, placedCount - piece.quantity))
+
+          return {
+            ...piece,
+            quantity: newQuantity,
+          }
+        })
+        .filter((piece) => piece.quantity > 0)
 
       boardNumber++
 
@@ -138,7 +142,9 @@ export class OptimizedGuillotineCuttingOptimizer {
       this.cutLines = []
       this.cutCounter = 0
       this.groupCounter = 0
-      this.freeRectangles = [{ x: 0, y: 0, width: this.boardWidth, height: this.boardHeight }]
+      this.freeRectangles = [
+        { x: 0, y: 0, width: this.boardWidth, height: this.boardHeight },
+      ]
 
       // Safety break to prevent infinite loops
       if (boardNumber > 10) {
@@ -147,19 +153,29 @@ export class OptimizedGuillotineCuttingOptimizer {
       }
     }
 
-    const totalPlacedPieces = allBoards.reduce((sum, board) => sum + board.placedPieces.length, 0)
-    const totalUsedArea = allBoards.reduce((sum, board) => sum + board.totalUsedArea, 0)
+    const totalPlacedPieces = allBoards.reduce(
+      (sum, board) => sum + board.placedPieces.length,
+      0,
+    )
+    const totalUsedArea = allBoards.reduce(
+      (sum, board) => sum + board.totalUsedArea,
+      0,
+    )
     const totalBoardArea = allBoards.length * this.boardWidth * this.boardHeight
-    const overallEfficiency = totalBoardArea > 0 ? (totalUsedArea / totalBoardArea) * 100 : 0
+    const overallEfficiency =
+      totalBoardArea > 0 ? (totalUsedArea / totalBoardArea) * 100 : 0
 
     return {
       boards: allBoards,
       totalBoards: allBoards.length,
       totalPieces: totalOriginalPieces,
       totalPlacedPieces,
-      totalUnplacedPieces: remainingPieces.reduce((sum, p) => sum + p.quantity, 0),
+      totalUnplacedPieces: remainingPieces.reduce(
+        (sum, p) => sum + p.quantity,
+        0,
+      ),
       overallEfficiency,
-      unplacedPieces: remainingPieces
+      unplacedPieces: remainingPieces,
     }
   }
 
@@ -172,33 +188,35 @@ export class OptimizedGuillotineCuttingOptimizer {
 
     // Expand pieces by quantity (1 piece with quantity 10 = 10 individual pieces)
     const expandedPieces: CuttingPiece[] = []
-    pieces.forEach(piece => {
+    pieces.forEach((piece) => {
       for (let i = 0; i < piece.quantity; i++) {
         expandedPieces.push({
           ...piece,
           id: `${piece.id}_${i}`,
-          quantity: 1
+          quantity: 1,
         })
       }
     })
-    
+
     this.placedPieces = []
     this.cutLines = []
     this.cutCounter = 0
     this.groupCounter = 0
-    this.freeRectangles = [{ x: 0, y: 0, width: this.boardWidth, height: this.boardHeight }]
+    this.freeRectangles = [
+      { x: 0, y: 0, width: this.boardWidth, height: this.boardHeight },
+    ]
 
     // Phase 1: Create piece groups for identical pieces
     const pieceGroups = this.createPieceGroups(expandedPieces)
-    
+
     // Phase 2: Sort groups by priority (large groups first, then by area)
     const sortedGroups = this.sortGroupsForOptimalCutting(pieceGroups)
-    
+
     // Phase 3: Place groups
     for (const group of sortedGroups) {
       this.placePieceGroup(group)
     }
-    
+
     // Phase 4: Post-processing - try to fill small gaps with remaining pieces
     this.optimizeSmallGaps()
 
@@ -208,10 +226,13 @@ export class OptimizedGuillotineCuttingOptimizer {
       x: rect.x,
       y: rect.y,
       width: rect.width,
-      height: rect.height
+      height: rect.height,
     }))
-    
-    const totalUsedArea = this.placedPieces.reduce((sum, p) => sum + (p.width * p.height), 0)
+
+    const totalUsedArea = this.placedPieces.reduce(
+      (sum, p) => sum + p.width * p.height,
+      0,
+    )
     const totalBoardArea = this.boardWidth * this.boardHeight
     const totalWasteArea = totalBoardArea - totalUsedArea
     const efficiency = (totalUsedArea / totalBoardArea) * 100
@@ -224,7 +245,7 @@ export class OptimizedGuillotineCuttingOptimizer {
       wasteAreas,
       efficiency,
       totalUsedArea,
-      totalWasteArea
+      totalWasteArea,
     }
   }
 
@@ -235,7 +256,7 @@ export class OptimizedGuillotineCuttingOptimizer {
     for (const piece of pieces) {
       // Create a key for identical pieces (same dimensions)
       const key = `${piece.length}x${piece.width}`
-      
+
       if (groupMap.has(key)) {
         const existingGroup = groupMap.get(key)!
         existingGroup.totalQuantity += piece.quantity
@@ -243,15 +264,20 @@ export class OptimizedGuillotineCuttingOptimizer {
         // Create new group
         const width = piece.length
         const height = piece.width
-        
+
         // Calculate optimal grid layout for this piece type
         const { gridWidth, gridHeight, rotated } = this.calculateOptimalGrid(
-          width, height, piece.quantity, this.boardWidth, this.boardHeight, piece.allowRotation
+          width,
+          height,
+          piece.quantity,
+          this.boardWidth,
+          this.boardHeight,
+          piece.allowRotation,
         )
-        
+
         const finalWidth = rotated ? height : width
         const finalHeight = rotated ? width : height
-        
+
         groupMap.set(key, {
           piece,
           totalQuantity: piece.quantity,
@@ -261,7 +287,7 @@ export class OptimizedGuillotineCuttingOptimizer {
           gridWidth,
           gridHeight,
           totalWidth: finalWidth * gridWidth,
-          totalHeight: finalHeight * gridHeight
+          totalHeight: finalHeight * gridHeight,
         })
       }
     }
@@ -271,35 +297,34 @@ export class OptimizedGuillotineCuttingOptimizer {
 
   // Calculate optimal grid arrangement for identical pieces
   private calculateOptimalGrid(
-    pieceWidth: number, 
-    pieceHeight: number, 
-    quantity: number, 
-    maxWidth: number, 
+    pieceWidth: number,
+    pieceHeight: number,
+    quantity: number,
+    maxWidth: number,
     maxHeight: number,
-    allowRotation = false
-  ): { gridWidth: number, gridHeight: number, rotated: boolean } {
-    
+    allowRotation = false,
+  ): { gridWidth: number; gridHeight: number; rotated: boolean } {
     const tryLayout = (w: number, h: number) => {
       const maxCols = Math.floor(maxWidth / w)
       const maxRows = Math.floor(maxHeight / h)
-      
+
       if (maxCols === 0 || maxRows === 0) return null
-      
+
       // Calculate how many pieces we can fit
       const totalFit = Math.min(maxCols * maxRows, quantity)
-      
+
       // Calculate optimal grid dimensions - prefer filling one dimension completely
       let bestCols = 1
       let bestRows = 1
       let bestWaste = Infinity
-      
+
       for (let cols = 1; cols <= Math.min(maxCols, totalFit); cols++) {
         const rows = Math.min(maxRows, Math.ceil(totalFit / cols))
         if (cols * rows >= totalFit) {
           const usedWidth = cols * w
           const usedHeight = rows * h
-          const waste = (maxWidth * maxHeight) - (usedWidth * usedHeight)
-          
+          const waste = maxWidth * maxHeight - usedWidth * usedHeight
+
           if (waste < bestWaste) {
             bestWaste = waste
             bestCols = cols
@@ -307,16 +332,16 @@ export class OptimizedGuillotineCuttingOptimizer {
           }
         }
       }
-      
+
       const cols = bestCols
       const rows = bestRows
-      
+
       return {
         gridWidth: cols,
         gridHeight: rows,
         totalFit,
         efficiency: totalFit / quantity,
-        wastedSpace: (maxWidth * maxHeight) - (w * cols * h * rows)
+        wastedSpace: maxWidth * maxHeight - w * cols * h * rows,
       }
     }
 
@@ -328,11 +353,19 @@ export class OptimizedGuillotineCuttingOptimizer {
     if (!normal && !rotated) {
       return { gridWidth: 1, gridHeight: 1, rotated: false }
     }
-    
+
     if (!rotated || (normal && normal.efficiency >= rotated.efficiency)) {
-      return { gridWidth: normal!.gridWidth, gridHeight: normal!.gridHeight, rotated: false }
+      return {
+        gridWidth: normal!.gridWidth,
+        gridHeight: normal!.gridHeight,
+        rotated: false,
+      }
     } else {
-      return { gridWidth: rotated.gridWidth, gridHeight: rotated.gridHeight, rotated: true }
+      return {
+        gridWidth: rotated.gridWidth,
+        gridHeight: rotated.gridHeight,
+        rotated: true,
+      }
     }
   }
 
@@ -343,14 +376,14 @@ export class OptimizedGuillotineCuttingOptimizer {
       if (a.totalQuantity !== b.totalQuantity) {
         return b.totalQuantity - a.totalQuantity
       }
-      
+
       // Second priority: larger total area
       const aArea = a.totalWidth * a.totalHeight
       const bArea = b.totalWidth * b.totalHeight
       if (aArea !== bArea) {
         return bArea - aArea
       }
-      
+
       // Third priority: larger individual pieces
       const aPieceArea = a.width * a.height
       const bPieceArea = b.width * b.height
@@ -366,17 +399,20 @@ export class OptimizedGuillotineCuttingOptimizer {
       // Calculate how many pieces to place in this iteration
       const piecesToPlace = Math.min(
         remainingQuantity,
-        group.gridWidth * group.gridHeight
+        group.gridWidth * group.gridHeight,
       )
 
       // Try to find space for the entire group
       const placedGroup = this.placeGroupGrid(group, piecesToPlace)
-      
+
       if (placedGroup) {
         remainingQuantity -= piecesToPlace
       } else {
         // If we can't place the group, try placing individual pieces
-        const individualPiece = this.placeSinglePiece(group.piece, `${group.piece.id}_${this.groupCounter++}`)
+        const individualPiece = this.placeSinglePiece(
+          group.piece,
+          `${group.piece.id}_${this.groupCounter++}`,
+        )
         if (individualPiece) {
           this.placedPieces.push(individualPiece)
           remainingQuantity -= 1
@@ -403,7 +439,10 @@ export class OptimizedGuillotineCuttingOptimizer {
     for (let i = 0; i < this.freeRectangles.length; i++) {
       const rect = this.freeRectangles[i]
       if (rect.width >= groupWidth && rect.height >= groupHeight) {
-        if (!bestRect || this.isBetterFit(rect, bestRect, groupWidth, groupHeight)) {
+        if (
+          !bestRect ||
+          this.isBetterFit(rect, bestRect, groupWidth, groupHeight)
+        ) {
           bestRect = rect
           bestIndex = i
         }
@@ -428,9 +467,9 @@ export class OptimizedGuillotineCuttingOptimizer {
           rotated: group.rotated,
           originalPiece: group.piece,
           isGrouped: true,
-          groupId
+          groupId,
         }
-        
+
         this.placedPieces.push(piece)
         pieceIndex++
       }
@@ -438,13 +477,21 @@ export class OptimizedGuillotineCuttingOptimizer {
 
     // Remove the used rectangle and split the remaining area
     this.freeRectangles.splice(bestIndex, 1)
-    this.splitRectangle(bestRect, { x: bestRect.x, y: bestRect.y, width: groupWidth, height: groupHeight })
+    this.splitRectangle(bestRect, {
+      x: bestRect.x,
+      y: bestRect.y,
+      width: groupWidth,
+      height: groupHeight,
+    })
 
     return true
   }
 
   // Fallback: place a single piece (same as original algorithm)
-  private placeSinglePiece(piece: CuttingPiece, uniqueId: string): PlacedPiece | null {
+  private placeSinglePiece(
+    piece: CuttingPiece,
+    uniqueId: string,
+  ): PlacedPiece | null {
     const width = piece.length
     const height = piece.width
 
@@ -491,7 +538,7 @@ export class OptimizedGuillotineCuttingOptimizer {
       width: finalWidth,
       height: finalHeight,
       rotated,
-      originalPiece: piece
+      originalPiece: piece,
     }
 
     this.freeRectangles.splice(bestIndex, 1)
@@ -501,7 +548,10 @@ export class OptimizedGuillotineCuttingOptimizer {
   }
 
   // Split a rectangle after placing pieces (enhanced with better cut line generation)
-  private splitRectangle(rect: Rectangle, placed: { x: number, y: number, width: number, height: number }) {
+  private splitRectangle(
+    rect: Rectangle,
+    placed: { x: number; y: number; width: number; height: number },
+  ) {
     const remainingWidth = rect.width - placed.width
     const remainingHeight = rect.height - placed.height
 
@@ -513,7 +563,7 @@ export class OptimizedGuillotineCuttingOptimizer {
         x: rect.x + placed.width,
         y: rect.y,
         width: remainingWidth,
-        height: rect.height
+        height: rect.height,
       })
 
       // Add vertical cut line
@@ -524,7 +574,7 @@ export class OptimizedGuillotineCuttingOptimizer {
         x2: rect.x + placed.width,
         y2: rect.y + rect.height,
         direction: 'vertical',
-        order: this.cutCounter
+        order: this.cutCounter,
       })
     }
 
@@ -533,7 +583,7 @@ export class OptimizedGuillotineCuttingOptimizer {
         x: rect.x,
         y: rect.y + placed.height,
         width: placed.width,
-        height: remainingHeight
+        height: remainingHeight,
       })
 
       // Add horizontal cut line
@@ -544,7 +594,7 @@ export class OptimizedGuillotineCuttingOptimizer {
         x2: rect.x + placed.width,
         y2: rect.y + placed.height,
         direction: 'horizontal',
-        order: this.cutCounter
+        order: this.cutCounter,
       })
     }
 
@@ -557,19 +607,30 @@ export class OptimizedGuillotineCuttingOptimizer {
   }
 
   // Enhanced fit evaluation with better waste minimization
-  private isBetterFit(rect1: Rectangle, rect2: Rectangle, width: number, height: number): boolean {
-    const waste1 = (rect1.width * rect1.height) - (width * height)
-    const waste2 = (rect2.width * rect2.height) - (width * height)
-    
+  private isBetterFit(
+    rect1: Rectangle,
+    rect2: Rectangle,
+    width: number,
+    height: number,
+  ): boolean {
+    const waste1 = rect1.width * rect1.height - width * height
+    const waste2 = rect2.width * rect2.height - width * height
+
     // Primary: minimize waste
     if (waste1 !== waste2) {
       return waste1 < waste2
     }
 
     // Secondary: prefer rectangles that create more usable remaining space
-    const remainingArea1 = (rect1.width - width) * rect1.height + rect1.width * (rect1.height - height) - (rect1.width - width) * (rect1.height - height)
-    const remainingArea2 = (rect2.width - width) * rect2.height + rect2.width * (rect2.height - height) - (rect2.width - width) * (rect2.height - height)
-    
+    const remainingArea1 =
+      (rect1.width - width) * rect1.height +
+      rect1.width * (rect1.height - height) -
+      (rect1.width - width) * (rect1.height - height)
+    const remainingArea2 =
+      (rect2.width - width) * rect2.height +
+      rect2.width * (rect2.height - height) -
+      (rect2.width - width) * (rect2.height - height)
+
     if (remainingArea1 !== remainingArea2) {
       return remainingArea1 > remainingArea2
     }
@@ -578,33 +639,33 @@ export class OptimizedGuillotineCuttingOptimizer {
     const aspectRatio = width / height
     const rect1AspectRatio = rect1.width / rect1.height
     const rect2AspectRatio = rect2.width / rect2.height
-    
+
     const aspectDiff1 = Math.abs(aspectRatio - rect1AspectRatio)
     const aspectDiff2 = Math.abs(aspectRatio - rect2AspectRatio)
-    
+
     return aspectDiff1 < aspectDiff2
   }
-  
+
   // Post-processing to fill small gaps
   private optimizeSmallGaps(): void {
     // Merge adjacent waste rectangles to create larger usable spaces
     this.mergeWasteRectangles()
-    
+
     // Try to compact existing pieces to reduce waste
     this.compactLayout()
   }
-  
+
   // Merge adjacent waste rectangles
   private mergeWasteRectangles(): void {
     let merged = true
     while (merged) {
       merged = false
-      
+
       for (let i = 0; i < this.freeRectangles.length; i++) {
         for (let j = i + 1; j < this.freeRectangles.length; j++) {
           const rect1 = this.freeRectangles[i]
           const rect2 = this.freeRectangles[j]
-          
+
           // Check if rectangles can be merged horizontally
           if (rect1.y === rect2.y && rect1.height === rect2.height) {
             if (rect1.x + rect1.width === rect2.x) {
@@ -613,7 +674,7 @@ export class OptimizedGuillotineCuttingOptimizer {
                 x: rect1.x,
                 y: rect1.y,
                 width: rect1.width + rect2.width,
-                height: rect1.height
+                height: rect1.height,
               }
               this.freeRectangles.splice(j, 1)
               merged = true
@@ -624,14 +685,14 @@ export class OptimizedGuillotineCuttingOptimizer {
                 x: rect2.x,
                 y: rect1.y,
                 width: rect1.width + rect2.width,
-                height: rect1.height
+                height: rect1.height,
               }
               this.freeRectangles.splice(j, 1)
               merged = true
               break
             }
           }
-          
+
           // Check if rectangles can be merged vertically
           if (rect1.x === rect2.x && rect1.width === rect2.width) {
             if (rect1.y + rect1.height === rect2.y) {
@@ -640,7 +701,7 @@ export class OptimizedGuillotineCuttingOptimizer {
                 x: rect1.x,
                 y: rect1.y,
                 width: rect1.width,
-                height: rect1.height + rect2.height
+                height: rect1.height + rect2.height,
               }
               this.freeRectangles.splice(j, 1)
               merged = true
@@ -651,7 +712,7 @@ export class OptimizedGuillotineCuttingOptimizer {
                 x: rect1.x,
                 y: rect2.y,
                 width: rect1.width,
-                height: rect1.height + rect2.height
+                height: rect1.height + rect2.height,
               }
               this.freeRectangles.splice(j, 1)
               merged = true
@@ -659,71 +720,84 @@ export class OptimizedGuillotineCuttingOptimizer {
             }
           }
         }
-        
+
         if (merged) break
       }
     }
   }
-  
+
   // Compact layout by moving pieces to reduce fragmentation
   private compactLayout(): void {
     // Sort placed pieces by area (smallest first for easier repositioning)
-    const sortedPieces = [...this.placedPieces].sort((a, b) => 
-      (a.width * a.height) - (b.width * b.height)
+    const sortedPieces = [...this.placedPieces].sort(
+      (a, b) => a.width * a.height - b.width * b.height,
     )
-    
+
     // Try to reposition smaller pieces to better locations
     for (let i = 0; i < Math.min(sortedPieces.length, 5); i++) {
       const piece = sortedPieces[i]
-      
+
       // Temporarily remove piece and add its space back
       const pieceIndex = this.placedPieces.indexOf(piece)
       if (pieceIndex === -1) continue
-      
+
       this.placedPieces.splice(pieceIndex, 1)
       this.freeRectangles.push({
         x: piece.x,
         y: piece.y,
         width: piece.width,
-        height: piece.height
+        height: piece.height,
       })
-      
+
       // Try to find a better position
       const originalPos = { x: piece.x, y: piece.y }
       let bestRect: Rectangle | null = null
       let bestIndex = -1
-      
+
       for (let j = 0; j < this.freeRectangles.length; j++) {
         const rect = this.freeRectangles[j]
         if (rect.width >= piece.width && rect.height >= piece.height) {
-          if (!bestRect || this.isBetterFit(rect, bestRect, piece.width, piece.height)) {
+          if (
+            !bestRect ||
+            this.isBetterFit(rect, bestRect, piece.width, piece.height)
+          ) {
             bestRect = rect
             bestIndex = j
           }
         }
       }
-      
+
       if (bestRect && bestIndex !== -1) {
         // Place piece in new position
         piece.x = bestRect.x
         piece.y = bestRect.y
         this.placedPieces.push(piece)
-        
+
         this.freeRectangles.splice(bestIndex, 1)
         this.splitRectangle(bestRect, piece)
-        
+
         // Remove the old position we added back
-        this.freeRectangles = this.freeRectangles.filter(rect => 
-          !(rect.x === originalPos.x && rect.y === originalPos.y && 
-            rect.width === piece.width && rect.height === piece.height)
+        this.freeRectangles = this.freeRectangles.filter(
+          (rect) =>
+            !(
+              rect.x === originalPos.x &&
+              rect.y === originalPos.y &&
+              rect.width === piece.width &&
+              rect.height === piece.height
+            ),
         )
       } else {
         // Put piece back in original position
         this.placedPieces.push(piece)
         // Remove the space we added back
-        this.freeRectangles = this.freeRectangles.filter(rect => 
-          !(rect.x === originalPos.x && rect.y === originalPos.y && 
-            rect.width === piece.width && rect.height === piece.height)
+        this.freeRectangles = this.freeRectangles.filter(
+          (rect) =>
+            !(
+              rect.x === originalPos.x &&
+              rect.y === originalPos.y &&
+              rect.width === piece.width &&
+              rect.height === piece.height
+            ),
         )
       }
     }
@@ -733,9 +807,9 @@ export class OptimizedGuillotineCuttingOptimizer {
 // Helper function for backward compatibility
 export function optimizeAllMaterials(
   materialSpecs: Array<{
-    material: { dimensions: { width: number, height: number } }
+    material: { dimensions: { width: number; height: number } }
     pieces: CuttingPiece[]
-  }>
+  }>,
 ): CuttingLayout[] {
   const layouts: CuttingLayout[] = []
 
@@ -743,9 +817,9 @@ export function optimizeAllMaterials(
     if (spec.material.dimensions && spec.pieces.length > 0) {
       const optimizer = new OptimizedGuillotineCuttingOptimizer(
         spec.material.dimensions.width,
-        spec.material.dimensions.height
+        spec.material.dimensions.height,
       )
-      
+
       const layout = optimizer.optimize(spec.pieces)
       layouts.push(layout)
     }

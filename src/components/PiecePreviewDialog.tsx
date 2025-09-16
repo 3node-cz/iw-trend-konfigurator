@@ -7,7 +7,7 @@ import {
   Button,
   Typography,
   Box,
-  IconButton
+  IconButton,
 } from '@mui/material'
 import { Close as CloseIcon } from '@mui/icons-material'
 import type { CuttingPiece, MaterialSearchResult } from '../types/shopify'
@@ -24,7 +24,7 @@ const PiecePreviewDialog: React.FC<PiecePreviewDialogProps> = ({
   open,
   piece,
   material,
-  onClose
+  onClose,
 }) => {
   if (!piece) return null
 

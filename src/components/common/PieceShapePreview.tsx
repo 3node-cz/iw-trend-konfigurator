@@ -2,7 +2,10 @@ import React from 'react'
 import { Box } from '@mui/material'
 import type { CuttingPiece } from '../../types/shopify'
 import type { PieceGeometry } from '../../types/geometry'
-import { SVGPathGenerator, createGeometryFromPiece } from '../../utils/svgPathGenerator'
+import {
+  SVGPathGenerator,
+  createGeometryFromPiece,
+} from '../../utils/svgPathGenerator'
 import { getEdgeColor, getEdgeStrokeWidth } from '../../utils/edgeColors'
 
 interface PieceShapePreviewProps {
@@ -28,47 +31,59 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
   backgroundOpacity = 0.8,
   showBackground = true,
   showEdges = true,
-  showRotationIndicator = true
+  showRotationIndicator = true,
 }) => {
   // Use custom geometry or create default from piece
   const geometry = customGeometry || createGeometryFromPiece(piece)
-  
+
   // Determine actual container dimensions
   const actualWidth = containerWidth || containerSize
   const actualHeight = containerHeight || containerSize
-  
+
   // Calculate scale to fit container with padding
   const padding = 10
   const maxDimension = Math.max(geometry.width, geometry.height)
-  const availableWidth = actualWidth - (padding * 2)
-  const availableHeight = actualHeight - (padding * 2)
+  const availableWidth = actualWidth - padding * 2
+  const availableHeight = actualHeight - padding * 2
   const scaleX = availableWidth / geometry.width
   const scaleY = availableHeight / geometry.height
-  const scale = Math.min(scaleX, scaleY, availableWidth / maxDimension, availableHeight / maxDimension)
-  
+  const scale = Math.min(
+    scaleX,
+    scaleY,
+    availableWidth / maxDimension,
+    availableHeight / maxDimension,
+  )
+
   // Calculate actual display dimensions
   const displayWidth = geometry.width * scale
   const displayHeight = geometry.height * scale
-  
+
   // Center the piece in the container
   const offsetX = (actualWidth - displayWidth) / 2
   const offsetY = (actualHeight - displayHeight) / 2
-  
+
   // Generate SVG path
   const pathGenerator = new SVGPathGenerator(geometry, scale)
   const piecePath = pathGenerator.generatePath()
-  
+
   // Generate unique IDs for SVG definitions
-  const patternId = `pattern-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  const patternId = `pattern-${Date.now()}-${Math.random()
+    .toString(36)
+    .substr(2, 9)}`
   const clipId = `clip-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-  
+
   // Extract individual edge thicknesses (numbers, not strings)
   // Priority: individual edge first, then edgeAllAround as fallback, then null
   const edgeThicknesses = {
-    top: piece.edgeTop !== null ? piece.edgeTop : (piece.edgeAllAround || null),
-    right: piece.edgeRight !== null ? piece.edgeRight : (piece.edgeAllAround || null),
-    bottom: piece.edgeBottom !== null ? piece.edgeBottom : (piece.edgeAllAround || null),
-    left: piece.edgeLeft !== null ? piece.edgeLeft : (piece.edgeAllAround || null),
+    top: piece.edgeTop !== null ? piece.edgeTop : piece.edgeAllAround || null,
+    right:
+      piece.edgeRight !== null ? piece.edgeRight : piece.edgeAllAround || null,
+    bottom:
+      piece.edgeBottom !== null
+        ? piece.edgeBottom
+        : piece.edgeAllAround || null,
+    left:
+      piece.edgeLeft !== null ? piece.edgeLeft : piece.edgeAllAround || null,
   }
 
   return (
@@ -77,7 +92,7 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
         width: actualWidth,
         height: actualHeight,
         position: 'relative',
-        mx: 'auto'
+        mx: 'auto',
       }}
     >
       <svg
@@ -87,7 +102,7 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
         style={{
           position: 'absolute',
           top: 0,
-          left: 0
+          left: 0,
         }}
       >
         {/* SVG Definitions for patterns and clipping */}
@@ -110,10 +125,12 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
                   y={(displayHeight - displayWidth) / 2}
                   opacity={backgroundOpacity}
                   preserveAspectRatio="xMidYMid slice"
-                  transform={`rotate(90 ${displayWidth/2} ${displayHeight/2})`}
+                  transform={`rotate(90 ${displayWidth / 2} ${
+                    displayHeight / 2
+                  })`}
                 />
               </pattern>
-              
+
               {/* Clipping path to match the piece shape */}
               <clipPath id={clipId}>
                 <path d={piecePath} />
@@ -126,15 +143,21 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
           {/* Main piece shape */}
           <path
             d={piecePath}
-            fill={showBackground && backgroundImage ? `url(#${patternId})` : "#ffffff"}
+            fill={
+              showBackground && backgroundImage
+                ? `url(#${patternId})`
+                : '#ffffff'
+            }
             stroke="#1976d2"
             strokeWidth="2"
-            clipPath={showBackground && backgroundImage ? `url(#${clipId})` : undefined}
+            clipPath={
+              showBackground && backgroundImage ? `url(#${clipId})` : undefined
+            }
             style={{
-              filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.1))'
+              filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.1))',
             }}
           />
-          
+
           {/* Edge indicators */}
           {showEdges && (
             <>
@@ -150,7 +173,7 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
                   strokeLinecap="round"
                 />
               )}
-              
+
               {/* Right edge */}
               {edgeThicknesses.right && (
                 <line
@@ -163,7 +186,7 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
                   strokeLinecap="round"
                 />
               )}
-              
+
               {/* Bottom edge */}
               {edgeThicknesses.bottom && (
                 <line
@@ -176,7 +199,7 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
                   strokeLinecap="round"
                 />
               )}
-              
+
               {/* Left edge */}
               {edgeThicknesses.left && (
                 <line
@@ -210,7 +233,7 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
             justifyContent: 'center',
             fontSize: '12px',
             color: 'white',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
           }}
           title="Rotácia povolená"
         >

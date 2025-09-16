@@ -18,9 +18,11 @@ export interface MaterialEdgeConsumption {
 /**
  * Calculate edge material consumption for a cutting piece
  */
-export const calculatePieceEdgeConsumption = (piece: CuttingPiece): EdgeConsumption[] => {
+export const calculatePieceEdgeConsumption = (
+  piece: CuttingPiece,
+): EdgeConsumption[] => {
   const consumptionMap = new Map<number, number>()
-  
+
   // Calculate perimeter for each edge thickness
   const addEdgeLength = (thickness: number | null, length: number) => {
     if (thickness && thickness > 0) {
@@ -28,21 +30,23 @@ export const calculatePieceEdgeConsumption = (piece: CuttingPiece): EdgeConsumpt
       consumptionMap.set(thickness, current + length)
     }
   }
-  
+
   // Always use individual edges for calculation since edgeAllAround is now reactive
   // If edgeAllAround was set, the individual edges will have been updated accordingly
   addEdgeLength(piece.edgeTop, piece.length * piece.quantity)
-  addEdgeLength(piece.edgeBottom, piece.length * piece.quantity)  
+  addEdgeLength(piece.edgeBottom, piece.length * piece.quantity)
   addEdgeLength(piece.edgeLeft, piece.width * piece.quantity)
   addEdgeLength(piece.edgeRight, piece.width * piece.quantity)
-  
+
   // Convert to EdgeConsumption array
-  return Array.from(consumptionMap.entries()).map(([thickness, totalLength]) => ({
-    thickness,
-    totalLength,
-    totalLengthMeters: totalLength / 1000,
-    pieceCount: 1 // Will be aggregated later
-  }))
+  return Array.from(consumptionMap.entries()).map(
+    ([thickness, totalLength]) => ({
+      thickness,
+      totalLength,
+      totalLengthMeters: totalLength / 1000,
+      pieceCount: 1, // Will be aggregated later
+    }),
+  )
 }
 
 /**
@@ -51,43 +55,52 @@ export const calculatePieceEdgeConsumption = (piece: CuttingPiece): EdgeConsumpt
 export const calculateMaterialEdgeConsumption = (
   pieces: CuttingPiece[],
   materialName: string,
-  edgeMaterialName: string
+  edgeMaterialName: string,
 ): MaterialEdgeConsumption => {
-  const consumptionMap = new Map<number, { length: number, pieceCount: number }>()
-  
+  const consumptionMap = new Map<
+    number,
+    { length: number; pieceCount: number }
+  >()
+
   // Process all pieces
-  pieces.forEach(piece => {
+  pieces.forEach((piece) => {
     const pieceConsumption = calculatePieceEdgeConsumption(piece)
-    
-    pieceConsumption.forEach(consumption => {
-      const existing = consumptionMap.get(consumption.thickness) || { length: 0, pieceCount: 0 }
+
+    pieceConsumption.forEach((consumption) => {
+      const existing = consumptionMap.get(consumption.thickness) || {
+        length: 0,
+        pieceCount: 0,
+      }
       consumptionMap.set(consumption.thickness, {
         length: existing.length + consumption.totalLength,
-        pieceCount: existing.pieceCount + piece.quantity
+        pieceCount: existing.pieceCount + piece.quantity,
       })
     })
   })
-  
+
   // Convert to consumption array
-  const consumptionByThickness: EdgeConsumption[] = Array.from(consumptionMap.entries()).map(
-    ([thickness, data]) => ({
-      thickness,
-      totalLength: data.length,
-      totalLengthMeters: data.length / 1000,
-      pieceCount: data.pieceCount
-    })
-  )
-  
+  const consumptionByThickness: EdgeConsumption[] = Array.from(
+    consumptionMap.entries(),
+  ).map(([thickness, data]) => ({
+    thickness,
+    totalLength: data.length,
+    totalLengthMeters: data.length / 1000,
+    pieceCount: data.pieceCount,
+  }))
+
   // Calculate totals
-  const totalEdgeLength = consumptionByThickness.reduce((sum, item) => sum + item.totalLength, 0)
+  const totalEdgeLength = consumptionByThickness.reduce(
+    (sum, item) => sum + item.totalLength,
+    0,
+  )
   const totalEdgeLengthMeters = totalEdgeLength / 1000
-  
+
   return {
     materialName,
     edgeMaterialName,
     consumptionByThickness,
     totalEdgeLength,
-    totalEdgeLengthMeters
+    totalEdgeLengthMeters,
   }
 }
 
@@ -102,10 +115,10 @@ export interface CuttingCostConfig {
 }
 
 export const DEFAULT_CUTTING_COSTS: CuttingCostConfig = {
-  baseCuttingCost: 0.50, // 50 cents per piece
+  baseCuttingCost: 0.5, // 50 cents per piece
   complexityCost: 0.25, // 25 cents for pieces with edges
-  edgingCost: 1.20, // 1.20 EUR per meter of edge
-  rushOrderMultiplier: 1.5 // 50% markup for rush orders
+  edgingCost: 1.2, // 1.20 EUR per meter of edge
+  rushOrderMultiplier: 1.5, // 50% markup for rush orders
 }
 
 export interface CuttingCostBreakdown {
@@ -125,27 +138,33 @@ export const calculateCuttingCosts = (
   pieces: CuttingPiece[],
   materialName: string,
   edgeConsumption: MaterialEdgeConsumption | null,
-  config: CuttingCostConfig = DEFAULT_CUTTING_COSTS
+  config: CuttingCostConfig = DEFAULT_CUTTING_COSTS,
 ): CuttingCostBreakdown => {
   const totalPieces = pieces.reduce((sum, piece) => sum + piece.quantity, 0)
-  
+
   // Base cutting cost (per piece)
   const baseCuttingCost = totalPieces * config.baseCuttingCost
-  
+
   // Complexity cost for pieces with edges
-  const piecesWithEdges = pieces.filter(piece => 
-    piece.edgeAllAround || piece.edgeTop || piece.edgeBottom || 
-    piece.edgeLeft || piece.edgeRight
-  ).reduce((sum, piece) => sum + piece.quantity, 0)
-  
+  const piecesWithEdges = pieces
+    .filter(
+      (piece) =>
+        piece.edgeAllAround ||
+        piece.edgeTop ||
+        piece.edgeBottom ||
+        piece.edgeLeft ||
+        piece.edgeRight,
+    )
+    .reduce((sum, piece) => sum + piece.quantity, 0)
+
   const complexityCost = piecesWithEdges * config.complexityCost
-  
+
   // Edging cost
   const edgingLength = edgeConsumption?.totalEdgeLengthMeters || 0
   const edgingCost = edgingLength * config.edgingCost
-  
+
   const totalCost = baseCuttingCost + complexityCost + edgingCost
-  
+
   return {
     materialName,
     piecesCount: totalPieces,
@@ -153,6 +172,6 @@ export const calculateCuttingCosts = (
     complexityCost,
     edgingCost,
     edgingLength,
-    totalCost
+    totalCost,
   }
 }

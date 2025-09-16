@@ -6,11 +6,11 @@ import {
   DialogActions,
   Button,
   IconButton,
-  Box
+  Box,
 } from '@mui/material'
 import {
   Close as CloseIcon,
-  Download as DownloadIcon
+  Download as DownloadIcon,
 } from '@mui/icons-material'
 import CuttingLayoutDiagram from './CuttingLayoutDiagram'
 import type { CuttingLayout } from '../../utils/guillotineCutting'
@@ -28,11 +28,11 @@ const CuttingDiagramDialog: React.FC<CuttingDiagramDialogProps> = ({
   layout,
   title,
   onClose,
-  globalPieceTypes
+  globalPieceTypes,
 }) => {
   const handleDownload = () => {
     if (!layout) return
-    
+
     // Create a canvas to export the SVG as image
     // This would need additional implementation for actual download
     console.log('Download cutting diagram:', title)
@@ -45,26 +45,29 @@ const CuttingDiagramDialog: React.FC<CuttingDiagramDialogProps> = ({
       maxWidth="lg"
       fullWidth
       PaperProps={{
-        sx: { 
+        sx: {
           minHeight: '80vh',
-          maxHeight: '90vh'
-        }
+          maxHeight: '90vh',
+        },
       }}
     >
-      <DialogTitle sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        pb: 1
-      }}>
-        <Box sx={{ fontWeight: 600, color: 'primary.main' }}>
-          {title}
-        </Box>
-        <IconButton onClick={onClose} size="small">
+      <DialogTitle
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          pb: 1,
+        }}
+      >
+        <Box sx={{ fontWeight: 600, color: 'primary.main' }}>{title}</Box>
+        <IconButton
+          onClick={onClose}
+          size="small"
+        >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      
+
       <DialogContent sx={{ p: 0 }}>
         {layout && (
           <CuttingLayoutDiagram
@@ -85,7 +88,10 @@ const CuttingDiagramDialog: React.FC<CuttingDiagramDialogProps> = ({
         >
           Stiahnuť diagram
         </Button>
-        <Button onClick={onClose} variant="contained">
+        <Button
+          onClick={onClose}
+          variant="contained"
+        >
           Zavrieť
         </Button>
       </DialogActions>

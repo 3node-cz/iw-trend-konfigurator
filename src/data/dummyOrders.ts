@@ -20,7 +20,7 @@ export const dummySavedOrders: SavedOrder[] = [
       processingType: 'Formátovať',
       notes: 'Priority zákazka - potrebné do konca januára',
       discountPercentage: 5,
-      company: 'IW TREND, s.r.o'
+      company: 'IW TREND, s.r.o',
     } as OrderFormData,
     specifications: [
       {
@@ -42,7 +42,7 @@ export const dummySavedOrders: SavedOrder[] = [
             edgeBottom: 2,
             edgeLeft: 2,
             edgeRight: 2,
-            notes: ''
+            notes: '',
           },
           {
             id: 'piece_2',
@@ -58,10 +58,10 @@ export const dummySavedOrders: SavedOrder[] = [
             edgeBottom: null,
             edgeLeft: 2,
             edgeRight: 2,
-            notes: 'Pravá a ľavá strana'
-          }
-        ]
-      }
+            notes: 'Pravá a ľavá strana',
+          },
+        ],
+      },
     ],
     summary: {
       totalMaterials: 1,
@@ -69,8 +69,8 @@ export const dummySavedOrders: SavedOrder[] = [
       totalBoards: 2,
       estimatedCost: 1285.68,
       currency: 'EUR',
-      materialNames: ['EGG 18 LDTD H1180 ST37 Dub Halifax prírodný']
-    }
+      materialNames: ['EGG 18 LDTD H1180 ST37 Dub Halifax prírodný'],
+    },
   },
 
   {
@@ -90,7 +90,7 @@ export const dummySavedOrders: SavedOrder[] = [
       processingType: 'Uskladniť',
       notes: '',
       discountPercentage: 0,
-      company: 'IW TREND, s.r.o'
+      company: 'IW TREND, s.r.o',
     } as OrderFormData,
     specifications: [
       {
@@ -112,19 +112,19 @@ export const dummySavedOrders: SavedOrder[] = [
             edgeBottom: 2,
             edgeLeft: null,
             edgeRight: null,
-            notes: ''
-          }
-        ]
-      }
+            notes: '',
+          },
+        ],
+      },
     ],
     summary: {
       totalMaterials: 1,
       totalPieces: 2,
       totalBoards: 1,
-      estimatedCost: 230.40,
+      estimatedCost: 230.4,
       currency: 'EUR',
-      materialNames: ['EGG 18 LDTD H3311 TM28 Dub Cuneo bielený']
-    }
+      materialNames: ['EGG 18 LDTD H3311 TM28 Dub Cuneo bielený'],
+    },
   },
 
   {
@@ -144,7 +144,7 @@ export const dummySavedOrders: SavedOrder[] = [
       processingType: 'Formátovať',
       notes: 'Rôzne materiály - pozor na správne priradenie',
       discountPercentage: 10,
-      company: 'IW TREND, s.r.o'
+      company: 'IW TREND, s.r.o',
     } as OrderFormData,
     specifications: [
       // Material 1: Real Shopify material
@@ -167,7 +167,7 @@ export const dummySavedOrders: SavedOrder[] = [
             edgeBottom: 2,
             edgeLeft: 2,
             edgeRight: 2,
-            notes: 'Svetlý dub pre horné skrinky'
+            notes: 'Svetlý dub pre horné skrinky',
           },
           {
             id: 'piece_1_2',
@@ -183,9 +183,9 @@ export const dummySavedOrders: SavedOrder[] = [
             edgeBottom: null, // No bottom edge
             edgeLeft: 1,
             edgeRight: 1,
-            notes: 'Bočnice pre horné skrinky - bez spodnej hrany'
-          }
-        ]
+            notes: 'Bočnice pre horné skrinky - bez spodnej hrany',
+          },
+        ],
       },
       // Material 2: Real Shopify material
       {
@@ -207,7 +207,7 @@ export const dummySavedOrders: SavedOrder[] = [
             edgeBottom: 0.8,
             edgeLeft: 0.8,
             edgeRight: 0.8,
-            notes: 'Bielený dub pre spodné skrinky'
+            notes: 'Bielený dub pre spodné skrinky',
           },
           {
             id: 'piece_2_2',
@@ -223,9 +223,9 @@ export const dummySavedOrders: SavedOrder[] = [
             edgeBottom: null,
             edgeLeft: null,
             edgeRight: null,
-            notes: 'Čela zásuviek - len predná hrana'
-          }
-        ]
+            notes: 'Čela zásuviek - len predná hrana',
+          },
+        ],
       },
       // Material 3: Real Shopify material - some pieces without edges
       {
@@ -247,7 +247,7 @@ export const dummySavedOrders: SavedOrder[] = [
             edgeBottom: null,
             edgeLeft: null,
             edgeRight: null,
-            notes: 'Tmavý dub pre pracovnú plochu - bez hrán'
+            notes: 'Tmavý dub pre pracovnú plochu - bez hrán',
           },
           {
             id: 'piece_3_2',
@@ -263,7 +263,7 @@ export const dummySavedOrders: SavedOrder[] = [
             edgeBottom: null,
             edgeLeft: null,
             edgeRight: null,
-            notes: 'Nastaviteľné police - bez hrán'
+            notes: 'Nastaviteľné police - bez hrán',
           },
           {
             id: 'piece_3_3',
@@ -279,23 +279,23 @@ export const dummySavedOrders: SavedOrder[] = [
             edgeBottom: null,
             edgeLeft: null,
             edgeRight: null,
-            notes: 'Zadné steny skriniek - bez hrán'
-          }
-        ]
-      }
+            notes: 'Zadné steny skriniek - bez hrán',
+          },
+        ],
+      },
     ],
     summary: {
       totalMaterials: 3,
       totalPieces: 37, // Updated count: 6+8+4+3+2+8+6 = 37
       totalBoards: 8, // Estimated boards needed
-      estimatedCost: 2150.00, // Updated cost
+      estimatedCost: 2150.0, // Updated cost
       currency: 'EUR',
       materialNames: [
         'EGG 18 LDTD H1180 ST37 Dub Halifax prírodný', // Light oak with edges
-        'EGG 18 LDTD H3311 TM28 Dub Cuneo bielený',     // White oak with edges  
-        'EGG 18 LDTD H1303 ST12 Dub Belmont hnedý'      // Dark oak without edges
-      ]
-    }
+        'EGG 18 LDTD H3311 TM28 Dub Cuneo bielený', // White oak with edges
+        'EGG 18 LDTD H1303 ST12 Dub Belmont hnedý', // Dark oak without edges
+      ],
+    },
   },
 
   {
@@ -315,7 +315,7 @@ export const dummySavedOrders: SavedOrder[] = [
       processingType: 'Zlikvidovať',
       notes: 'Bez hranovania - len rezy',
       discountPercentage: 0,
-      company: 'IW TREND, s.r.o'
+      company: 'IW TREND, s.r.o',
     } as OrderFormData,
     specifications: [
       {
@@ -337,10 +337,10 @@ export const dummySavedOrders: SavedOrder[] = [
             edgeBottom: null,
             edgeLeft: null,
             edgeRight: null,
-            notes: 'Bez hranovania'
-          }
-        ]
-      }
+            notes: 'Bez hranovania',
+          },
+        ],
+      },
     ],
     summary: {
       totalMaterials: 1,
@@ -348,8 +348,8 @@ export const dummySavedOrders: SavedOrder[] = [
       totalBoards: 1,
       estimatedCost: 321.42,
       currency: 'EUR',
-      materialNames: ['EGG 18 LDTD H1180 ST37 Dub Halifax prírodný']
-    }
+      materialNames: ['EGG 18 LDTD H1180 ST37 Dub Halifax prírodný'],
+    },
   },
 
   {
@@ -369,7 +369,7 @@ export const dummySavedOrders: SavedOrder[] = [
       processingType: 'Formátovať',
       notes: 'Dokončené - pripravené na odber',
       discountPercentage: 15,
-      company: 'IW TREND, s.r.o'
+      company: 'IW TREND, s.r.o',
     } as OrderFormData,
     specifications: [
       {
@@ -391,7 +391,7 @@ export const dummySavedOrders: SavedOrder[] = [
             edgeBottom: 2,
             edgeLeft: 2,
             edgeRight: 2,
-            notes: 'Bezpečnostné hrany - všetky rovnaké'
+            notes: 'Bezpečnostné hrany - všetky rovnaké',
           },
           {
             id: 'piece_8',
@@ -407,20 +407,20 @@ export const dummySavedOrders: SavedOrder[] = [
             edgeBottom: null,
             edgeLeft: 2,
             edgeRight: 0.8,
-            notes: 'Rôzne hrúbky hrán podľa potreby'
-          }
-        ]
-      }
+            notes: 'Rôzne hrúbky hrán podľa potreby',
+          },
+        ],
+      },
     ],
     summary: {
       totalMaterials: 1,
       totalPieces: 6,
       totalBoards: 2,
-      estimatedCost: 691.20,
+      estimatedCost: 691.2,
       currency: 'EUR',
-      materialNames: ['EGG 18 LDTD H3311 TM28 Dub Cuneo bielený']
-    }
-  }
+      materialNames: ['EGG 18 LDTD H3311 TM28 Dub Cuneo bielený'],
+    },
+  },
 ]
 
 export default dummySavedOrders

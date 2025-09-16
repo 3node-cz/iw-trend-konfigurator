@@ -14,11 +14,12 @@ const EdgeThicknessSelect: React.FC<EdgeThicknessSelectProps> = ({
   value,
   onChange,
   edgeMaterial,
-  minWidth = 100
+  minWidth = 100,
 }) => {
   // Use available thicknesses from the selected edge material
   // If no edge material is selected, show standard thickness options as fallback
-  const thicknessOptions = edgeMaterial?.availableThicknesses || DIMENSIONS.EDGE_THICKNESSES
+  const thicknessOptions =
+    edgeMaterial?.availableThicknesses || DIMENSIONS.EDGE_THICKNESSES
 
   return (
     <FormControl sx={{ minWidth }}>
@@ -35,7 +36,10 @@ const EdgeThicknessSelect: React.FC<EdgeThicknessSelectProps> = ({
           <em>—</em>
         </MenuItem>
         {thicknessOptions.map((thickness) => (
-          <MenuItem key={thickness} value={thickness.toString()}>
+          <MenuItem
+            key={thickness}
+            value={thickness.toString()}
+          >
             {thickness}
           </MenuItem>
         ))}

@@ -9,11 +9,11 @@ interface CuttingDiagramThumbnailProps {
   globalPieceTypes?: string[] // Optional: piece types from all layouts for consistent coloring
 }
 
-const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({ 
-  layout, 
+const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
+  layout,
   title,
   onClick,
-  globalPieceTypes
+  globalPieceTypes,
 }) => {
   // Small thumbnail size
   const thumbnailWidth = 200
@@ -29,44 +29,63 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
 
   // Color palette for different piece types
   const rowColors = [
-    '#E3F2FD', '#F3E5F5', '#E8F5E8', '#FFF3E0', '#FCE4EC', 
-    '#E0F2F1', '#F1F8E9', '#FFF8E1', '#E8EAF6', '#FFEBEE'
+    '#E3F2FD',
+    '#F3E5F5',
+    '#E8F5E8',
+    '#FFF3E0',
+    '#FCE4EC',
+    '#E0F2F1',
+    '#F1F8E9',
+    '#FFF8E1',
+    '#E8EAF6',
+    '#FFEBEE',
   ]
 
   // Use global piece types if provided, otherwise calculate from current layout
-  const uniquePieceTypes = globalPieceTypes || [...new Set(layout.placedPieces.map(p => p.originalPiece.partName || p.originalPiece.id))]
-  
-  const getPieceColor = (piece: { originalPiece: { partName?: string; id: string } }) => {
+  const uniquePieceTypes = globalPieceTypes || [
+    ...new Set(
+      layout.placedPieces.map(
+        (p) => p.originalPiece.partName || p.originalPiece.id,
+      ),
+    ),
+  ]
+
+  const getPieceColor = (piece: {
+    originalPiece: { partName?: string; id: string }
+  }) => {
     const pieceType = piece.originalPiece.partName || piece.originalPiece.id
     const typeIndex = uniquePieceTypes.indexOf(pieceType)
     return rowColors[typeIndex % rowColors.length]
   }
 
   return (
-    <Paper 
-      sx={{ 
-        p: 2, 
+    <Paper
+      sx={{
+        p: 2,
         cursor: 'pointer',
         transition: 'all 0.2s',
         '&:hover': {
           transform: 'scale(1.05)',
-          boxShadow: 4
-        }
+          boxShadow: 4,
+        },
       }}
       onClick={onClick}
     >
-      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, textAlign: 'center' }}>
+      <Typography
+        variant="subtitle2"
+        sx={{ mb: 1, fontWeight: 600, textAlign: 'center' }}
+      >
         {title}
       </Typography>
-      
+
       <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-        <svg 
-          width={svgWidth} 
+        <svg
+          width={svgWidth}
           height={svgHeight}
           viewBox={`0 0 ${layout.boardWidth} ${layout.boardHeight}`}
           style={{
             border: '1px solid #333',
-            backgroundColor: '#fafafa'
+            backgroundColor: '#fafafa',
           }}
         >
           {/* Board outline */}
@@ -82,11 +101,32 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
 
           {/* Waste areas with hatching pattern */}
           <defs>
-            <pattern id={`wastePattern-${layout.boardWidth}-${layout.boardHeight}`} patternUnits="userSpaceOnUse" width="20" height="20">
-              <rect width="20" height="20" fill="#f0f0f0"/>
-              <path d="M0,20 L20,0" stroke="#ccc" strokeWidth="2"/>
-              <path d="M-4,4 L4,-4" stroke="#ccc" strokeWidth="2"/>
-              <path d="M16,24 L24,16" stroke="#ccc" strokeWidth="2"/>
+            <pattern
+              id={`wastePattern-${layout.boardWidth}-${layout.boardHeight}`}
+              patternUnits="userSpaceOnUse"
+              width="20"
+              height="20"
+            >
+              <rect
+                width="20"
+                height="20"
+                fill="#f0f0f0"
+              />
+              <path
+                d="M0,20 L20,0"
+                stroke="#ccc"
+                strokeWidth="2"
+              />
+              <path
+                d="M-4,4 L4,-4"
+                stroke="#ccc"
+                strokeWidth="2"
+              />
+              <path
+                d="M16,24 L24,16"
+                stroke="#ccc"
+                strokeWidth="2"
+              />
             </pattern>
           </defs>
 
@@ -136,11 +176,25 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
       </Box>
 
       {/* Thumbnail stats */}
-      <Box sx={{ mt: 1, display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-        <Typography variant="caption" color="success.main" sx={{ fontWeight: 600 }}>
+      <Box
+        sx={{
+          mt: 1,
+          display: 'flex',
+          justifyContent: 'space-between',
+          fontSize: '0.75rem',
+        }}
+      >
+        <Typography
+          variant="caption"
+          color="success.main"
+          sx={{ fontWeight: 600 }}
+        >
           {layout.efficiency.toFixed(1)}%
         </Typography>
-        <Typography variant="caption" color="text.secondary">
+        <Typography
+          variant="caption"
+          color="text.secondary"
+        >
           {layout.placedPieces.length} kusov
         </Typography>
       </Box>
