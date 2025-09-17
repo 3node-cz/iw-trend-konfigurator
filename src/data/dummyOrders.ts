@@ -25,7 +25,7 @@ export const dummySavedOrders: SavedOrder[] = [
     specifications: [
       {
         materialId: 'gid://shopify/Product/15514382139774', // H1180 Dub Halifax
-        edgeMaterialId: 'gid://shopify/Product/15514434371966', // ABS hrana
+        edgeMaterialId: 'gid://shopify/Product/15514939490686', // ABS hrana
         glueType: 'PUR transparentná/bílá',
         pieces: [
           {
@@ -95,7 +95,7 @@ export const dummySavedOrders: SavedOrder[] = [
     specifications: [
       {
         materialId: 'gid://shopify/Product/15514382139774', // H1180 Dub Halifax (using same for simplicity)
-        edgeMaterialId: 'gid://shopify/Product/15514434371966', // ABS hrana
+        edgeMaterialId: 'gid://shopify/Product/15514939490686', // ABS hrana
         glueType: 'PUR transparentná/bílá',
         pieces: [
           {
@@ -150,7 +150,7 @@ export const dummySavedOrders: SavedOrder[] = [
       // Material 1: Real Shopify material
       {
         materialId: 'gid://shopify/Product/15514941194622',
-        edgeMaterialId: 'gid://shopify/Product/15514434371966', // ABS hrana
+        edgeMaterialId: 'gid://shopify/Product/15514939490686', // ABS hrana
         glueType: 'PUR transparentná/bílá',
         pieces: [
           {
@@ -190,7 +190,7 @@ export const dummySavedOrders: SavedOrder[] = [
       // Material 2: Real Shopify material
       {
         materialId: 'gid://shopify/Product/15514941129086',
-        edgeMaterialId: 'gid://shopify/Product/15514434372000', // Different edge material
+        edgeMaterialId: 'gid://shopify/Product/15514939359614', // Different edge material
         glueType: 'PUR transparentná/bílá',
         pieces: [
           {
@@ -374,7 +374,7 @@ export const dummySavedOrders: SavedOrder[] = [
     specifications: [
       {
         materialId: 'gid://shopify/Product/15514382139774', // H1180 Dub Halifax (using same for simplicity)
-        edgeMaterialId: 'gid://shopify/Product/15514434371966', // ABS hrana
+        edgeMaterialId: 'gid://shopify/Product/15514939490686', // ABS hrana
         glueType: 'PUR transparentná/bílá',
         pieces: [
           {

@@ -45,7 +45,7 @@ const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
               variant="body1"
-              sx={{ fontWeight: 500, mb: 1, color: '#1976d2' }}
+              sx={{ fontWeight: 500, mb: 1, color: 'primary.main' }}
             >
               {material.name}
             </Typography>

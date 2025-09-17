@@ -8,6 +8,7 @@ interface EdgeThicknessSelectProps {
   onChange: (value: number | null) => void
   edgeMaterial: EdgeMaterial | null
   minWidth?: number
+  disabled?: boolean
 }
 
 const EdgeThicknessSelect: React.FC<EdgeThicknessSelectProps> = ({
@@ -15,11 +16,15 @@ const EdgeThicknessSelect: React.FC<EdgeThicknessSelectProps> = ({
   onChange,
   edgeMaterial,
   minWidth = 100,
+  disabled = false,
 }) => {
   // Use available thicknesses from the selected edge material
   // If no edge material is selected, show standard thickness options as fallback
   const thicknessOptions =
     edgeMaterial?.availableThicknesses || DIMENSIONS.EDGE_THICKNESSES
+
+  // Disable when no edge material selected or explicitly disabled
+  const isDisabled = disabled || !edgeMaterial
 
   return (
     <FormControl sx={{ minWidth }}>
@@ -31,6 +36,7 @@ const EdgeThicknessSelect: React.FC<EdgeThicknessSelectProps> = ({
         }}
         displayEmpty
         size="small"
+        disabled={isDisabled}
       >
         <MenuItem value="">
           <em>—</em>

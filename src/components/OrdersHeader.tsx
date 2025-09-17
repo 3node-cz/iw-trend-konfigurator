@@ -37,7 +37,7 @@ const OrdersHeader: React.FC<OrdersHeaderProps> = ({ onOrderCreated, customer })
           mb: 3
         }}
       >
-        <Typography variant="h4" component="h1" sx={{ color: '#1976d2', fontWeight: 500 }}>
+        <Typography variant="h4" component="h1" sx={{ color: 'primary.main', fontWeight: 500 }}>
           Zákazky
         </Typography>
         

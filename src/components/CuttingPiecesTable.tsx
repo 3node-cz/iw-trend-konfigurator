@@ -499,7 +499,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                   sx={{
                     py: 0.5,
                     px: 1,
-                    verticalAlign: 'top',
+                    verticalAlign: 'middle',
                   }}
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}

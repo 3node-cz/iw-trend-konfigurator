@@ -154,8 +154,8 @@ const OrdersFilters: React.FC = () => {
                 borderRadius: 1, 
                 border: '1px solid #e3f2fd' 
               }}>
-                <FilterIcon sx={{ color: '#1976d2', fontSize: 20 }} />
-                <Typography variant="body2" sx={{ color: '#1976d2', fontSize: '13px' }}>
+                <FilterIcon sx={{ color: 'primary.main', fontSize: 20 }} />
+                <Typography variant="body2" sx={{ color: 'primary.main', fontSize: '13px' }}>
                   Vyberte stav/typ zákazky a kliknite na tlačidlo Hľadať
                 </Typography>
               </Box>

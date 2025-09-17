@@ -170,7 +170,28 @@ export const useOrderSubmission = () => {
           }
         }
       }
-      
+
+      // Add cutting service product (flat 1 piece for any cutting order)
+      const cuttingServiceProductId = 'gid://shopify/Product/15514687799678'
+      const cuttingServiceVariantId = await getVariantIdFromProduct(cuttingServiceProductId)
+
+      allLines.push({
+        merchandiseId: cuttingServiceVariantId,
+        quantity: 1,
+        attributes: [
+          {
+            key: '_cutting_service',
+            value: JSON.stringify({
+              totalPieces: completeOrder.specifications.reduce((sum, spec) =>
+                sum + spec.pieces.reduce((pieceSum, piece) => pieceSum + piece.quantity, 0), 0
+              ),
+              totalBoards: completeOrder.cuttingLayouts?.length || 0,
+              orderName: completeOrder.order.orderName,
+            }),
+          },
+        ],
+      })
+
       const lines = allLines
 
       // 4. Add items to cart with order data as attributes

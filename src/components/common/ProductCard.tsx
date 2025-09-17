@@ -51,7 +51,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               variant="subtitle2" 
               sx={{ 
                 fontWeight: 600, 
-                color: '#1976d2',
+                color: 'primary.main',
                 fontSize: '0.875rem',
                 lineHeight: 1.2,
                 mb: 0.5,

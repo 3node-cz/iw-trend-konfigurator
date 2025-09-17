@@ -35,6 +35,12 @@ import {
 import OrderInvoiceTable from './OrderInvoiceTable'
 import { useCuttingLayouts, useOrderCalculations } from '../hooks'
 import { useOrderSubmission } from '../hooks/useOrderSubmission'
+import {
+  groupCuttingLayouts,
+  getGroupedLayoutTitle,
+  getGroupedLayoutShortTitle,
+  getGroupedLayoutDescription
+} from '../utils/layoutGrouping'
 
 interface OrderRecapitulationPageProps {
   order: OrderFormData
@@ -168,7 +174,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
         <Typography
           variant="h4"
           component="h1"
-          sx={{ color: '#1976d2', fontWeight: 500 }}
+          sx={{ color: 'primary.main', fontWeight: 500 }}
         >
           {order.orderName} - Rekapitulácia zákazky
         </Typography>
@@ -274,25 +280,16 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
         order={order}
       />
 
-      {/* Cutting Layout Diagrams - Thumbnail View */}
+      {/* Cutting Layout Diagrams - Grouped Thumbnail View */}
       {cuttingLayouts.length > 0 ? (
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Typography
-            variant="h6"
-            sx={{ mb: 2, fontWeight: 600 }}
-          >
-            Rozrezové plány ({cuttingLayouts.length})
-          </Typography>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ mb: 3 }}
-          >
-            Kliknite na diagram pre zobrazenie detailu
-          </Typography>
-
-          {/* Calculate global piece types for consistent coloring across all diagrams */}
+        <Paper sx={{ p: 3, mt: 3, mb: 3 }}>
           {(() => {
+            // Group identical cutting layouts
+            const groupedLayouts = groupCuttingLayouts(cuttingLayouts)
+            const totalDiagrams = cuttingLayouts.length
+            const uniqueDiagrams = groupedLayouts.length
+
+            // Calculate global piece types for consistent coloring across all diagrams
             const globalPieceTypes = [
               ...new Set(
                 specifications.flatMap((spec) =>
@@ -303,7 +300,36 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
 
             return (
               <>
-                {/* Thumbnail Grid */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 600 }}
+                  >
+                    Rozrezové plány
+                  </Typography>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600 }}>
+                      {uniqueDiagrams} unikátnych plánov
+                    </Typography>
+                    {totalDiagrams !== uniqueDiagrams && (
+                      <Typography variant="caption" color="text.secondary">
+                        z celkovo {totalDiagrams} dosiek
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 3 }}
+                >
+                  {totalDiagrams !== uniqueDiagrams
+                    ? 'Identické plány sú zoskupené s počítadlom. Kliknite na diagram pre detail.'
+                    : 'Kliknite na diagram pre zobrazenie detailu'
+                  }
+                </Typography>
+
+                {/* Grouped Thumbnail Grid */}
                 <Box
                   sx={{
                     display: 'flex',
@@ -312,24 +338,22 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
                     justifyContent: 'flex-start',
                   }}
                 >
-                  {cuttingLayouts.map((layoutData) => {
-                    const title = layoutData.isMultiBoard
-                      ? `${layoutData.materialIndex}.${layoutData.boardNumber}`
-                      : `${layoutData.materialIndex}`
-
-                    const fullTitle = layoutData.isMultiBoard
-                      ? `Plán č. ${layoutData.materialIndex}.${layoutData.boardNumber} - ${layoutData.materialName} (${layoutData.boardNumber}/${layoutData.totalBoards})`
-                      : `Plán č. ${layoutData.materialIndex} - ${layoutData.materialName}`
+                  {groupedLayouts.map((groupData) => {
+                    const shortTitle = getGroupedLayoutShortTitle(groupData)
+                    const fullTitle = getGroupedLayoutTitle(groupData)
+                    const description = getGroupedLayoutDescription(groupData)
 
                     return (
                       <CuttingDiagramThumbnail
-                        key={`layout-${layoutData.materialIndex}-${layoutData.boardNumber}`}
-                        layout={layoutData.layout}
-                        title={title}
+                        key={`group-${groupData.groupId}`}
+                        layout={groupData.layout}
+                        title={shortTitle}
                         globalPieceTypes={globalPieceTypes}
+                        count={groupData.count}
+                        description={description}
                         onClick={() =>
                           setSelectedDiagram({
-                            layout: layoutData.layout,
+                            layout: groupData.layout,
                             title: fullTitle,
                             globalPieceTypes,
                           })
@@ -342,112 +366,9 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
             )
           })()}
 
-          {/* Multi-board Statistics */}
-          {cuttingLayouts.some((l) => l.isMultiBoard) && (
-            <Box sx={{ mt: 3 }}>
-              <Typography
-                variant="subtitle1"
-                sx={{ fontWeight: 600, mb: 2 }}
-              >
-                Štatistiky materiálov vyžadujúcich viacero dosiek
-              </Typography>
-              {cuttingLayouts
-                .filter((l) => l.isMultiBoard && l.boardNumber === 1)
-                .map((layoutData) => (
-                  <Paper
-                    key={`stats-${layoutData.materialIndex}`}
-                    sx={{ p: 2, mb: 2, backgroundColor: '#f8f9fa' }}
-                  >
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ fontWeight: 600, mb: 1 }}
-                    >
-                      {layoutData.materialName}
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-                      <Box>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                        >
-                          Potrebné dosky
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {layoutData.totalBoards}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                        >
-                          Celkom kusov
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {layoutData.multiboardStats.totalPieces}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                        >
-                          Umiestnené kusy
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ fontWeight: 600, color: 'success.main' }}
-                        >
-                          {layoutData.multiboardStats.totalPlacedPieces}
-                        </Typography>
-                      </Box>
-                      {layoutData.multiboardStats.totalUnplacedPieces > 0 && (
-                        <Box>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                          >
-                            Neumiestnené kusy
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{ fontWeight: 600, color: 'warning.main' }}
-                          >
-                            {layoutData.multiboardStats.totalUnplacedPieces}
-                          </Typography>
-                        </Box>
-                      )}
-                      <Box>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                        >
-                          Celková efektivita
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ fontWeight: 600, color: 'primary.main' }}
-                        >
-                          {layoutData.multiboardStats.overallEfficiency.toFixed(
-                            1,
-                          )}
-                          %
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Paper>
-                ))}
-            </Box>
-          )}
         </Paper>
       ) : (
-        <Paper sx={{ p: 3, mb: 3, textAlign: 'center' }}>
+        <Paper sx={{ p: 3, mt: 3, mb: 3, textAlign: 'center' }}>
           <Typography
             variant="h6"
             sx={{ mb: 2, color: 'warning.main' }}
@@ -594,7 +515,13 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
               variant="h6"
               sx={{ fontWeight: 600, color: 'secondary.main' }}
             >
-              {orderCalculations.totals.totalCuttingCost.toFixed(2)} €
+              {(() => {
+                const rawCost = orderCalculations.totals.totalCuttingCost
+                const discountedCost = order.discountPercentage > 0
+                  ? rawCost * (1 - order.discountPercentage / 100)
+                  : rawCost
+                return discountedCost.toFixed(2)
+              })()} €
             </Typography>
           </Box>
         </Box>

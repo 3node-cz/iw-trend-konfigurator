@@ -129,65 +129,8 @@ async function fetchMaterialById(
     })
 
     if (results.length === 0) {
-      console.warn(
-        `Material not found for ID ${materialId}, falling back to mock data`,
-      )
-
-      // Return different mock materials based on ID for testing
-      const mockMaterials: Record<
-        string,
-        {
-          id: string
-          code: string
-          name: string
-          productCode: string
-          availability: 'available'
-          warehouse: string
-          price: { amount: number; currency: string; perUnit: string }
-          dimensions: { width: number; height: number; thickness: number }
-          image: string
-        }
-      > = {
-        'gid://shopify/Product/15514382139774': {
-          id: materialId,
-          code: 'H1180',
-          name: 'EGG 18,6 LDTD H1180 ST37 Dub Halifax prírodný',
-          productCode: '275048',
-          availability: 'available' as const,
-          warehouse: 'Bratislava',
-          price: { amount: 103.39, currency: 'EUR', perUnit: '/ ks' },
-          dimensions: { width: 2800, height: 2070, thickness: 18.6 },
-          image: '/images/materials/h1180.jpg',
-        },
-        'gid://shopify/Product/15514382140000': {
-          id: materialId,
-          code: 'H3311',
-          name: 'EGG 18,6 LDTD H3311 TM28 Dub Cuneo bielený',
-          productCode: '275051',
-          availability: 'available' as const,
-          warehouse: 'Bratislava',
-          price: { amount: 96.43, currency: 'EUR', perUnit: '/ ks' },
-          dimensions: { width: 2800, height: 2070, thickness: 18.6 },
-          image: '/images/materials/h3311.jpg',
-        },
-        'gid://shopify/Product/15514382141000': {
-          id: materialId,
-          code: 'H1303',
-          name: 'EGG 18,6 LDTD H1303 ST12 Dub Belmont hnedý',
-          productCode: '275055',
-          availability: 'available' as const,
-          warehouse: 'Bratislava',
-          price: { amount: 89.75, currency: 'EUR', perUnit: '/ ks' },
-          dimensions: { width: 2800, height: 2070, thickness: 18.6 },
-          image: '/images/materials/h1303.jpg',
-        },
-      }
-
-      // Return specific mock material or default to H1180
-      return (
-        mockMaterials[materialId] ||
-        mockMaterials['gid://shopify/Product/15514382139774']
-      )
+      console.warn(`Material not found for ID ${materialId}`)
+      return null
     }
 
     return results[0]
@@ -228,21 +171,8 @@ async function fetchEdgeMaterialById(
       }
     }
 
-    // Fallback to mock edge data
-    console.warn(
-      `Edge material not found for ID ${edgeMaterialId}, falling back to mock data`,
-    )
-    return {
-      id: edgeMaterialId,
-      name: 'ABS hrana dub Halifax prírodný',
-      productCode: 'ABS001',
-      availability: 'available' as const,
-      thickness: 2,
-      availableThicknesses: [0.4, 0.8, 1, 2],
-      warehouse: 'Bratislava',
-      price: { amount: 12.5, currency: 'EUR', perUnit: '/ m' },
-      image: '/images/edges/abs-halifax.jpg', // Mock edge image
-    }
+    console.warn(`Edge material not found for ID ${edgeMaterialId}`)
+    return null
   } catch (error) {
     console.error('Error fetching edge material by ID:', error)
     return null

@@ -78,7 +78,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
         >
           Späť
         </Button>
-        <Typography variant="h4" component="h1" sx={{ color: '#1976d2', fontWeight: 500 }}>
+        <Typography variant="h4" component="h1" sx={{ color: 'primary.main', fontWeight: 500 }}>
           {orderName} - Špecifikácia rezania
         </Typography>
       </Box>
@@ -90,7 +90,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
         return (
           <Box key={material.id} sx={{ mb: 4 }}>
             {/* Material Header */}
-            <Typography variant="h5" sx={{ color: '#1976d2', fontWeight: 500, mb: 2 }}>
+            <Typography variant="h5" sx={{ color: 'primary.main', fontWeight: 500, mb: 2 }}>
               Materiál {index + 1} z {materials.length}
             </Typography>
 

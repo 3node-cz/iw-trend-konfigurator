@@ -6,7 +6,9 @@ interface CuttingDiagramThumbnailProps {
   layout: CuttingLayout
   title: string
   onClick: () => void
-  globalPieceTypes?: string[] // Optional: piece types from all layouts for consistent coloring
+  globalPieceTypes?: string[]
+  count?: number
+  description?: string
 }
 
 const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
@@ -14,20 +16,18 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
   title,
   onClick,
   globalPieceTypes,
+  count,
+  description,
 }) => {
-  // Small thumbnail size
   const thumbnailWidth = 200
   const thumbnailHeight = 150
 
-  // Calculate scale to fit the thumbnail
   const scaleX = thumbnailWidth / layout.boardWidth
   const scaleY = thumbnailHeight / layout.boardHeight
   const scale = Math.min(scaleX, scaleY)
 
   const svgWidth = layout.boardWidth * scale
   const svgHeight = layout.boardHeight * scale
-
-  // Color palette for different piece types
   const rowColors = [
     '#E3F2FD',
     '#F3E5F5',
@@ -41,7 +41,6 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
     '#FFEBEE',
   ]
 
-  // Use global piece types if provided, otherwise calculate from current layout
   const uniquePieceTypes = globalPieceTypes || [
     ...new Set(
       layout.placedPieces.map(
@@ -64,6 +63,7 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
         p: 2,
         cursor: 'pointer',
         transition: 'all 0.2s',
+        position: 'relative',
         '&:hover': {
           transform: 'scale(1.05)',
           boxShadow: 4,
@@ -71,12 +71,61 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
       }}
       onClick={onClick}
     >
+      {count && count > 1 && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            bgcolor: 'primary.main',
+            color: 'white',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            minWidth: '24px',
+            height: '24px',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1,
+            boxShadow: 2,
+          }}
+        >
+          ×{count}
+        </Box>
+      )}
+
       <Typography
-        variant="subtitle2"
-        sx={{ mb: 1, fontWeight: 600, textAlign: 'center' }}
+        variant="h6"
+        sx={{
+          mb: 1,
+          fontWeight: 700,
+          textAlign: 'center',
+          fontSize: '1.25rem',
+          color: 'primary.main'
+        }}
       >
         {title}
       </Typography>
+
+      {description && (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{
+            display: 'block',
+            textAlign: 'center',
+            mb: 1,
+            fontSize: '0.65rem',
+            lineHeight: 1.1,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}
+        >
+          {description}
+        </Typography>
+      )}
 
       <Box sx={{ display: 'flex', justifyContent: 'center' }}>
         <svg
@@ -88,7 +137,6 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
             backgroundColor: '#fafafa',
           }}
         >
-          {/* Board outline */}
           <rect
             x={0}
             y={0}
@@ -98,8 +146,6 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
             stroke="#333"
             strokeWidth="4"
           />
-
-          {/* Waste areas with hatching pattern */}
           <defs>
             <pattern
               id={`wastePattern-${layout.boardWidth}-${layout.boardHeight}`}
@@ -144,7 +190,6 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
             />
           ))}
 
-          {/* Cut lines */}
           {layout.cutLines.map((cutLine) => (
             <line
               key={cutLine.id}
@@ -159,7 +204,6 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
             />
           ))}
 
-          {/* Pieces - simplified for thumbnail */}
           {layout.placedPieces.map((piece, index) => (
             <rect
               key={`${piece.id}_${index}`}
@@ -175,7 +219,6 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
         </svg>
       </Box>
 
-      {/* Thumbnail stats */}
       <Box
         sx={{
           mt: 1,

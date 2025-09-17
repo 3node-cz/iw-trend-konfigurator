@@ -296,7 +296,7 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography
                   variant="body2"
-                  sx={{ fontWeight: 600, mb: 0.5, color: '#1976d2' }}
+                  sx={{ fontWeight: 600, mb: 0.5, color: 'primary.main' }}
                 >
                   {selectedEdge.name}
                 </Typography>

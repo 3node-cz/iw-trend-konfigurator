@@ -154,7 +154,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
       }}
     >
         <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Typography variant="h6" component="div" sx={{ color: '#1976d2', fontWeight: 600 }}>
+          <Typography variant="h6" component="div" sx={{ color: 'primary.main', fontWeight: 600 }}>
             Zákazka formátovania
           </Typography>
           <IconButton

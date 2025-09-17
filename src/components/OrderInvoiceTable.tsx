@@ -97,24 +97,13 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
     if (spec.edgeMaterial) {
       const totalEdgeLength = spec.pieces.reduce((sum, piece) => {
         let pieceEdgeLength = 0
-        if (piece.edgeAllAround) {
-          pieceEdgeLength =
-            ((piece.length + piece.width) * 2 * piece.quantity) / 1000 // Convert to meters
-        } else {
-          const edges = [
-            piece.edgeTop,
-            piece.edgeBottom,
-            piece.edgeLeft,
-            piece.edgeRight,
-          ]
-          edges.forEach((edge) => {
-            if (edge) {
-              // Simplified edge length calculation
-              pieceEdgeLength +=
-                (((piece.length + piece.width) / 2) * piece.quantity) / 1000
-            }
-          })
-        }
+
+        // Use same calculation as edgeCalculations.ts
+        if (piece.edgeTop) pieceEdgeLength += (piece.length * piece.quantity) / 1000
+        if (piece.edgeBottom) pieceEdgeLength += (piece.length * piece.quantity) / 1000
+        if (piece.edgeLeft) pieceEdgeLength += (piece.width * piece.quantity) / 1000
+        if (piece.edgeRight) pieceEdgeLength += (piece.width * piece.quantity) / 1000
+
         return sum + pieceEdgeLength
       }, 0)
 

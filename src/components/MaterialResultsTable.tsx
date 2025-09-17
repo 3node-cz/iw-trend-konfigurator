@@ -10,21 +10,16 @@ import {
   Typography,
   Box,
   IconButton,
-  Avatar,
-  Grid,
-  ToggleButton,
-  ToggleButtonGroup
+  Avatar
 } from '@mui/material'
 import {
   Add as AddIcon,
   Remove as RemoveIcon,
-  Visibility as VisibilityIcon,
-  ViewList as ViewListIcon,
-  ViewModule as ViewModuleIcon
+  Visibility as VisibilityIcon
 } from '@mui/icons-material'
 import type { MaterialSearchResult } from '../types/shopify'
 import MaterialAllResultsModal from './MaterialAllResultsModal'
-import { AvailabilityChip, ProductCard } from './common'
+import { AvailabilityChip } from './common'
 
 interface MaterialResultsTableProps {
   results: MaterialSearchResult[]
@@ -44,47 +39,14 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
   selectedMaterialIds = []
 }) => {
   const [showAllModal, setShowAllModal] = useState(false)
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
-
-
 
   return (
     <>
-      {/* View Mode Toggle */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+      <Box sx={{ mb: 2 }}>
         <Typography variant="body2" color="text.secondary">
           {results.length} materiálov
         </Typography>
-        <ToggleButtonGroup
-          value={viewMode}
-          exclusive
-          onChange={(_, newMode) => newMode && setViewMode(newMode)}
-          size="small"
-        >
-          <ToggleButton value="cards">
-            <ViewModuleIcon fontSize="small" />
-          </ToggleButton>
-          <ToggleButton value="table">
-            <ViewListIcon fontSize="small" />
-          </ToggleButton>
-        </ToggleButtonGroup>
       </Box>
-
-      {viewMode === 'cards' ? (
-        <Grid container spacing={2}>
-          {results.map((material) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={material.id}>
-              <ProductCard
-                material={material}
-                isSelected={isSelectedMaterials}
-                selectedMaterialIds={selectedMaterialIds}
-                onAddMaterial={onAddMaterial}
-                onRemoveMaterial={onRemoveMaterial}
-              />
-            </Grid>
-          ))}
-        </Grid>
-      ) : (
         <TableContainer>
           <Table size="small">
             <TableHead>
@@ -234,9 +196,6 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
             </TableBody>
           </Table>
         </TableContainer>
-      )}
-
-      {/* View All Button */}
       {showViewAllButton && (
         <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', borderTop: '1px solid #e0e0e0' }}>
           <Button
