@@ -9,12 +9,14 @@ import {
 } from '@mui/icons-material'
 import CreateOrderModal from './CreateOrderModal'
 import type { OrderFormData } from '../types/shopify'
+import type { CustomerOrderData } from '../services/customerApi'
 
 interface OrdersHeaderProps {
   onOrderCreated?: (orderData: OrderFormData) => void
+  customer?: CustomerOrderData | null
 }
 
-const OrdersHeader: React.FC<OrdersHeaderProps> = ({ onOrderCreated }) => {
+const OrdersHeader: React.FC<OrdersHeaderProps> = ({ onOrderCreated, customer }) => {
   const [modalOpen, setModalOpen] = useState(false)
 
   const handleCreateOrder = () => {
@@ -59,6 +61,7 @@ const OrdersHeader: React.FC<OrdersHeaderProps> = ({ onOrderCreated }) => {
         open={modalOpen}
         onClose={handleCloseModal}
         onOrderCreated={onOrderCreated}
+        customer={customer}
       />
     </>
   )

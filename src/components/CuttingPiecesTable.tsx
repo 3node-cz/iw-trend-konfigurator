@@ -20,7 +20,6 @@ import {
 } from '@mui/material'
 import {
   Delete as DeleteIcon,
-  Visibility as VisibilityIcon,
 } from '@mui/icons-material'
 import type { CuttingPiece, EdgeMaterial } from '../types/shopify'
 import {
@@ -30,6 +29,7 @@ import {
   HeaderWithHint,
   EdgeOrientationHint,
 } from './common'
+import PieceShapePreview from './common/PieceShapePreview'
 
 interface CuttingPiecesTableProps {
   pieces: CuttingPiece[]
@@ -131,6 +131,46 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
           </Typography>
         ),
         size: 40,
+      }),
+
+      // Preview
+      columnHelper.display({
+        id: 'preview',
+        header: 'Náhľad',
+        cell: ({ row }) => {
+          const piece = row.original
+          // Only show preview if piece has valid dimensions
+          if (!piece.length || !piece.width) {
+            return (
+              <Box sx={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography variant="caption" color="text.disabled">-</Typography>
+              </Box>
+            )
+          }
+          return (
+            <Box
+              sx={{
+                cursor: onPreviewPiece ? 'pointer' : 'default',
+                '&:hover': onPreviewPiece ? {
+                  opacity: 0.8,
+                  transform: 'scale(1.05)',
+                } : {},
+                transition: 'all 0.2s ease',
+              }}
+              onClick={() => onPreviewPiece && handlePreviewPiece(piece)}
+              title={onPreviewPiece ? 'Kliknite pre detail náhľadu' : ''}
+            >
+              <PieceShapePreview
+                piece={piece}
+                containerSize={40}
+                showBackground={false}
+                showRotationIndicator={false}
+                showEdges={true}
+              />
+            </Box>
+          )
+        },
+        size: 50,
       }),
 
       // Part Name
@@ -371,28 +411,16 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         id: 'actions',
         header: 'Akcie',
         cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            {onPreviewPiece && (
-              <IconButton
-                size="small"
-                color="primary"
-                onClick={() => handlePreviewPiece(row.original)}
-                title="Náhľad dielca"
-              >
-                <VisibilityIcon />
-              </IconButton>
-            )}
-            <IconButton
-              size="small"
-              color="error"
-              onClick={() => handleRemovePiece(row.original.id)}
-              title="Odstrániť dielec"
-            >
-              <DeleteIcon />
-            </IconButton>
-          </Box>
+          <IconButton
+            size="small"
+            color="error"
+            onClick={() => handleRemovePiece(row.original.id)}
+            title="Odstrániť dielec"
+          >
+            <DeleteIcon />
+          </IconButton>
         ),
-        size: onPreviewPiece ? 110 : 70,
+        size: 60,
       }),
     ],
     [

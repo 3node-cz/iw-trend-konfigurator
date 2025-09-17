@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { CustomerOrderData } from '../services/customerApi'
 
 const REQUIRED_FIELD_MESSAGE = 'Toto pole je povinné'
 const MIN_LENGTH_MESSAGE = 'Minimálne 2 znaky'
@@ -57,4 +58,24 @@ export const getFieldErrors = (error: z.ZodError): Record<string, string> => {
   })
   
   return fieldErrors
+}
+
+// Helper function to create order data with customer defaults
+export const createOrderWithCustomerDefaults = (customer: CustomerOrderData | null): Partial<OrderFormData> => {
+  if (!customer) {
+    return {
+      company: 'IW TREND, s.r.o',
+      discountPercentage: 0
+    }
+  }
+
+  return {
+    company: customer.defaultCompany || 'IW TREND, s.r.o',
+    transferLocation: customer.defaultTransferLocation,
+    costCenter: customer.defaultCostCenter,
+    cuttingCenter: customer.defaultCuttingCenter,
+    deliveryMethod: customer.defaultDeliveryMethod,
+    processingType: customer.defaultProcessingType,
+    discountPercentage: customer.discountPercentage || 0
+  }
 }

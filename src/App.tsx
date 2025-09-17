@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Container } from '@mui/material'
+import { Container, Box, Typography, CircularProgress } from '@mui/material'
 import OrdersPage from './components/OrdersPage'
 import MaterialSelectionPage from './components/MaterialSelectionPage'
 import CuttingSpecificationPage from './components/CuttingSpecificationPage'
@@ -15,6 +15,7 @@ import type {
   CompleteOrder,
 } from './types/shopify'
 import type { SavedOrder } from './types/savedOrder'
+import { useCustomer } from './hooks/useCustomer'
 
 type AppView =
   | 'orders'
@@ -27,6 +28,7 @@ type AppView =
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('orders')
   const [currentOrder, setCurrentOrder] = useState<OrderFormData | null>(null)
+  const { customer, isLoading: customerLoading, isLoggedIn, testCustomer } = useCustomer()
   const [selectedMaterials, setSelectedMaterials] = useState<
     SelectedMaterial[]
   >([])
@@ -141,15 +143,43 @@ function App() {
     window.scrollTo(0, 0)
   }
 
+  // Show loading spinner while customer data is being fetched
+  if (customerLoading) {
+    return (
+      <Container maxWidth="sm" sx={{ mt: 8, textAlign: 'center' }}>
+        <CircularProgress size={40} />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Načítavam údaje...
+        </Typography>
+      </Container>
+    )
+  }
+
   return (
     <Container
       maxWidth={false}
       disableGutters
     >
+      {/* Customer Info Bar */}
+      <Box sx={{ p: 2, bgcolor: '#f5f5f5', mb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {isLoggedIn && customer ? (
+          <Typography variant="caption">
+            👤 Prihlásený: {customer.firstName} {customer.lastName} ({customer.email})
+            {customer.discountPercentage > 0 && ` • Zľava: ${customer.discountPercentage}%`}
+          </Typography>
+        ) : (
+          <Typography variant="caption">🔓 Nie je prihlásený zákazník</Typography>
+        )}
+        <button onClick={testCustomer} style={{ padding: '4px 8px', fontSize: '11px' }}>
+          Test Customer 24045487456638
+        </button>
+      </Box>
+
       {currentView === 'orders' && (
         <OrdersPage
           onOrderCreated={handleOrderCreated}
           onLoadConfiguration={handleLoadConfiguration}
+          customer={customer}
         />
       )}
       {currentView === 'material-selection' && currentOrder && (

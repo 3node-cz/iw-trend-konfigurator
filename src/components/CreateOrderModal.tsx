@@ -5,8 +5,6 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Switch,
-  FormControlLabel,
   Typography,
   IconButton,
   Alert,
@@ -16,28 +14,24 @@ import { Close as CloseIcon } from '@mui/icons-material'
 import Grid from '@mui/system/Grid'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { z } from 'zod'
-import { orderSchema, type OrderFormData, getFieldErrors } from '../schemas/orderSchema'
+import { orderSchema, type OrderFormData, getFieldErrors, createOrderWithCustomerDefaults } from '../schemas/orderSchema'
 import { FormTextField, FormSelect } from './common'
+import type { CustomerOrderData } from '../services/customerApi'
 
 interface CreateOrderModalProps {
   open: boolean
   onClose: () => void
   onOrderCreated?: (orderData: OrderFormData) => void
+  customer?: CustomerOrderData | null
 }
 
-const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOrderCreated }) => {
-  const [formData, setFormData] = useState<OrderFormData>({
+const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOrderCreated, customer }) => {
+  const [formData, setFormData] = useState<OrderFormData>(() => ({
     orderName: '',
     deliveryDate: null,
-    transferLocation: '',
-    costCenter: '',
-    cuttingCenter: '',
-    deliveryMethod: '',
-    processingType: '',
     notes: '',
-    discountPercentage: 0,
-    company: 'IW TREND, s.r.o'
-  })
+    ...createOrderWithCustomerDefaults(customer)
+  }))
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -287,7 +281,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
                 value={formData.discountPercentage.toString()}
                 onChange={handleFieldChange('discountPercentage')}
                 error={!!errors.discountPercentage}
-                helperText={errors.discountPercentage || "Zľava sa načítava automaticky z údajov zákazníka"}
+                helperText={errors.discountPercentage || (customer ? `Zľava zákazníka: ${customer.discountPercentage}%` : "Žiadna zľava")}
                 size="small"
                 fullWidth
                 InputProps={{

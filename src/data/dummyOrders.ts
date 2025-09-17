@@ -181,8 +181,8 @@ export const dummySavedOrders: SavedOrder[] = [
             edgeAllAround: null, // Different edges
             edgeTop: 2,
             edgeBottom: null, // No bottom edge
-            edgeLeft: 1,
-            edgeRight: 1,
+            edgeLeft: 0.8,
+            edgeRight: 0.8,
             notes: 'Bočnice pre horné skrinky - bez spodnej hrany',
           },
         ],

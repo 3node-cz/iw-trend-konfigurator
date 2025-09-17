@@ -14,15 +14,18 @@ import OrdersFilters from './OrdersFilters'
 import OrdersTable from './OrdersTable'
 import type { OrderFormData } from '../types/shopify'
 import type { SavedOrder } from '../types/savedOrder'
+import type { CustomerOrderData } from '../services/customerApi'
 
 interface OrdersPageProps {
   onOrderCreated?: (orderData: OrderFormData) => void
   onLoadConfiguration?: (order: SavedOrder) => void // Navigate to order summary with loaded config
+  customer?: CustomerOrderData | null
 }
 
-const OrdersPage: React.FC<OrdersPageProps> = ({ 
-  onOrderCreated, 
-  onLoadConfiguration 
+const OrdersPage: React.FC<OrdersPageProps> = ({
+  onOrderCreated,
+  onLoadConfiguration,
+  customer
 }) => {
   const [showAlert, setShowAlert] = useState(false)
   const [alertMessage, setAlertMessage] = useState('')
@@ -76,9 +79,9 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
       </Collapse>
 
       <Container maxWidth={false} sx={{ maxWidth: '1920px', mx: 'auto', py: 3 }}>
-        <OrdersHeader onOrderCreated={handleOrderCreated} />
+        <OrdersHeader onOrderCreated={handleOrderCreated} customer={customer} />
         <OrdersFilters />
-        <OrdersTable 
+        <OrdersTable
           onLoadConfiguration={onLoadConfiguration}
           onDeleteOrder={handleDeleteOrder}
         />
