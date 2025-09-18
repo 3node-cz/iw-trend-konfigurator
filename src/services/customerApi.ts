@@ -188,7 +188,6 @@ export const clearCustomerSession = (): void => {
 export const getCustomerById = async (customerId: string): Promise<CustomerOrderData | null> => {
   const numericId = customerId.replace('gid://shopify/Customer/', '')
 
-  console.log(`🔍 Using test data for customer ${numericId}`)
 
   // Test data for development
   if (numericId === '24045487456638') {

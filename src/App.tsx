@@ -102,7 +102,6 @@ function App() {
   }
 
   const handleLoadConfiguration = async (savedOrder: SavedOrder) => {
-    console.log('🚀 Loading saved order configuration:', savedOrder.orderNumber)
 
     try {
       // Load configuration and fetch fresh material data

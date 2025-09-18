@@ -5,12 +5,9 @@ import { SHOPIFY_CONFIG, getShopifyHeaders } from '../config/shopify'
 import { SHOPIFY_API } from '../constants'
 
 
-// ⚠️ NEVER put Admin API credentials in frontend!
-// Admin API calls should go through your backend API
+// Admin API calls should go through backend
 
-// Shopify Storefront API for searching materials (back to targeted search approach)
 export const searchMaterials = async (params: MaterialSearchParams): Promise<MaterialSearchResult[]> => {
-  // Use single query with collection filtering in the search string
   const query = `
     query searchProducts($query: String!, $first: Int, $sortKey: ProductSortKeys, $reverse: Boolean) {
       products(query: $query, first: $first, sortKey: $sortKey, reverse: $reverse) {
@@ -72,7 +69,6 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
   // Always show all products, regardless of availability
   const showAvailableOnly = false
   
-  // Build search query - keep it simple for now
   const searchQuery = params.query
 
   try {
@@ -84,7 +80,7 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
         variables: {
           query: searchQuery,
           first: 250,
-          sortKey: "RELEVANCE", // Sort by search relevance first
+          sortKey: "RELEVANCE",
           reverse: false
         }
       })
@@ -105,7 +101,6 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
       throw new Error('Invalid response from Shopify API')
     }
     
-    // Transform Shopify response to our MaterialSearchResult format  
     const allProducts = data.data.products.edges.map((edge: any) => {
       const product = edge.node
       const variant = product.variants.edges[0]?.node
@@ -142,12 +137,9 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
       } as MaterialSearchResult
     })
 
-    // Removed debug logging for production
     
-    // Apply filtering based on params
     let filteredProducts = allProducts
     
-    // Apply collection-based filtering (client-side)
     if (params.collection) {
       filteredProducts = allProducts.filter((product: MaterialSearchResult) => {
         if (params.collection === 'dekorativne-plosne-materialy') {
@@ -199,7 +191,6 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
       filteredProducts = filteredProducts.filter((product: MaterialSearchResult) => 
         product.availability === 'available'
       )
-      console.log(`DEBUG - After availability filter: ${filteredProducts.length} available products`)
     }
     
     // Filter by warehouse if specified
@@ -216,7 +207,7 @@ export const searchMaterials = async (params: MaterialSearchParams): Promise<Mat
     
     return filteredProducts
   } catch (error) {
-    console.error('DEBUG - Search error:', error)
+    console.error('Search error:', error)
     throw new Error('Failed to search materials from Shopify')
   }
 }

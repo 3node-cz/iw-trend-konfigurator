@@ -19,14 +19,10 @@ export const loadOrderConfiguration = async (
   orderInfo: typeof savedOrder.orderInfo
   specifications: CuttingSpecification[]
 }> => {
-  console.log('📋 Loading order configuration:', savedOrder.orderNumber)
-  console.log('🔄 Fetching fresh material data from Shopify...')
 
-  // Clear cache for fresh data on each order load
   materialCache.clear()
   edgeCache.clear()
 
-  // Collect unique material and edge IDs to batch fetch
   const uniqueMaterialIds = [
     ...new Set(savedOrder.specifications.map((spec) => spec.materialId)),
   ]
@@ -38,33 +34,25 @@ export const loadOrderConfiguration = async (
     ),
   ]
 
-  console.log(
-    `📦 Fetching ${uniqueMaterialIds.length} unique materials and ${uniqueEdgeIds.length} unique edges`,
-  )
 
-  // Batch fetch all unique materials
   await Promise.all(
     uniqueMaterialIds.map(async (materialId) => {
       const material = await fetchMaterialById(materialId)
       if (material) {
         materialCache.set(materialId, material)
-        console.log(`✅ Cached material: ${material.name}`)
       }
     }),
   )
 
-  // Batch fetch all unique edge materials
   await Promise.all(
     uniqueEdgeIds.map(async (edgeId) => {
       const edge = await fetchEdgeMaterialById(edgeId)
       if (edge) {
         edgeCache.set(edgeId, edge)
-        console.log(`✅ Cached edge: ${edge.name}`)
       }
     }),
   )
 
-  // Build specifications using cached data
   const specifications: CuttingSpecification[] = []
   for (const savedSpec of savedOrder.specifications) {
     const material = materialCache.get(savedSpec.materialId)
@@ -87,11 +75,6 @@ export const loadOrderConfiguration = async (
     })
   }
 
-  console.log(
-    `🎉 Successfully loaded ${specifications.length} specifications with ${
-      uniqueMaterialIds.length + uniqueEdgeIds.length
-    } total API calls`,
-  )
 
   return {
     orderInfo: savedOrder.orderInfo,
@@ -113,14 +96,10 @@ export const convertToSavedSpecification = (
   }
 }
 
-/**
- * Fetches material data by Shopify product ID with optimized single API call
- */
 async function fetchMaterialById(
   materialId: string,
 ): Promise<MaterialSearchResult | null> {
   try {
-    // Extract numeric ID directly to avoid double API call
     const numericId = materialId.split('/').pop() || materialId
 
     const results = await searchMaterials({
@@ -140,14 +119,10 @@ async function fetchMaterialById(
   }
 }
 
-/**
- * Fetches edge material data by Shopify product ID with optimized single API call
- */
 async function fetchEdgeMaterialById(
   edgeMaterialId: string,
 ): Promise<EdgeMaterial | null> {
   try {
-    // Extract numeric ID directly to avoid double API call
     const numericId = edgeMaterialId.split('/').pop() || edgeMaterialId
 
     const results = await searchEdgeMaterials({
@@ -157,17 +132,16 @@ async function fetchEdgeMaterialById(
 
     if (results.length > 0) {
       const result = results[0]
-      // Convert MaterialSearchResult to EdgeMaterial
       return {
         id: result.id,
         name: result.name,
         productCode: result.productCode || result.code,
         availability: result.availability,
-        thickness: 0.8, // Default thickness
-        availableThicknesses: [0.4, 0.8, 2], // Common edge thickness variants
+        thickness: 0.8,
+        availableThicknesses: [0.4, 0.8, 2],
         warehouse: result.warehouse,
         price: result.price,
-        image: result.image, // Include the image from the API result
+        image: result.image,
       }
     }
 
