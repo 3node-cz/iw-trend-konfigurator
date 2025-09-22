@@ -24,7 +24,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     const response = await admin.graphql(`
       query {
         shop {
-          metafields(first: 10, namespace: "konfigurator") {
+          metafields(first: 10, namespace: "configurator") {
             edges {
               node {
                 id
@@ -99,7 +99,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       variables: {
         metafields: [{
           ownerId: shopId,
-          namespace: "konfigurator",
+          namespace: "configurator",
           key: "primary_color",
           value: primaryColor,
           type: "single_line_text_field"
@@ -164,7 +164,7 @@ export default function Index() {
                     Widget Color Settings
                   </Text>
                   <Text variant="bodyMd" as="p">
-                    Customize the primary color for your konfigurator widget. This color will be used for buttons, links, and accents in the theme extension.
+                    Customize the primary color for your configurator widget. This color will be used for buttons, links, and accents in the theme extension.
                   </Text>
                 </BlockStack>
 

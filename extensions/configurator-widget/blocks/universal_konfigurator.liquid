@@ -1,19 +1,75 @@
 {% comment %}
-  Universal Konfigurator Block
+  Universal Configurator Block
   Can be placed anywhere on the site - not product specific
   Shows customer info and metafields if logged in
 {% endcomment %}
 
-{% assign primary_color = shop.metafields.konfigurator.primary_color | default: "#007cba" %}
+{% assign primary_color = shop.metafields.configurator.primary_color | default: "#007cba" %}
 
-<div class="universal-konfigurator" id="konfigurator-{{ block.id }}">
-  <div class="konfigurator-header">
-    <h3 style="color: {{ primary_color }};">{{ block.settings.title }}</h3>
-    {% if block.settings.description != blank %}
-      <p class="konfigurator-description">{{ block.settings.description }}</p>
-    {% endif %}
+<!-- React App Container -->
+<div class="universal-configurator" id="configurator-{{ block.id }}">
+  <!-- Loading state while React loads -->
+  <div class="configurator-loading" id="loading-{{ block.id }}">
+    <div class="configurator-header">
+      <h3 style="color: {{ primary_color }};">{{ block.settings.title }}</h3>
+      {% if block.settings.description != blank %}
+        <p class="configurator-description">{{ block.settings.description }}</p>
+      {% endif %}
+    </div>
+    <div class="loading-spinner">Loading...</div>
   </div>
 
+  <!-- React app will mount here -->
+  <div class="configurator-react-root" id="react-root-{{ block.id }}" style="display: none;"></div>
+</div>
+
+<!-- Pass Shopify data to React -->
+<script type="application/json" id="shopify-data-{{ block.id }}">
+{
+  "customer": {% if customer %}
+    {
+      "id": "{{ customer.id }}",
+      "firstName": "{{ customer.first_name }}",
+      "lastName": "{{ customer.last_name }}",
+      "email": "{{ customer.email }}",
+      "metafields": {
+        "saved_configurations": "{{ customer.metafields.custom.saved_configurations | escape }}"
+      }
+    }
+  {% else %}
+    null
+  {% endif %},
+  "shop": {
+    "domain": "{{ shop.domain }}",
+    "name": "{{ shop.name }}"
+  },
+  "settings": {
+    "title": "{{ block.settings.title }}",
+    "description": "{{ block.settings.description }}",
+    "primaryColor": "{{ primary_color }}",
+    "showCustomerDetails": {{ block.settings.show_customer_details }},
+    "showMetafields": {{ block.settings.show_metafields }}
+  },
+  "blockId": "{{ block.id }}"
+}
+</script>
+
+<!-- Load React and our app -->
+<script defer crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script defer crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+<!-- Our React App Bundle -->
+<script>
+  window.ConfiguratorConfig = window.ConfiguratorConfig || {};
+  window.ConfiguratorConfig['{{ block.id }}'] = JSON.parse(
+    document.getElementById('shopify-data-{{ block.id }}').textContent
+  );
+</script>
+
+<script defer src="{{ 'configurator-widget.umd.js' | asset_url }}?v={{ 'now' | date: '%s' }}"></script>
+
+{% comment %} Fallback for old content - will be hidden by React {% endcomment %}
+<div style="display: none;">
   {% comment %} Customer Information Section {% endcomment %}
   <div class="customer-info-section">
     {% if customer %}
@@ -65,25 +121,25 @@
   </div>
 
   {% if customer %}
-  <div class="konfigurator-form">
+  <div class="configurator-form">
     <h5>Edit Your Configuration Data:</h5>
 
-    <div class="konfigurator-option">
-      <label for="konfigurator-metafield-{{ block.id }}">Saved Configurations (JSON):</label>
+    <div class="configurator-option">
+      <label for="configurator-metafield-{{ block.id }}">Saved Configurations (JSON):</label>
       <textarea
-        id="konfigurator-metafield-{{ block.id }}"
+        id="configurator-metafield-{{ block.id }}"
         name="saved_configurations"
         rows="8"
-        class="konfigurator-textarea"
+        class="configurator-textarea"
         placeholder="Enter your configuration data in JSON format..."
       >{{ customer.metafields.custom.saved_configurations }}</textarea>
       <small style="color: #666;">Edit the JSON data above directly. Make sure to keep valid JSON format.</small>
     </div>
 
-    <div class="konfigurator-actions">
+    <div class="configurator-actions">
       <button
         type="button"
-        class="konfigurator-submit-btn"
+        class="configurator-submit-btn"
         style="background-color: {{ primary_color }};"
       >
         Update Configuration Data
@@ -97,7 +153,7 @@
   {% endif %}
 
   {% comment %} Results area {% endcomment %}
-  <div class="konfigurator-results" id="results-{{ block.id }}" style="display: none;">
+  <div class="configurator-results" id="results-{{ block.id }}" style="display: none;">
     <h4>Configuration Summary:</h4>
     <div class="results-content">
       <!-- Results will be populated here -->
@@ -106,7 +162,7 @@
 </div>
 
 <style>
-.universal-konfigurator {
+.universal-configurator {
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   padding: 20px;
@@ -115,6 +171,33 @@
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+}
+
+.configurator-widget {
+  width: 100%;
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+.configurator-message {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border: 1px solid;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.configurator-message.success {
+  background-color: #f0f8ff;
+}
+
+.configurator-message.error {
+  background-color: #fff5f5;
 }
 
 /* Customer Information Styles */
@@ -219,31 +302,31 @@
 }
 
 
-.konfigurator-header h3 {
+.configurator-header h3 {
   margin: 0 0 10px 0;
   font-size: 1.3em;
   text-align: center;
 }
 
-.konfigurator-description {
+.configurator-description {
   color: #666;
   margin-bottom: 20px;
   text-align: center;
 }
 
-.konfigurator-option {
+.configurator-option {
   margin-bottom: 15px;
 }
 
-.konfigurator-option label {
+.configurator-option label {
   display: block;
   margin-bottom: 5px;
   font-weight: 500;
 }
 
-.konfigurator-select,
-.konfigurator-input,
-.konfigurator-textarea {
+.configurator-select,
+.configurator-input,
+.configurator-textarea {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid #ddd;
@@ -252,12 +335,12 @@
   font-family: inherit;
 }
 
-.konfigurator-textarea {
+.configurator-textarea {
   resize: vertical;
   min-height: 80px;
 }
 
-.konfigurator-submit-btn {
+.configurator-submit-btn {
   width: 100%;
   padding: 15px 24px;
   color: white;
@@ -270,12 +353,12 @@
   letter-spacing: 0.5px;
 }
 
-.konfigurator-submit-btn:hover {
+.configurator-submit-btn:hover {
   opacity: 0.9;
   transform: translateY(-1px);
 }
 
-.konfigurator-results {
+.configurator-results {
   margin-top: 20px;
   padding: 15px;
   background: #f0f8ff;
@@ -283,117 +366,24 @@
   border-left: 4px solid {{ primary_color }};
 }
 
-.konfigurator-results h4 {
+.configurator-results h4 {
   margin: 0 0 10px 0;
   color: {{ primary_color }};
 }
 
 @media (max-width: 768px) {
-  .universal-konfigurator {
+  .universal-configurator {
     padding: 15px;
     margin: 10px;
   }
 }
 </style>
 
-<script>
-(function() {
-  const configurator = document.getElementById('konfigurator-{{ block.id }}');
-  if (!configurator) return;
-
-  const blockId = '{{ block.id }}';
-  const submitBtn = configurator.querySelector('.konfigurator-submit-btn');
-  const resultsDiv = document.getElementById(`results-${blockId}`);
-
-  // Handle form submission
-  if (submitBtn) {
-    submitBtn.addEventListener('click', function() {
-      {% if customer %}
-      const metafieldTextarea = document.getElementById(`konfigurator-metafield-${blockId}`);
-      if (!metafieldTextarea) {
-        alert('Error: Could not find the configuration textarea.');
-        return;
-      }
-
-      const newConfigData = metafieldTextarea.value.trim();
-
-      // Validate JSON format
-      try {
-        if (newConfigData) {
-          JSON.parse(newConfigData);
-        }
-      } catch (error) {
-        alert('❌ Invalid JSON format. Please check your data and try again.');
-        return;
-      }
-
-      // Show loading state
-      submitBtn.textContent = 'Updating...';
-      submitBtn.disabled = true;
-
-      // Update the metafield directly
-      updateCustomerMetafield(newConfigData);
-      {% else %}
-      alert('Please login to edit configuration data.');
-      {% endif %}
-    });
-  }
-
-  {% if customer %}
-  // Function to update customer metafield directly
-  function updateCustomerMetafield(configData) {
-    // Call via App Proxy - this will route to api.update-metafield.tsx
-    fetch('/apps/konfigurator/api/update-metafield', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Shop-Domain': '{{ shop.domain }}'
-      },
-      body: JSON.stringify({
-        customer_id: '{{ customer.id }}',
-        namespace: 'custom',
-        key: 'saved_configurations',
-        value: configData,
-        type: 'multi_line_text_field'
-      })
-    })
-    .then(response => response.json())
-    .then(data => {
-      console.log('Metafield update response:', data);
-
-      // Reset button
-      submitBtn.textContent = 'Update Configuration Data';
-      submitBtn.disabled = false;
-
-      if (data.success) {
-        // Show success and refresh page to see updated metafield
-        alert('✅ Configuration data updated successfully! The page will refresh.');
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      } else {
-        alert('❌ Failed to update configuration: ' + (data.error || 'Unknown error'));
-      }
-    })
-    .catch(error => {
-      console.error('Error updating configuration:', error);
-
-      // Reset button
-      submitBtn.textContent = 'Update Configuration Data';
-      submitBtn.disabled = false;
-
-      alert('❌ Error updating configuration. Please try again.');
-    });
-  }
-  {% endif %}
-
-
-})();
-</script>
+<!-- Old JavaScript removed - now using React -->
 
 {% schema %}
 {
-  "name": "Universal Konfigurator",
+  "name": "Universal Configurator",
   "target": "section",
   "settings": [
     {
