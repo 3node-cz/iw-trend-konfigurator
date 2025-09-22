@@ -33,7 +33,7 @@
       "lastName": "{{ customer.last_name }}",
       "email": "{{ customer.email }}",
       "metafields": {
-        "saved_configurations": "{{ customer.metafields.custom.saved_configurations | escape }}"
+        "saved_configurations": {{ customer.metafields.custom.saved_configurations | json }}
       }
     }
   {% else %}
@@ -53,10 +53,6 @@
   "blockId": "{{ block.id }}"
 }
 </script>
-
-<!-- Load React and our app -->
-<script defer crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script defer crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
 <!-- Our React App Bundle -->
 <script>
