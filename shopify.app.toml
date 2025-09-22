@@ -2,7 +2,7 @@
 
 client_id = "34dbe43a78626352390045be3bb58946"
 name = "iw-trend-konfigurator-remix"
-application_url = "https://motels-creature-constant-lat.trycloudflare.com"
+application_url = "https://typical-alexandria-athletes-telescope.trycloudflare.com"
 embedded = true
 handle = "iw-trend-konfigurator-remix-1"
 
@@ -26,12 +26,12 @@ api_version = "2025-07"
 scopes = "read_customers,read_orders,read_products,write_customers,write_orders,write_products,write_app_proxy"
 
 [auth]
-redirect_urls = ["https://motels-creature-constant-lat.trycloudflare.com/auth/callback", "https://motels-creature-constant-lat.trycloudflare.com/auth/shopify/callback", "https://motels-creature-constant-lat.trycloudflare.com/api/auth/callback"]
+redirect_urls = ["https://typical-alexandria-athletes-telescope.trycloudflare.com/auth/callback", "https://typical-alexandria-athletes-telescope.trycloudflare.com/auth/shopify/callback", "https://typical-alexandria-athletes-telescope.trycloudflare.com/api/auth/callback"]
 
 [pos]
 embedded = false
 
 [app_proxy]
-url = "https://motels-creature-constant-lat.trycloudflare.com"
+url = "https://typical-alexandria-athletes-telescope.trycloudflare.com"
 subpath = "konfigurator"
 prefix = "apps"
