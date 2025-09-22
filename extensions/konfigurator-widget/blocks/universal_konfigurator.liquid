@@ -4,9 +4,11 @@
   Shows customer info and metafields if logged in
 {% endcomment %}
 
+{% assign primary_color = shop.metafields.konfigurator.primary_color | default: "#007cba" %}
+
 <div class="universal-konfigurator" id="konfigurator-{{ block.id }}">
   <div class="konfigurator-header">
-    <h3 style="color: {{ block.settings.title_color }};">{{ block.settings.title }}</h3>
+    <h3 style="color: {{ primary_color }};">{{ block.settings.title }}</h3>
     {% if block.settings.description != blank %}
       <p class="konfigurator-description">{{ block.settings.description }}</p>
     {% endif %}
@@ -82,7 +84,7 @@
       <button
         type="button"
         class="konfigurator-submit-btn"
-        style="background-color: {{ block.settings.button_color }};"
+        style="background-color: {{ primary_color }};"
       >
         Update Configuration Data
       </button>
@@ -124,7 +126,7 @@
 
 .customer-welcome h4 {
   margin: 0 0 15px 0;
-  color: #007cba;
+  color: {{ primary_color }};
   font-size: 1.1em;
 }
 
@@ -173,13 +175,13 @@
 }
 
 .metafield-value {
-  color: #007cba;
+  color: {{ primary_color }};
   font-weight: 500;
   font-size: 14px;
 }
 
 .metafield-value.badge {
-  background: #007cba;
+  background: {{ primary_color }};
   color: white;
   padding: 3px 8px;
   border-radius: 12px;
@@ -198,7 +200,7 @@
   background: #e7f3ff;
   padding: 15px;
   border-radius: 6px;
-  border-left: 4px solid #007cba;
+  border-left: 4px solid {{ primary_color }};
 }
 
 .customer-login-prompt p {
@@ -207,7 +209,7 @@
 }
 
 .customer-login-prompt a {
-  color: #007cba;
+  color: {{ primary_color }};
   text-decoration: none;
   font-weight: 500;
 }
@@ -278,12 +280,12 @@
   padding: 15px;
   background: #f0f8ff;
   border-radius: 4px;
-  border-left: 4px solid #007cba;
+  border-left: 4px solid {{ primary_color }};
 }
 
 .konfigurator-results h4 {
   margin: 0 0 10px 0;
-  color: #007cba;
+  color: {{ primary_color }};
 }
 
 @media (max-width: 768px) {
@@ -340,8 +342,8 @@
   {% if customer %}
   // Function to update customer metafield directly
   function updateCustomerMetafield(configData) {
-    // Call via App Proxy - this will route to api.proxy.update-metafield.tsx
-    fetch('/apps/konfigurator/api/proxy/update-metafield', {
+    // Call via App Proxy - this will route to api.update-metafield.tsx
+    fetch('/apps/konfigurator/api/update-metafield', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -405,42 +407,6 @@
       "id": "description",
       "label": "Description",
       "default": "Tell us what you're looking for and we'll help you find the perfect solution."
-    },
-    {
-      "type": "color",
-      "id": "title_color",
-      "label": "Title Color",
-      "default": "#333333"
-    },
-    {
-      "type": "color",
-      "id": "button_color",
-      "label": "Button Color",
-      "default": "#007cba"
-    },
-    {
-      "type": "text",
-      "id": "button_text",
-      "label": "Button Text",
-      "default": "Submit Configuration"
-    },
-    {
-      "type": "checkbox",
-      "id": "show_product_selector",
-      "label": "Show Product Selector",
-      "default": false
-    },
-    {
-      "type": "checkbox",
-      "id": "enable_custom_options",
-      "label": "Enable Custom Requirements",
-      "default": true
-    },
-    {
-      "type": "checkbox",
-      "id": "enable_contact_info",
-      "label": "Enable Contact Information",
-      "default": true
     },
     {
       "type": "header",

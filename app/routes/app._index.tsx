@@ -1,265 +1,237 @@
-import { useEffect } from "react";
+import { useState, useCallback } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { useFetcher } from "@remix-run/react";
+import { json } from "@remix-run/node";
+import { useLoaderData, useFetcher } from "@remix-run/react";
 import {
   Page,
   Layout,
   Text,
   Card,
-  Button,
   BlockStack,
-  Box,
-  List,
-  Link,
   InlineStack,
-  ResourceList,
-  ResourceItem,
+  Button,
+  TextField,
+  Banner,
 } from "@shopify/polaris";
 import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
 
-  return null;
-};
-
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
-  const color = ["Red", "Orange", "Yellow", "Green"][
-    Math.floor(Math.random() * 4)
-  ];
-  const response = await admin.graphql(
-    `#graphql
-      mutation populateProduct($product: ProductCreateInput!) {
-        productCreate(product: $product) {
-          product {
-            id
-            title
-            handle
-            status
-            variants(first: 10) {
-              edges {
-                node {
-                  id
-                  price
-                  barcode
-                  createdAt
-                }
+  // Try to get existing color preference from shop metafields
+  try {
+    const response = await admin.graphql(`
+      query {
+        shop {
+          metafields(first: 10, namespace: "konfigurator") {
+            edges {
+              node {
+                id
+                key
+                value
               }
             }
           }
         }
-      }`,
-    {
-      variables: {
-        product: {
-          title: `${color} Snowboard`,
-        },
-      },
-    },
-  );
-  const responseJson = await response.json();
+      }
+    `);
 
-  const product = responseJson.data!.productCreate!.product!;
-  const variantId = product.variants.edges[0]!.node!.id!;
+    const data = await response.json();
+    const metafields = data.data?.shop?.metafields?.edges || [];
+    const colorMetafield = metafields.find((edge: any) => edge.node.key === "primary_color");
 
-  const variantResponse = await admin.graphql(
-    `#graphql
-    mutation shopifyRemixTemplateUpdateVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
-      productVariantsBulkUpdate(productId: $productId, variants: $variants) {
-        productVariants {
+    return json({
+      currentColor: colorMetafield?.node?.value || "#007cba",
+      shop: session.shop
+    });
+  } catch (error) {
+    return json({
+      currentColor: "#007cba",
+      shop: session.shop
+    });
+  }
+};
+
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const { admin, session } = await authenticate.admin(request);
+  const formData = await request.formData();
+  const primaryColor = formData.get("primaryColor") as string;
+
+  if (!primaryColor || !primaryColor.match(/^#[0-9a-fA-F]{6}$/)) {
+    return json({ success: false, error: "Invalid color format" }, { status: 400 });
+  }
+
+  try {
+    // First get the shop ID
+    const shopResponse = await admin.graphql(`
+      query {
+        shop {
           id
-          price
-          barcode
-          createdAt
         }
       }
-    }`,
-    {
+    `);
+
+    const shopData = await shopResponse.json();
+    const shopId = shopData.data?.shop?.id;
+
+    if (!shopId) {
+      return json({ success: false, error: "Could not get shop ID" }, { status: 500 });
+    }
+
+    // Save color to shop metafield using metafieldSet
+    const response = await admin.graphql(`
+      mutation metafieldSet($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) {
+          metafields {
+            id
+            namespace
+            key
+            value
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `, {
       variables: {
-        productId: product.id,
-        variants: [{ id: variantId, price: "100.00" }],
-      },
-    },
-  );
+        metafields: [{
+          ownerId: shopId,
+          namespace: "konfigurator",
+          key: "primary_color",
+          value: primaryColor,
+          type: "single_line_text_field"
+        }]
+      }
+    });
 
-  const variantResponseJson = await variantResponse.json();
+    const data = await response.json();
 
-  return {
-    product: responseJson!.data!.productCreate!.product,
-    variant:
-      variantResponseJson!.data!.productVariantsBulkUpdate!.productVariants,
-  };
+    if (data.data?.metafieldsSet?.userErrors?.length > 0) {
+      return json({
+        success: false,
+        error: data.data.metafieldsSet.userErrors[0].message
+      }, { status: 400 });
+    }
+
+    return json({ success: true, color: primaryColor });
+  } catch (error) {
+    return json({
+      success: false,
+      error: "Failed to save color preference"
+    }, { status: 500 });
+  }
 };
 
 export default function Index() {
+  const { currentColor, shop } = useLoaderData<typeof loader>();
   const fetcher = useFetcher<typeof action>();
-
   const shopify = useAppBridge();
-  const isLoading =
-    ["loading", "submitting"].includes(fetcher.state) &&
-    fetcher.formMethod === "POST";
-  const productId = fetcher.data?.product?.id.replace(
-    "gid://shopify/Product/",
-    "",
-  );
+  const [colorValue, setColorValue] = useState(currentColor);
 
-  useEffect(() => {
-    if (productId) {
-      shopify.toast.show("Product created");
-    }
-  }, [productId, shopify]);
-  const generateProduct = () => fetcher.submit({}, { method: "POST" });
+  const handleColorChange = useCallback((value: string) => {
+    setColorValue(value);
+  }, []);
+
+  const handleSubmit = useCallback(() => {
+    fetcher.submit(
+      { primaryColor: colorValue },
+      { method: "POST", action: "/app?index" }
+    );
+  }, [fetcher, colorValue]);
+
+  const isLoading = fetcher.state === "submitting";
+  const showSuccess = fetcher.data?.success;
+  const showError = fetcher.data?.error;
+
+  // Show toast on success
+  if (showSuccess && fetcher.state === "idle") {
+    shopify.toast.show("Widget color updated successfully!");
+  }
 
   return (
     <Page>
-      <TitleBar title="Remix app template">
-        <button variant="primary" onClick={generateProduct}>
-          Generate a product
-        </button>
-      </TitleBar>
-      <BlockStack gap="500">
-        <Layout>
-          <Layout.Section>
+      <TitleBar title="IW Trend Konfigurator Settings" />
+      <Layout>
+        <Layout.Section>
+          <BlockStack gap="500">
             <Card>
               <BlockStack gap="500">
                 <BlockStack gap="200">
                   <Text as="h2" variant="headingMd">
-                    IW Trend Konfigurator - Shopify MCP App 🎉
+                    Widget Color Settings
                   </Text>
                   <Text variant="bodyMd" as="p">
-                    This app connects to Shopify via MCP (Model Context Protocol) to manage your store data.
-                    Use the sections below to access customers, products, and orders with full CRUD capabilities.
+                    Customize the primary color for your konfigurator widget. This color will be used for buttons, links, and accents in the theme extension.
                   </Text>
                 </BlockStack>
-                <BlockStack gap="200">
-                  <Text as="h3" variant="headingMd">
-                    Store Management
-                  </Text>
-                  <Text as="p" variant="bodyMd">
-                    Access and manage your store data through MCP integration.
-                    Navigate to different sections to view and update customers, products, and orders.
-                  </Text>
+
+                {showError && (
+                  <Banner status="critical">
+                    {showError}
+                  </Banner>
+                )}
+
+                <BlockStack gap="400">
+                  <InlineStack gap="400" align="start">
+                    <div style={{ flex: 1 }}>
+                      <TextField
+                        label="Primary Color"
+                        type="color"
+                        value={colorValue}
+                        onChange={handleColorChange}
+                        helpText="Choose a color that matches your brand"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div style={{
+                      width: "60px",
+                      height: "60px",
+                      backgroundColor: colorValue,
+                      border: "1px solid #ddd",
+                      borderRadius: "8px",
+                      marginTop: "24px"
+                    }} />
+                  </InlineStack>
+
+                  <InlineStack gap="200">
+                    <Button
+                      variant="primary"
+                      onClick={handleSubmit}
+                      loading={isLoading}
+                      disabled={colorValue === currentColor}
+                    >
+                      Save Color
+                    </Button>
+                    <Button
+                      onClick={() => setColorValue(currentColor)}
+                      disabled={colorValue === currentColor || isLoading}
+                    >
+                      Reset
+                    </Button>
+                  </InlineStack>
                 </BlockStack>
-                <InlineStack gap="300">
-                  <Button url="/app/customers">
-                    Manage Customers
-                  </Button>
-                  <Button url="/app/products">
-                    Manage Products
-                  </Button>
-                  <Button url="/app/orders">
-                    View Orders
-                  </Button>
-                </InlineStack>
               </BlockStack>
             </Card>
-          </Layout.Section>
-          <Layout.Section variant="oneThird">
-            <BlockStack gap="500">
-              <Card>
-                <BlockStack gap="200">
-                  <Text as="h2" variant="headingMd">
-                    App template specs
-                  </Text>
-                  <BlockStack gap="200">
-                    <InlineStack align="space-between">
-                      <Text as="span" variant="bodyMd">
-                        Framework
-                      </Text>
-                      <Link
-                        url="https://remix.run"
-                        target="_blank"
-                        removeUnderline
-                      >
-                        Remix
-                      </Link>
-                    </InlineStack>
-                    <InlineStack align="space-between">
-                      <Text as="span" variant="bodyMd">
-                        Database
-                      </Text>
-                      <Link
-                        url="https://www.prisma.io/"
-                        target="_blank"
-                        removeUnderline
-                      >
-                        Prisma
-                      </Link>
-                    </InlineStack>
-                    <InlineStack align="space-between">
-                      <Text as="span" variant="bodyMd">
-                        Interface
-                      </Text>
-                      <span>
-                        <Link
-                          url="https://polaris.shopify.com"
-                          target="_blank"
-                          removeUnderline
-                        >
-                          Polaris
-                        </Link>
-                        {", "}
-                        <Link
-                          url="https://shopify.dev/docs/apps/tools/app-bridge"
-                          target="_blank"
-                          removeUnderline
-                        >
-                          App Bridge
-                        </Link>
-                      </span>
-                    </InlineStack>
-                    <InlineStack align="space-between">
-                      <Text as="span" variant="bodyMd">
-                        API
-                      </Text>
-                      <Link
-                        url="https://shopify.dev/docs/api/admin-graphql"
-                        target="_blank"
-                        removeUnderline
-                      >
-                        GraphQL API
-                      </Link>
-                    </InlineStack>
-                  </BlockStack>
-                </BlockStack>
-              </Card>
-              <Card>
-                <BlockStack gap="200">
-                  <Text as="h2" variant="headingMd">
-                    Next steps
-                  </Text>
-                  <List>
-                    <List.Item>
-                      Build an{" "}
-                      <Link
-                        url="https://shopify.dev/docs/apps/getting-started/build-app-example"
-                        target="_blank"
-                        removeUnderline
-                      >
-                        {" "}
-                        example app
-                      </Link>{" "}
-                      to get started
-                    </List.Item>
-                    <List.Item>
-                      Explore Shopify’s API with{" "}
-                      <Link
-                        url="https://shopify.dev/docs/apps/tools/graphiql-admin-api"
-                        target="_blank"
-                        removeUnderline
-                      >
-                        GraphiQL
-                      </Link>
-                    </List.Item>
-                  </List>
-                </BlockStack>
-              </Card>
-            </BlockStack>
-          </Layout.Section>
-        </Layout>
-      </BlockStack>
+
+            <Card>
+              <BlockStack gap="200">
+                <Text as="h3" variant="headingMd">
+                  Theme Extension
+                </Text>
+                <Text as="p" variant="bodyMd">
+                  Add the "Universal Konfigurator" block to any page in your theme to allow customers to view and edit their saved configurations. The widget will automatically use your selected primary color.
+                </Text>
+                <Text as="p" variant="bodySm" tone="subdued">
+                  Current shop: {shop}
+                </Text>
+              </BlockStack>
+            </Card>
+          </BlockStack>
+        </Layout.Section>
+      </Layout>
     </Page>
   );
 }
