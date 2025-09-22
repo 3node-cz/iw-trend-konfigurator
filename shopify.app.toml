@@ -1,0 +1,37 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "34dbe43a78626352390045be3bb58946"
+name = "iw-trend-konfigurator-remix"
+application_url = "https://motels-creature-constant-lat.trycloudflare.com"
+embedded = true
+handle = "iw-trend-konfigurator-remix-1"
+
+[build]
+include_config_on_deploy = true
+automatically_update_urls_on_dev = true
+
+[webhooks]
+api_version = "2025-07"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_customers,read_orders,read_products,write_customers,write_orders,write_products,write_app_proxy"
+
+[auth]
+redirect_urls = ["https://motels-creature-constant-lat.trycloudflare.com/auth/callback", "https://motels-creature-constant-lat.trycloudflare.com/auth/shopify/callback", "https://motels-creature-constant-lat.trycloudflare.com/api/auth/callback"]
+
+[pos]
+embedded = false
+
+[app_proxy]
+url = "https://motels-creature-constant-lat.trycloudflare.com"
+subpath = "konfigurator"
+prefix = "apps"

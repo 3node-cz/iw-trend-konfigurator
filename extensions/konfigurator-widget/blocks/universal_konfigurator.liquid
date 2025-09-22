@@ -1,0 +1,472 @@
+{% comment %}
+  Universal Konfigurator Block
+  Can be placed anywhere on the site - not product specific
+  Shows customer info and metafields if logged in
+{% endcomment %}
+
+<div class="universal-konfigurator" id="konfigurator-{{ block.id }}">
+  <div class="konfigurator-header">
+    <h3 style="color: {{ block.settings.title_color }};">{{ block.settings.title }}</h3>
+    {% if block.settings.description != blank %}
+      <p class="konfigurator-description">{{ block.settings.description }}</p>
+    {% endif %}
+  </div>
+
+  {% comment %} Customer Information Section {% endcomment %}
+  <div class="customer-info-section">
+    {% if customer %}
+      <div class="customer-welcome">
+        <h4>Welcome back, {{ customer.first_name | default: customer.email }}! 👋</h4>
+
+        {% if block.settings.show_customer_details %}
+        <div class="customer-details">
+          {% if customer.first_name or customer.last_name %}
+            <p><strong>Name:</strong> {{ customer.first_name }} {{ customer.last_name }}</p>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% if block.settings.show_metafields %}
+        <div class="customer-metafields">
+          <h5>Your Saved Configurations:</h5>
+          <div class="metafields-grid">
+            {% assign saved_configurations = customer.metafields.custom.saved_configurations %}
+            {% if saved_configurations %}
+              <div class="metafield-item">
+                <span class="metafield-label">Configurations:</span>
+                <span class="metafield-value">{{ saved_configurations }}</span>
+              </div>
+            {% else %}
+              <p class="no-metafields">No saved configurations yet. Create your first configuration below!</p>
+            {% endif %}
+
+            {% comment %} Display all metafields for debugging (if enabled) {% endcomment %}
+            {% if block.settings.show_all_metafields %}
+              {% for metafield in customer.metafields %}
+                {% if metafield[1].namespace != blank %}
+                  <div class="metafield-item debug">
+                    <span class="metafield-label">{{ metafield[1].namespace }}.{{ metafield[1].key }}:</span>
+                    <span class="metafield-value">{{ metafield[1].value }}</span>
+                  </div>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="customer-login-prompt">
+        <p>👤 <a href="/account/login">Login</a> or <a href="/account/register">create an account</a> to save your preferences and see personalized recommendations.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if customer %}
+  <div class="konfigurator-form">
+    <h5>Edit Your Configuration Data:</h5>
+
+    <div class="konfigurator-option">
+      <label for="konfigurator-metafield-{{ block.id }}">Saved Configurations (JSON):</label>
+      <textarea
+        id="konfigurator-metafield-{{ block.id }}"
+        name="saved_configurations"
+        rows="8"
+        class="konfigurator-textarea"
+        placeholder="Enter your configuration data in JSON format..."
+      >{{ customer.metafields.custom.saved_configurations }}</textarea>
+      <small style="color: #666;">Edit the JSON data above directly. Make sure to keep valid JSON format.</small>
+    </div>
+
+    <div class="konfigurator-actions">
+      <button
+        type="button"
+        class="konfigurator-submit-btn"
+        style="background-color: {{ block.settings.button_color }};"
+      >
+        Update Configuration Data
+      </button>
+    </div>
+  </div>
+  {% else %}
+    <div class="customer-login-prompt">
+      <p>👤 <a href="/account/login">Login</a> to edit your configuration data.</p>
+    </div>
+  {% endif %}
+
+  {% comment %} Results area {% endcomment %}
+  <div class="konfigurator-results" id="results-{{ block.id }}" style="display: none;">
+    <h4>Configuration Summary:</h4>
+    <div class="results-content">
+      <!-- Results will be populated here -->
+    </div>
+  </div>
+</div>
+
+<style>
+.universal-konfigurator {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  background: #fff;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Customer Information Styles */
+.customer-info-section {
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.customer-welcome h4 {
+  margin: 0 0 15px 0;
+  color: #007cba;
+  font-size: 1.1em;
+}
+
+.customer-details {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+.customer-details p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.customer-metafields h5 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 1em;
+}
+
+.metafields-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.metafield-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+}
+
+.metafield-item.debug {
+  background: #fff3cd;
+  border-color: #ffeaa7;
+}
+
+.metafield-label {
+  font-weight: 500;
+  color: #495057;
+  font-size: 14px;
+}
+
+.metafield-value {
+  color: #007cba;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.metafield-value.badge {
+  background: #007cba;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.no-metafields {
+  color: #6c757d;
+  font-style: italic;
+  text-align: center;
+  margin: 15px 0;
+}
+
+.customer-login-prompt {
+  background: #e7f3ff;
+  padding: 15px;
+  border-radius: 6px;
+  border-left: 4px solid #007cba;
+}
+
+.customer-login-prompt p {
+  margin: 0;
+  color: #495057;
+}
+
+.customer-login-prompt a {
+  color: #007cba;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.customer-login-prompt a:hover {
+  text-decoration: underline;
+}
+
+
+.konfigurator-header h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.3em;
+  text-align: center;
+}
+
+.konfigurator-description {
+  color: #666;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.konfigurator-option {
+  margin-bottom: 15px;
+}
+
+.konfigurator-option label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.konfigurator-select,
+.konfigurator-input,
+.konfigurator-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.konfigurator-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.konfigurator-submit-btn {
+  width: 100%;
+  padding: 15px 24px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.konfigurator-submit-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.konfigurator-results {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f0f8ff;
+  border-radius: 4px;
+  border-left: 4px solid #007cba;
+}
+
+.konfigurator-results h4 {
+  margin: 0 0 10px 0;
+  color: #007cba;
+}
+
+@media (max-width: 768px) {
+  .universal-konfigurator {
+    padding: 15px;
+    margin: 10px;
+  }
+}
+</style>
+
+<script>
+(function() {
+  const configurator = document.getElementById('konfigurator-{{ block.id }}');
+  if (!configurator) return;
+
+  const blockId = '{{ block.id }}';
+  const submitBtn = configurator.querySelector('.konfigurator-submit-btn');
+  const resultsDiv = document.getElementById(`results-${blockId}`);
+
+  // Handle form submission
+  if (submitBtn) {
+    submitBtn.addEventListener('click', function() {
+      {% if customer %}
+      const metafieldTextarea = document.getElementById(`konfigurator-metafield-${blockId}`);
+      if (!metafieldTextarea) {
+        alert('Error: Could not find the configuration textarea.');
+        return;
+      }
+
+      const newConfigData = metafieldTextarea.value.trim();
+
+      // Validate JSON format
+      try {
+        if (newConfigData) {
+          JSON.parse(newConfigData);
+        }
+      } catch (error) {
+        alert('❌ Invalid JSON format. Please check your data and try again.');
+        return;
+      }
+
+      // Show loading state
+      submitBtn.textContent = 'Updating...';
+      submitBtn.disabled = true;
+
+      // Update the metafield directly
+      updateCustomerMetafield(newConfigData);
+      {% else %}
+      alert('Please login to edit configuration data.');
+      {% endif %}
+    });
+  }
+
+  {% if customer %}
+  // Function to update customer metafield directly
+  function updateCustomerMetafield(configData) {
+    // Call via App Proxy - this will route to api.proxy.update-metafield.tsx
+    fetch('/apps/konfigurator/api/proxy/update-metafield', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Shop-Domain': '{{ shop.domain }}'
+      },
+      body: JSON.stringify({
+        customer_id: '{{ customer.id }}',
+        namespace: 'custom',
+        key: 'saved_configurations',
+        value: configData,
+        type: 'multi_line_text_field'
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Metafield update response:', data);
+
+      // Reset button
+      submitBtn.textContent = 'Update Configuration Data';
+      submitBtn.disabled = false;
+
+      if (data.success) {
+        // Show success and refresh page to see updated metafield
+        alert('✅ Configuration data updated successfully! The page will refresh.');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        alert('❌ Failed to update configuration: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Error updating configuration:', error);
+
+      // Reset button
+      submitBtn.textContent = 'Update Configuration Data';
+      submitBtn.disabled = false;
+
+      alert('❌ Error updating configuration. Please try again.');
+    });
+  }
+  {% endif %}
+
+
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Universal Konfigurator",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Configure Your Requirements"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "Description",
+      "default": "Tell us what you're looking for and we'll help you find the perfect solution."
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Title Color",
+      "default": "#333333"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Button Color",
+      "default": "#007cba"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button Text",
+      "default": "Submit Configuration"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_product_selector",
+      "label": "Show Product Selector",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_custom_options",
+      "label": "Enable Custom Requirements",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_contact_info",
+      "label": "Enable Contact Information",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Customer Information"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_customer_details",
+      "label": "Show Customer Details",
+      "default": true,
+      "info": "Display customer name, email, phone, and order history"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_metafields",
+      "label": "Show Customer Metafields",
+      "default": true,
+      "info": "Display customer preferences and custom fields"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_all_metafields",
+      "label": "Show All Metafields (Debug)",
+      "default": false,
+      "info": "Show all customer metafields for debugging purposes"
+    }
+  ]
+}
+{% endschema %}

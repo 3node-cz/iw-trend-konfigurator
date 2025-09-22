@@ -1,0 +1,28 @@
+{
+  "ratings": {
+    "stars": {
+      "label": "Ratings"
+    },
+    "home": {
+      "recommendationText": "Recommended Product!"
+    }
+  },
+  "konfigurator": {
+    "title": "Configure Your Product",
+    "description": "Customize your product with the options below",
+    "color_label": "Color",
+    "size_label": "Size",
+    "custom_text_label": "Custom Text",
+    "custom_text_placeholder": "Enter custom text",
+    "update_button": "Update Configuration",
+    "add_to_cart_button": "Add to Cart",
+    "preview_title": "Preview",
+    "not_selected": "Not selected",
+    "none": "None",
+    "success_message": "Configuration saved successfully!",
+    "error_message": "Failed to save configuration. Please try again.",
+    "loading": "Saving...",
+    "select_color": "Select Color",
+    "select_size": "Select Size"
+  }
+}

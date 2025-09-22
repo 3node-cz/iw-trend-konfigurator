@@ -1,0 +1,110 @@
+{% comment %}
+  Konfigurator API Integration Snippet
+  Handles communication with MCP backend
+{% endcomment %}
+
+<script>
+window.KonfiguratorAPI = {
+  // Base URL for app proxy
+  baseUrl: '{{ shop.url }}/apps/konfigurator',
+
+  // Save configuration to MCP backend
+  async saveConfiguration(productId, config) {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/configure`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-Shop-Domain': '{{ shop.domain }}'
+        },
+        body: JSON.stringify({
+          product_id: productId,
+          configuration: config,
+          customer_id: {% if customer %}{{ customer.id }}{% else %}null{% endif %}
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Failed to save configuration:', error);
+      throw error;
+    }
+  },
+
+  // Load existing configuration
+  async loadConfiguration(productId, customerId = null) {
+    try {
+      const params = new URLSearchParams({
+        product_id: productId
+      });
+
+      if (customerId) {
+        params.append('customer_id', customerId);
+      }
+
+      const response = await fetch(`${this.baseUrl}/api/configuration?${params}`, {
+        headers: {
+          'X-Shopify-Shop-Domain': '{{ shop.domain }}'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Failed to load configuration:', error);
+      throw error;
+    }
+  },
+
+  // Add to cart with configuration
+  async addToCartWithConfig(variantId, quantity, config) {
+    try {
+      const formData = {
+        'items': [{
+          'id': variantId,
+          'quantity': quantity,
+          'properties': {
+            '_konfigurator_config': JSON.stringify(config),
+            'Color': config.color || '',
+            'Size': config.size || '',
+            'Custom Text': config.customText || ''
+          }
+        }]
+      };
+
+      const response = await fetch('/cart/add.js', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      // Trigger cart drawer update if it exists
+      if (window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('cart:updated'));
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+      throw error;
+    }
+  }
+};
+</script>
