@@ -91,7 +91,7 @@ export class ConfigurationService {
     configurationData: string
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const response = await fetch('/apps/configurator/api/update-metafield', {
+      const response = await fetch('/apps/konfigurator/api/update-metafield', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

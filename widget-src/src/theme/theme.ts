@@ -1,4 +1,4 @@
-import { createTheme } from '@mui/material/styles'
+import { createTheme } from "@mui/material/styles";
 
 // Function to get primary color from Shopify configuration
 const getPrimaryColor = () => {
@@ -7,73 +7,73 @@ const getPrimaryColor = () => {
     if (widgetConfigs) {
       const firstBlockId = Object.keys(widgetConfigs)[0];
       const config = widgetConfigs[firstBlockId];
-      return config?.settings?.primaryColor || '#22C55E';
+      return config?.settings?.primaryColor || "#2E7D32";
     }
-    return '#22C55E';
+    return "#2E7D32";
   } catch (error) {
-    return '#22C55E';
+    return "#2E7D32";
   }
 };
 
 export const theme = createTheme({
   palette: {
-    mode: 'light',
+    mode: "light",
     primary: {
       main: getPrimaryColor(),
     },
     secondary: {
-      main: '#dc004e',
+      main: "#dc004e",
     },
   },
   components: {
     // TextField default props
     MuiTextField: {
       defaultProps: {
-        size: 'small',
-        variant: 'outlined',
+        size: "small",
+        variant: "outlined",
       },
     },
     // Switch default props
     MuiSwitch: {
       defaultProps: {
-        size: 'small',
+        size: "small",
       },
     },
     // Button default props
     MuiButton: {
       defaultProps: {
-        variant: 'contained',
+        variant: "contained",
       },
       styleOverrides: {
         root: {
-          textTransform: 'none', // Remove ALL CAPS
+          textTransform: "none", // Remove ALL CAPS
         },
       },
     },
     // Select default props
     MuiSelect: {
       defaultProps: {
-        size: 'small',
+        size: "small",
       },
     },
     // FormControl default props
     MuiFormControl: {
       defaultProps: {
-        size: 'small',
+        size: "small",
       },
     },
     // Table styling for better density
     MuiTable: {
       defaultProps: {
-        size: 'small',
+        size: "small",
       },
     },
     // Chip default props
     MuiChip: {
       defaultProps: {
-        size: 'small',
-        variant: 'outlined',
+        size: "small",
+        variant: "outlined",
       },
     },
   },
-})
+});

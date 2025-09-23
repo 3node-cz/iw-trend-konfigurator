@@ -22,15 +22,19 @@ api_version = "2025-07"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_customers,read_orders,read_products,write_customers,write_orders,write_products,write_app_proxy"
+scopes = "read_customers,read_orders,read_products,write_app_proxy,write_customers,write_orders,write_products"
 
 [auth]
-redirect_urls = ["https://sunglasses-compiled-caused-sending.trycloudflare.com/auth/callback", "https://sunglasses-compiled-caused-sending.trycloudflare.com/auth/shopify/callback", "https://sunglasses-compiled-caused-sending.trycloudflare.com/api/auth/callback"]
-
-[pos]
-embedded = false
+redirect_urls = [
+  "https://sunglasses-compiled-caused-sending.trycloudflare.com/auth/callback",
+  "https://sunglasses-compiled-caused-sending.trycloudflare.com/auth/shopify/callback",
+  "https://sunglasses-compiled-caused-sending.trycloudflare.com/api/auth/callback"
+]
 
 [app_proxy]
 url = "https://sunglasses-compiled-caused-sending.trycloudflare.com"
 subpath = "configurator"
 prefix = "apps"
+
+[pos]
+embedded = false

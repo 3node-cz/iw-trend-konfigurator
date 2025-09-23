@@ -6,6 +6,7 @@ import CuttingSpecificationPage from './components/CuttingSpecificationPage'
 import OrderRecapitulationPage from './components/OrderRecapitulationPage'
 import OrderSuccessPage from './components/OrderSuccessPage'
 import CuttingLayoutDemo from './components/CuttingLayoutDemo'
+import { ApiTestForm } from './components/ApiTestForm'
 import { submitOrderToShopify } from './services/shopifyApi'
 import { loadOrderConfiguration } from './services/orderLoader'
 import { theme } from './theme/theme'
@@ -163,6 +164,9 @@ function App() {
       maxWidth={false}
       disableGutters
     >
+      {/* API Test Form */}
+      <ApiTestForm />
+
       {/* Customer Info Bar - Debug Metafields */}
       <Box sx={{ p: 2, bgcolor: '#f5f5f5', mb: 1 }}>
         {isLoggedIn && customer ? (

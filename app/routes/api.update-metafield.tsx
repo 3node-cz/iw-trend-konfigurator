@@ -1,43 +1,55 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { authenticate } from "~/shopify.server";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export async function action({ request }: ActionFunctionArgs) {
+  console.log('🔄 Update metafield endpoint hit');
+
+  if (request.method !== "POST") {
+    return json({ error: "Method not allowed" }, { status: 405 });
+  }
+
   try {
-    // For app proxy, we need to use authenticate.public
+    // Authenticate with app proxy
     const { session, admin } = await authenticate.public.appProxy(request);
 
-    if (!session) {
-      return json(
-        { success: false, error: "No valid session found" },
-        { status: 401 },
-      );
+    if (!session?.shop) {
+      return json({ error: "No shop session found" }, { status: 401 });
     }
 
-    console.log("🔗 App Proxy session:", session.shop);
+    if (!admin) {
+      return json({ error: "Admin API not available" }, { status: 401 });
+    }
 
-    // Parse the request body
-    const body = await request.json();
-    const { customer_id, namespace, key, value, type } = body;
+    // Parse request body
+    const {
+      customer_id,
+      namespace,
+      key,
+      value,
+      type = "multi_line_text_field"
+    } = await request.json();
 
-    // Validate required fields
     if (!customer_id || !namespace || !key || value === undefined) {
-      return json(
-        {
-          success: false,
-          error: "Missing required fields: customer_id, namespace, key, value",
-        },
-        { status: 400 },
-      );
+      return json({
+        error: "Missing required fields: customer_id, namespace, key, value"
+      }, { status: 400 });
     }
 
-    // Create the metafield using GraphQL
+    console.log('💾 Updating customer metafield:', {
+      customer_id,
+      namespace,
+      key,
+      valueLength: typeof value === 'string' ? value.length : 'not string'
+    });
+
+    // Update customer metafield using Admin API
     const mutation = `
       mutation customerUpdate($input: CustomerInput!) {
         customerUpdate(input: $input) {
           customer {
             id
-            metafields(first: 10) {
+            metafields(first: 5) {
               edges {
                 node {
                   id
@@ -56,7 +68,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
     `;
 
-    // Prepare the GraphQL variables
     const variables = {
       input: {
         id: `gid://shopify/Customer/${customer_id}`,
@@ -65,88 +76,38 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             namespace,
             key,
             value,
-            type: type || "multi_line_text_field",
-          },
-        ],
-      },
+            type
+          }
+        ]
+      }
     };
 
-    console.log("🚀 Updating customer metafield via app proxy:", {
-      customer_id,
-      namespace,
-      key,
-      valueLength: value.length,
-      shop: session.shop,
+    const response = await admin.graphql(mutation, { variables });
+    const result = await response.json();
+
+    if (result.data?.customerUpdate?.userErrors?.length > 0) {
+      console.error('❌ GraphQL errors:', result.data.customerUpdate.userErrors);
+      return json({
+        success: false,
+        error: "GraphQL errors",
+        details: result.data.customerUpdate.userErrors
+      }, { status: 400 });
+    }
+
+    console.log('✅ Customer metafield updated successfully');
+
+    return json({
+      success: true,
+      message: "Metafield updated successfully",
+      customer: result.data?.customerUpdate?.customer || null
     });
 
-    // Execute the GraphQL mutation
-    const response = await admin.graphql(mutation, { variables });
-    const data = await response.json();
-
-    console.log("📦 GraphQL response:", JSON.stringify(data, null, 2));
-
-    // Check for GraphQL errors
-    if (data.data?.customerUpdate?.userErrors?.length > 0) {
-      const errors = data.data.customerUpdate.userErrors;
-      console.error("❌ Customer update errors:", errors);
-      return json(
-        {
-          success: false,
-          error: errors.map((e: any) => e.message).join(", "),
-          details: errors,
-        },
-        { status: 400 },
-      );
-    }
-
-    // Check if the mutation was successful
-    if (data.data?.customerUpdate?.customer) {
-      console.log("✅ Metafield updated successfully via app proxy");
-      return json({
-        success: true,
-        message: "Customer metafield updated successfully",
-        customer_id,
-        metafield: { namespace, key, value: value.substring(0, 100) + "..." },
-      });
-    } else {
-      console.error("❌ Unexpected GraphQL response:", data);
-      return json(
-        {
-          success: false,
-          error: "Failed to update customer metafield",
-          details: data,
-        },
-        { status: 500 },
-      );
-    }
   } catch (error) {
-    console.error("💥 Error in app proxy route:", error);
-    return json(
-      {
-        success: false,
-        error:
-          error instanceof Error ? error.message : "Unknown error occurred",
-        details: error,
-      },
-      { status: 500 },
-    );
-  }
-};
+    console.error('💥 Error updating metafield:', error);
 
-// Handle GET requests (app proxy verification)
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  return null;
-  // try {
-  //   const { session } = await authenticate.public.appProxy(request);
-  //   return json({
-  //     message: "App Proxy is working",
-  //     shop: session?.shop,
-  //     timestamp: new Date().toISOString()
-  //   });
-  // } catch (error) {
-  //   return json(
-  //     { error: "App proxy verification failed" },
-  //     { status: 500 }
-  //   );
-  // }
-};
+    return json({
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred"
+    }, { status: 500 });
+  }
+}
