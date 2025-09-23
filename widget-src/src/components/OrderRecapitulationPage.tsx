@@ -117,8 +117,8 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
 
   // Check for unavailable products
   const unavailableProducts = specifications.reduce((acc, spec) => {
-    if (spec.material.availability === 'unavailable') {
-      acc.push(`${spec.material.name} (materiál)`)
+    if (!spec.material.variant?.availableForSale) {
+      acc.push(`${spec.material.title} (materiál)`)
     }
     if (spec.edgeMaterial && spec.edgeMaterial.availability === 'unavailable') {
       acc.push(`${spec.edgeMaterial.name} (hrana)`)

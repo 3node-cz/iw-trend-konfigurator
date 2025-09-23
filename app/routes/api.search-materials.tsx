@@ -54,6 +54,18 @@ export async function loader({ request }: LoaderFunctionArgs) {
               vendor
               productType
               tags
+              featuredImage {
+                url
+                altText
+              }
+              images(first: 5) {
+                edges {
+                  node {
+                    url
+                    altText
+                  }
+                }
+              }
               variants(first: 10) {
                 edges {
                   node {
@@ -63,6 +75,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
                     price
                     inventoryQuantity
                     availableForSale
+                    image {
+                      url
+                      altText
+                    }
                     metafields(first: 10) {
                       edges {
                         node {
@@ -123,38 +139,30 @@ export async function loader({ request }: LoaderFunctionArgs) {
         return acc;
       }, {}) || {};
 
+      // Get images - prefer variant image, fallback to product featured image
+      const variantImage = variant?.image?.url;
+      const productImage = product.featuredImage?.url;
+      const productImages = product.images?.edges?.map((edge: any) => edge.node.url) || [];
+
       return {
         id: variant?.id || product.id,
-        variantId: variant?.id,
-        code: variant?.sku || product.handle,
-        name: product.title,
-        productCode: variant?.sku || product.handle,
-        availability: variant?.availableForSale ? 'available' : 'unavailable',
-        warehouse: variant?.inventoryQuantity && variant.inventoryQuantity > 0 ? 'Available' : 'Out of Stock',
-        price: {
-          amount: parseFloat(variant?.price || "0"),
-          currency: "EUR",
-          perUnit: "/ ks"
-        },
-        quantity: variant?.inventoryQuantity || 0,
-        // Additional data for debugging/reference
-        _originalData: {
-          title: product.title,
-          handle: product.handle,
-          vendor: product.vendor,
-          productType: product.productType,
-          tags: product.tags,
-          variant: variant ? {
-            id: variant.id,
-            title: variant.title,
-            sku: variant.sku,
-            price: parseFloat(variant.price || "0"),
-            inventoryQuantity: variant.inventoryQuantity,
-            availableForSale: variant.availableForSale,
-            metafields: variantMetafields
-          } : null,
-          metafields: productMetafields
-        }
+        title: product.title,
+        handle: product.handle,
+        vendor: product.vendor,
+        productType: product.productType,
+        tags: product.tags,
+        image: variantImage || productImage,
+        images: productImages,
+        variant: variant ? {
+          id: variant.id,
+          title: variant.title,
+          sku: variant.sku,
+          price: variant.price || "0",
+          inventoryQuantity: variant.inventoryQuantity,
+          availableForSale: variant.availableForSale,
+          metafields: variantMetafields
+        } : undefined,
+        metafields: productMetafields
       };
     });
 

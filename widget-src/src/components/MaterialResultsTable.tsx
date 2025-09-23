@@ -80,35 +80,32 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Avatar
                         src={material.image}
-                        alt={material.name}
+                        alt={material.title}
                         sx={{ width: 40, height: 40, borderRadius: 1 }}
                         variant="rounded"
                       >
                         📦
                       </Avatar>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {material.name}
+                        {material.title}
                       </Typography>
                     </Box>
                   </TableCell>
                   
                   <TableCell>
                     <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                      {material.dimensions 
-                        ? `${material.dimensions.width}×${material.dimensions.height}×${material.dimensions.thickness} mm`
-                        : '-'
-                      }
+                      {material.variant?.sku || material.handle || '-'}
                     </Typography>
                   </TableCell>
                   
                   <TableCell sx={{ textAlign: 'center' }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
                       <AvailabilityChip
-                        availability={material.availability}
+                        availability={material.variant?.availableForSale ? 'available' : 'unavailable'}
                         size="small"
                       />
                       <Typography variant="caption" color="text.secondary">
-                        {material.warehouse}
+                        {material.vendor || 'Skladom'}
                       </Typography>
                     </Box>
                   </TableCell>
@@ -116,7 +113,7 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                   <TableCell sx={{ textAlign: 'center' }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
                       <AvailabilityChip
-                        availability={material.availability}
+                        availability={material.variant?.availableForSale ? 'available' : 'unavailable'}
                         size="small"
                       />
                       <Typography variant="caption" color="text.secondary">
@@ -128,30 +125,25 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                   <TableCell sx={{ textAlign: 'right' }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {material.price.amount.toFixed(4)} EUR
+                        {parseFloat(material.variant?.price || "0").toFixed(4)} EUR
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {material.price.perUnit}
+                        per unit
                       </Typography>
-                      {material.discountInfo && (
-                        <Typography variant="caption" color="text.secondary">
-                          {material.discountInfo}
-                        </Typography>
-                      )}
                     </Box>
                   </TableCell>
                   
                   <TableCell sx={{ textAlign: 'right' }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {material.totalPrice?.amount.toFixed(4)} EUR
+                        {parseFloat(material.variant?.price || "0").toFixed(4)} EUR
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         / ks
                       </Typography>
-                      {material.quantity && (
+                      {material.variant?.inventoryQuantity && (
                         <Typography variant="caption" color="text.secondary">
-                          {material.quantity} ks / 1
+                          {material.variant?.inventoryQuantity} ks / 1
                         </Typography>
                       )}
                     </Box>

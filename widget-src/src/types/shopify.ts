@@ -33,32 +33,25 @@ export interface ProductVariant {
   quantityAvailable?: number
 }
 
+// Clean Shopify API structure
 export interface MaterialSearchResult {
-  id: string
-  variantId?: string // Shopify ProductVariant ID for cart operations
-  code: string // "H1180"
-  name: string // "DTD_H1180 ST37 Dub Halifax prírodný 2800/2070/18.6"
-  productCode: string // "275048"
-  availability: 'available' | 'unavailable' | 'limited'
-  warehouse: string // "Bratislava"
-  price: {
-    amount: number
-    currency: string
-    perUnit: string // "/ ks" or "/ m²"
+  id: string // Product or Variant ID
+  title: string // Product title
+  handle: string // Product handle
+  vendor: string // Product vendor
+  productType: string // Product type
+  tags: string[] // Product tags
+  variant?: {
+    id: string // Variant ID
+    title: string // Variant title
+    sku: string // SKU
+    price: string // Price as string (Shopify format)
+    inventoryQuantity: number
+    availableForSale: boolean
+    metafields: Record<string, string>
   }
-  totalPrice?: {
-    amount: number
-    currency: string
-  }
-  discountInfo?: string // "22 % / 0 %" 
-  quantity?: number
-  dimensions?: {
-    width: number
-    height: number
-    thickness: number
-  }
+  metafields: Record<string, string> // Product metafields
   image?: string // Featured product image URL
-  grainDirection?: 'horizontal' | 'vertical' // Wood grain direction for visualization
   images?: string[] // Additional product images
   description?: string // Product description
 }

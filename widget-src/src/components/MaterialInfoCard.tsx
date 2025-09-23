@@ -15,6 +15,17 @@ interface MaterialInfoCardProps {
 }
 
 const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
+  console.log('🔍 MaterialInfoCard received material:', material);
+  console.log('🔍 Material fields breakdown:', {
+    title: material.title,
+    vendor: material.vendor,
+    handle: material.handle,
+    image: material.image,
+    variant: material.variant,
+    'variant.sku': material.variant?.sku,
+    'variant.price': material.variant?.price
+  });
+
   return (
     <Card>
       <CardContent sx={{ p: 3 }}>
@@ -29,7 +40,7 @@ const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
         <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
           <Avatar
             src={material.image}
-            alt={material.name}
+            alt={material.title}
             sx={{
               width: 100,
               height: 100,
@@ -47,7 +58,7 @@ const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
               variant="body1"
               sx={{ fontWeight: 500, mb: 1, color: 'primary.main' }}
             >
-              {material.name}
+              {material.title || '[No Title]'}
             </Typography>
 
             <Typography
@@ -55,28 +66,24 @@ const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
               color="primary"
               sx={{ fontWeight: 500, mb: 1 }}
             >
-              {material.productCode} - Egger
+              {material.variant?.sku || material.handle || '[No SKU/Handle]'} - {material.vendor || '[No Vendor]'}
             </Typography>
 
-            {/* Dimensions in compact format */}
-            {material.dimensions && (
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mb: 1 }}
-              >
-                {material.dimensions.height}×{material.dimensions.width}×
-                {material.dimensions.thickness} mm
-              </Typography>
-            )}
+            {/* SKU / Product Code */}
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mb: 1 }}
+            >
+              SKU: {material.variant?.sku || material.handle || 'N/A'}
+            </Typography>
 
             {/* Price highlight */}
             <Typography
               variant="body2"
               sx={{ fontWeight: 600, color: '#2e7d32' }}
             >
-              {Number(material.price.amount).toFixed(4)} EUR{' '}
-              {material.price.perUnit}
+              {material.variant?.price ? `${parseFloat(material.variant.price).toFixed(4)} EUR per unit` : '[No Price]'}
             </Typography>
           </Box>
         </Box>
@@ -84,19 +91,18 @@ const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
         <Divider sx={{ my: 2 }} />
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {/* Dimensions */}
-          {material.dimensions && (
+          {/* Inventory */}
+          {material.variant?.inventoryQuantity !== undefined && (
             <Box>
               <Typography
                 variant="caption"
                 color="text.secondary"
                 sx={{ display: 'block', mb: 0.5 }}
               >
-                Rozmery
+                Skladom
               </Typography>
               <Typography variant="body2">
-                {material.dimensions.width} × {material.dimensions.height} ×{' '}
-                {material.dimensions.thickness} mm
+                {material.variant.inventoryQuantity} ks
               </Typography>
             </Box>
           )}

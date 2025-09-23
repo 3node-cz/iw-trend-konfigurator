@@ -87,7 +87,93 @@ export const addToCartSF = async ({
 }
 
 /**
- * Vytvorí nový košík
+ * Vytvorí nový košík cez backend API (odporúčané)
+ */
+export const createCartViaBackend = async (items: Array<{
+  variantId: string
+  quantity: number
+  attributes?: Array<{ key: string; value: string }>
+}>): Promise<CartResponse> => {
+  try {
+    const response = await fetch('/apps/konfigurator/api/cart-create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        items,
+        orderAttributes: {
+          _order_source: 'cutting_configurator'
+        }
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const result = await response.json()
+
+    if (result.error) {
+      throw new Error(result.error)
+    }
+
+    console.log('Vytvorený draft order:', result.draftOrder)
+    return {
+      cart: {
+        id: result.draftOrder.id,
+        checkoutUrl: result.draftOrder.checkoutUrl,
+        totalQuantity: result.draftOrder.lineItems.reduce((sum: number, item: any) => sum + item.quantity, 0)
+      }
+    }
+  } catch (error) {
+    console.error('Chyba createCartViaBackend:', error)
+    throw error
+  }
+}
+
+/**
+ * Vytvorí nový košík cez Storefront API (server-side)
+ */
+export const createCartStorefront = async (items: Array<{
+  variantId: string
+  quantity: number
+  attributes?: Array<{ key: string; value: string }>
+}>): Promise<CartResponse> => {
+  try {
+    const response = await fetch('/apps/konfigurator/api/cart-storefront', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        items,
+        buyerIdentity: {
+          countryCode: 'SK'
+        }
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const result = await response.json()
+
+    if (result.error) {
+      throw new Error(result.error)
+    }
+
+    console.log('Vytvorený košík:', result.cart)
+    return { cart: result.cart }
+  } catch (error) {
+    console.error('Chyba createCartStorefront:', error)
+    throw error
+  }
+}
+
+/**
+ * Vytvorí nový košík (DEPRECATED - použite createCartViaBackend)
  */
 export const createCartSF = async ({
   shopUrl,
@@ -96,6 +182,8 @@ export const createCartSF = async ({
   shopUrl: string
   storefrontToken: string
 }): Promise<CartResponse> => {
+  console.warn('createCartSF is deprecated. Use createCartViaBackend instead.')
+
   try {
     const res = await fetch(shopUrl, {
       method: 'POST',

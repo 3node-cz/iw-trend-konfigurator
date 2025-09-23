@@ -1,46 +1,26 @@
 import { useState, useCallback } from 'react'
-import { addToCartSF, createCartSF, redirectToCheckout } from '../api/cart'
-import { SHOPIFY_CONFIG } from '../config/shopify'
+import { createCartViaBackend, createCartStorefront } from '../api/cart'
 import type { CompleteOrder } from '../types/shopify'
 
-// Helper function to get variant ID from product ID
+// Helper function to get variant ID from product ID - now uses backend API
 const getVariantIdFromProduct = async (productId: string): Promise<string> => {
-  const query = `
-    query getProductVariant($id: ID!) {
-      product(id: $id) {
-        variants(first: 1) {
-          edges {
-            node {
-              id
-            }
-          }
-        }
-      }
-    }
-  `
-  
   try {
-    const response = await fetch(SHOPIFY_CONFIG.SHOP_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Storefront-Access-Token': SHOPIFY_CONFIG.STOREFRONT_API_TOKEN,
-      },
-      body: JSON.stringify({
-        query,
-        variables: { id: productId }
-      })
-    })
-    
-    const data = await response.json()
-    const variantId = data.data?.product?.variants?.edges[0]?.node?.id
-    
-    if (variantId) {
-      return variantId
+    // Use our backend API to get variant information
+    const response = await fetch(`/apps/konfigurator/api/search-materials?query=${productId}&limit=1`)
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const materials = await response.json()
+
+    if (materials.length > 0 && materials[0].variant?.id) {
+      return materials[0].variant.id
     } else {
       return productId // Fallback to product ID if no variant found
     }
   } catch (error) {
+    console.warn('Failed to get variant ID via backend API:', error)
     return productId // Fallback to product ID on error
   }
 }
@@ -66,16 +46,8 @@ export const useOrderSubmission = () => {
     setState(prev => ({ ...prev, isSubmitting: true, error: null }))
 
     try {
-      // 1. Create a new cart if we don't have one
-      let cartId = state.cartId
-      if (!cartId) {
-        const cartResult = await createCartSF({
-          shopUrl: SHOPIFY_CONFIG.SHOP_URL,
-          storefrontToken: SHOPIFY_CONFIG.STOREFRONT_API_TOKEN,
-        })
-        cartId = cartResult.cart.id
-        setState(prev => ({ ...prev, cartId }))
-      }
+      // 1. Prepare all line items first
+      const allLineItems = []
 
       // 2. Prepare order data for cart attributes
       const orderData = {
@@ -93,13 +65,10 @@ export const useOrderSubmission = () => {
         timestamp: new Date().toISOString(),
       }
 
-      // 3. Create cart lines - one for each material specification with cutting pieces
+      // 2. Create items for each material specification with cutting pieces
       const specsWithPieces = completeOrder.specifications.filter(spec => spec.pieces.length > 0)
-      
-      // Allow all materials to be ordered regardless of availability status
 
-      // Get variant IDs for all materials and create cart lines
-      const allLines = []
+      // Allow all materials to be ordered regardless of availability status
       
       for (const [specIndex, spec] of specsWithPieces.entries()) {
         // Calculate how many boards are needed based on cutting layouts
@@ -114,8 +83,8 @@ export const useOrderSubmission = () => {
         const boardMerchandiseId = spec.material.variantId || await getVariantIdFromProduct(spec.material.id)
         
         // Add board material line item
-        allLines.push({
-          merchandiseId: boardMerchandiseId,
+        allLineItems.push({
+          variantId: boardMerchandiseId,
           quantity: boardsNeeded,
           attributes: [
             {
@@ -153,8 +122,8 @@ export const useOrderSubmission = () => {
             // Get the correct variant ID for the edge material
             const edgeMerchandiseId = spec.edgeMaterial.variantId || await getVariantIdFromProduct(spec.edgeMaterial.id)
             
-            allLines.push({
-              merchandiseId: edgeMerchandiseId,
+            allLineItems.push({
+              variantId: edgeMerchandiseId,
               quantity: Math.ceil(totalEdgeLength), // Round up to whole meters
               attributes: [
                 {
@@ -175,8 +144,8 @@ export const useOrderSubmission = () => {
       const cuttingServiceProductId = 'gid://shopify/Product/15514687799678'
       const cuttingServiceVariantId = await getVariantIdFromProduct(cuttingServiceProductId)
 
-      allLines.push({
-        merchandiseId: cuttingServiceVariantId,
+      allLineItems.push({
+        variantId: cuttingServiceVariantId,
         quantity: 1,
         attributes: [
           {
@@ -192,32 +161,19 @@ export const useOrderSubmission = () => {
         ],
       })
 
-      const lines = allLines
+      // 3. Create cart/draft order via backend API (recommended approach)
+      const result = await createCartViaBackend(allLineItems)
 
-      // 4. Add items to cart with order data as attributes
-      const result = await addToCartSF({
-        cartId: cartId!,
-        shopUrl: SHOPIFY_CONFIG.SHOP_URL,
-        storefrontToken: SHOPIFY_CONFIG.STOREFRONT_API_TOKEN,
-        lines,
-        attributes: [
-          {
-            key: '_cutting_data',
-            value: JSON.stringify(orderData),
-          },
-          {
-            key: '_order_type',
-            value: 'cutting_specification',
-          },
-        ],
-      })
+      // Alternative: Use Storefront API via backend
+      // const result = await createCartStorefront(allLineItems)
 
-      // 5. Set success state with checkout URL (no automatic redirect)
-      setState(prev => ({ 
-        ...prev, 
+      // 4. Set success state with checkout URL (no automatic redirect)
+      setState(prev => ({
+        ...prev,
         isSubmitting: false,
         success: true,
-        checkoutUrl: result.cart.checkoutUrl
+        checkoutUrl: result.cart.checkoutUrl,
+        cartId: result.cart.id
       }))
       
       return result

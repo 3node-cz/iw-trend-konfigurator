@@ -42,8 +42,6 @@ function App() {
   const handleOrderCreated = (orderData: OrderFormData) => {
     setCurrentOrder(orderData)
     setCurrentView('material-selection')
-    // Scroll to top when navigating to material selection
-    window.scrollTo(0, 0)
   }
 
   const handleBackToOrders = () => {
@@ -52,28 +50,25 @@ function App() {
     setSelectedMaterials([])
     setCuttingSpecifications([])
     setCheckoutUrl('')
-    // Scroll to top when going back to orders
-    window.scrollTo(0, 0)
   }
 
   const handleBackToMaterialSelection = () => {
     setCurrentView('material-selection')
     // Don't reset selectedMaterials or cutting specs - preserve them when going back
-    window.scrollTo(0, 0)
   }
 
   const handleBackToCuttingSpecification = () => {
     setCurrentView('cutting-specification')
-    window.scrollTo(0, 0)
   }
 
   const handleMaterialSelectionComplete = (materials: SelectedMaterial[]) => {
+    console.log('🔍 handleMaterialSelectionComplete received materials:', materials);
+
     // Store all selected materials
     setSelectedMaterials(materials)
 
     if (materials.length > 0) {
       setCurrentView('cutting-specification')
-      window.scrollTo(0, 0)
     }
   }
 
@@ -83,7 +78,6 @@ function App() {
     // Save all cutting specifications
     setCuttingSpecifications(specifications)
     setCurrentView('recapitulation')
-    window.scrollTo(0, 0)
   }
 
   const handleOrderSubmit = async (completeOrder: CompleteOrder) => {
@@ -113,6 +107,7 @@ function App() {
 
       // Set the loaded configuration into app state
       setCurrentOrder(orderInfo)
+
       setSelectedMaterials(
         specifications.map((spec) => ({
           id: spec.material.id,
@@ -131,7 +126,6 @@ function App() {
 
       // Navigate directly to order recap/summary
       setCurrentView('recapitulation')
-      window.scrollTo(0, 0)
     } catch (error) {
       console.error('❌ Error loading configuration:', error)
       // Could show error message to user here
@@ -141,7 +135,6 @@ function App() {
   const handleOrderSuccess = (url: string, orderName: string) => {
     setCheckoutUrl(url)
     setCurrentView('success')
-    window.scrollTo(0, 0)
   }
 
   // Show loading spinner while customer data is being fetched
@@ -257,22 +250,23 @@ function App() {
           <CuttingSpecificationPage
             materials={selectedMaterials.map((material) => ({
               id: material.id,
-              code: material.code,
-              name: material.name,
-              productCode: material.code,
-              availability: 'available' as const,
-              warehouse: 'Bratislava',
-              price: {
-                amount: material.price,
-                currency: 'EUR',
-                perUnit: '/ ks',
-              },
-              totalPrice: {
-                amount: material.totalPrice,
-                currency: 'EUR',
-              },
-              quantity: material.quantity,
+              title: material.name || '[No Title]',
+              handle: material.code || 'unknown',
+              vendor: '[Unknown Vendor]',
+              productType: 'Material',
+              tags: [],
               image: material.image,
+              images: material.image ? [material.image] : [],
+              variant: {
+                id: material.variantId || material.id,
+                title: material.name || '[No Title]',
+                sku: material.code || 'N/A',
+                price: material.price.toString(),
+                inventoryQuantity: 0,
+                availableForSale: true,
+                metafields: {}
+              },
+              metafields: {}
             }))}
             orderName={currentOrder.orderName}
             existingSpecifications={cuttingSpecifications}

@@ -119,9 +119,9 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
     result: MaterialSearchResult,
   ): EdgeMaterial & { image?: string } => ({
     id: result.id,
-    name: result.name,
-    productCode: result.productCode || result.code,
-    availability: result.availability,
+    name: result.title,
+    productCode: result.variant?.sku || result.handle,
+    availability: result.variant?.availableForSale ? 'available' : 'unavailable',
     thickness: 0.8, // Default thickness, could be extracted from dimensions
     availableThicknesses: [0.4, 0.8, 2], // Common edge thickness variants
     warehouse: result.warehouse,
@@ -215,7 +215,7 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
                   {/* Small edge preview image */}
                   <Avatar
                     src={result.image}
-                    alt={result.name}
+                    alt={result.title}
                     sx={{
                       width: 40,
                       height: 40,
@@ -234,13 +234,13 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
                       variant="body2"
                       sx={{ fontWeight: 500, mb: 0.5 }}
                     >
-                      {result.name}
+                      {result.title}
                     </Typography>
                     <Typography
                       variant="caption"
                       color="text.secondary"
                     >
-                      {result.productCode || result.code} • {result.warehouse}
+                      {result.variant?.sku || result.handle} • {result.warehouse || 'warehouse'}
                     </Typography>
                   </Box>
 
@@ -368,7 +368,7 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
                       textAlign: 'left',
                     }}
                   >
-                    {result.name}
+                    {result.title}
                   </Button>
                 </Box>
               ))

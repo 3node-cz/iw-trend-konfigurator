@@ -33,6 +33,8 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
   onBack,
   onContinue
 }) => {
+  console.log('🔍 CuttingSpecificationPage received materials:', materials);
+  console.log('🔍 CuttingSpecificationPage existingSpecifications:', existingSpecifications);
   // State for piece preview dialog
   const [previewPiece, setPreviewPiece] = useState<CuttingPiece | null>(null)
   const [previewMaterial, setPreviewMaterial] = useState<MaterialSearchResult | null>(null)

@@ -34,7 +34,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
           <Avatar
             src={material.image}
-            alt={material.name}
+            alt={material.title}
             sx={{
               width: 80,
               height: 80,
@@ -61,16 +61,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 overflow: 'hidden'
               }}
             >
-              {material.name}
+              {material.title}
             </Typography>
             
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-              {material.productCode} - Egger
+              {material.variant?.sku || material.handle} - {material.vendor}
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
               <AvailabilityChip
-                availability={material.availability}
+                availability={material.variant?.availableForSale ? 'available' : 'unavailable'}
                 size="small"
               />
               <Typography variant="caption" color="text.secondary">
@@ -95,14 +95,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {/* Price */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 'auto' }}>
           <Typography variant="caption" color="text.secondary">
-            {material.price.perUnit}
+            per unit
           </Typography>
           <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 600 }}>
-            €{material.price.amount.toFixed(2)}
+            €{parseFloat(material.variant?.price || "0").toFixed(2)}
           </Typography>
         </Box>
 
-        {material.totalPrice && material.totalPrice.amount !== material.price.amount && (
+        {material.variant && parseFloat(material.variant.price) > 0 && (
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.5 }}>
             <Typography variant="caption" color="text.secondary">
               Pôvodná cena
@@ -111,7 +111,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               variant="body2" 
               sx={{ textDecoration: 'line-through', color: 'text.secondary' }}
             >
-              €{material.totalPrice.amount.toFixed(2)}
+              €{parseFloat(material.variant?.price || "0").toFixed(2)}
             </Typography>
           </Box>
         )}

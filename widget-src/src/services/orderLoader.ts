@@ -19,6 +19,8 @@ export const loadOrderConfiguration = async (
   orderInfo: typeof savedOrder.orderInfo
   specifications: CuttingSpecification[]
 }> => {
+  console.log('🔍 Loading order configuration for:', savedOrder.id);
+  console.log('🔍 Saved order specifications:', savedOrder.specifications);
 
   materialCache.clear()
   edgeCache.clear()
@@ -26,6 +28,7 @@ export const loadOrderConfiguration = async (
   const uniqueMaterialIds = [
     ...new Set(savedOrder.specifications.map((spec) => spec.materialId)),
   ]
+  console.log('🔍 Unique material IDs to fetch:', uniqueMaterialIds);
   const uniqueEdgeIds = [
     ...new Set(
       savedOrder.specifications
@@ -99,19 +102,23 @@ export const convertToSavedSpecification = (
 async function fetchMaterialById(
   materialId: string,
 ): Promise<MaterialSearchResult | null> {
-  try {
-    const numericId = materialId.split('/').pop() || materialId
+  console.log('🔍 Fetching material by ID:', materialId);
 
+  try {
+    // Pass the full materialId (GID) to the search, let the API handle the format
     const results = await searchMaterials({
-      query: `id:${numericId}`,
+      query: `id:${materialId}`,
       limit: 1,
     })
 
+    console.log('🔍 Search results for material ID', materialId, ':', results);
+
     if (results.length === 0) {
-      console.warn(`Material not found for ID ${materialId}`)
+      console.warn(`❌ Material not found for ID ${materialId}`)
       return null
     }
 
+    console.log('✅ Found material:', results[0]);
     return results[0]
   } catch (error) {
     console.error('Error fetching material by ID:', error)
@@ -123,10 +130,9 @@ async function fetchEdgeMaterialById(
   edgeMaterialId: string,
 ): Promise<EdgeMaterial | null> {
   try {
-    const numericId = edgeMaterialId.split('/').pop() || edgeMaterialId
-
+    // Pass the full edgeMaterialId (GID) to the search, let the API handle the format
     const results = await searchEdgeMaterials({
-      query: `id:${numericId}`,
+      query: `id:${edgeMaterialId}`,
       limit: 1,
     })
 

@@ -82,8 +82,8 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
     // Add material board
     orderItems.push({
       id: `material-${specIndex}`,
-      name: spec.material.name,
-      code: spec.material.productCode || spec.material.code || '',
+      name: spec.material.title,
+      code: spec.material.variant?.sku || spec.material.handle || '',
       quantity: boardsNeeded,
       unit: 'ks',
       unitPrice: discountedUnitPrice,

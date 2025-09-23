@@ -55,7 +55,7 @@ const CuttingOptimizationPanel: React.FC<CuttingOptimizationPanelProps> = ({
       efficiency: 92.5,
       wastePercentage: 7.5,
       totalSheets: Math.ceil(totalArea / (material.dimensions ? (material.dimensions.width * material.dimensions.height / 1000000) : 5.6)),
-      totalCost: material.price.amount * Math.ceil(totalArea),
+      totalCost: parseFloat(material.variant?.price || "0") * Math.ceil(totalArea),
       recommendations: [
         'Optimalizovať rozloženie pre minimalizáciu odpadu',
         'Zvážiť otočenie niektorých kusov pre lepšie využitie',
@@ -102,7 +102,7 @@ const CuttingOptimizationPanel: React.FC<CuttingOptimizationPanelProps> = ({
         <Grid size={{ xs: 12, sm: 4 }}>
           <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
             <Typography variant="h4" color="primary" sx={{ fontWeight: 600 }}>
-              {(material.price.amount * totalArea).toFixed(2)}
+              {(parseFloat(material.variant?.price || "0") * totalArea).toFixed(2)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               Odhadovaná cena (EUR)

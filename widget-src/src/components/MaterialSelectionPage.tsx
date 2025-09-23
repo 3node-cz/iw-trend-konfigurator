@@ -95,11 +95,11 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
 
     const selectedMaterial: SelectedMaterial = {
       id: material.id,
-      code: material.code,
-      name: material.name,
-      quantity: material.quantity || 1,
-      price: material.price.amount,
-      totalPrice: material.totalPrice?.amount || material.price.amount,
+      code: material.variant?.sku || material.handle,
+      name: material.title,
+      quantity: material.variant?.inventoryQuantity || 1,
+      price: parseFloat(material.variant?.price || "0"),
+      totalPrice: parseFloat(material.variant?.price || "0"),
       variantId: `variant-${material.id}`,
       image: material.image // Preserve the image
     }
@@ -205,24 +205,25 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
           <MaterialResultsTable
             results={selectedMaterials.map(material => ({
               id: material.id,
-              code: material.code,
-              name: material.name,
-              productCode: '',
-              availability: 'available' as const,
-              warehouse: '',
-              price: {
-                amount: material.price,
-                currency: 'EUR',
-                perUnit: '/ ks'
+              title: material.name,
+              handle: material.code,
+              vendor: 'Vendor',
+              productType: 'Material',
+              tags: [],
+              variant: {
+                id: material.id,
+                title: material.name,
+                sku: material.code,
+                price: material.price.toString(),
+                inventoryQuantity: material.quantity,
+                availableForSale: true,
+                metafields: {}
               },
-              totalPrice: {
-                amount: material.totalPrice,
-                currency: 'EUR'
-              },
-              quantity: material.quantity,
-              image: material.image // Include the image in the display mapping
-            }))}
-            onRemoveMaterial={handleRemoveMaterial}
+              metafields: {},
+              image: material.image
+            }))
+          }
+          onRemoveMaterial={handleRemoveMaterial}
             isSelectedMaterials
           />
           
