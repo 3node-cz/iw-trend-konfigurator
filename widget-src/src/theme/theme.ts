@@ -1,10 +1,25 @@
 import { createTheme } from '@mui/material/styles'
 
+// Function to get primary color from Shopify configuration
+const getPrimaryColor = () => {
+  try {
+    const widgetConfigs = (window as any).ConfiguratorConfig;
+    if (widgetConfigs) {
+      const firstBlockId = Object.keys(widgetConfigs)[0];
+      const config = widgetConfigs[firstBlockId];
+      return config?.settings?.primaryColor || '#22C55E';
+    }
+    return '#22C55E';
+  } catch (error) {
+    return '#22C55E';
+  }
+};
+
 export const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#2e7d32',
+      main: getPrimaryColor(),
     },
     secondary: {
       main: '#dc004e',

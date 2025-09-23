@@ -2,12 +2,11 @@
 
 client_id = "34dbe43a78626352390045be3bb58946"
 name = "iw-trend-configurator-remix"
-application_url = "https://uni-implement-municipal-unless.trycloudflare.com"
+application_url = "https://sunglasses-compiled-caused-sending.trycloudflare.com"
 embedded = true
 handle = "iw-trend-configurator-remix-1"
 
 [build]
-include_config_on_deploy = true
 automatically_update_urls_on_dev = true
 
 [webhooks]
@@ -26,12 +25,12 @@ api_version = "2025-07"
 scopes = "read_customers,read_orders,read_products,write_customers,write_orders,write_products,write_app_proxy"
 
 [auth]
-redirect_urls = ["https://uni-implement-municipal-unless.trycloudflare.com/auth/callback", "https://uni-implement-municipal-unless.trycloudflare.com/auth/shopify/callback", "https://uni-implement-municipal-unless.trycloudflare.com/api/auth/callback"]
+redirect_urls = ["https://sunglasses-compiled-caused-sending.trycloudflare.com/auth/callback", "https://sunglasses-compiled-caused-sending.trycloudflare.com/auth/shopify/callback", "https://sunglasses-compiled-caused-sending.trycloudflare.com/api/auth/callback"]
 
 [pos]
 embedded = false
 
 [app_proxy]
-url = "https://uni-implement-municipal-unless.trycloudflare.com"
+url = "https://sunglasses-compiled-caused-sending.trycloudflare.com"
 subpath = "configurator"
 prefix = "apps"

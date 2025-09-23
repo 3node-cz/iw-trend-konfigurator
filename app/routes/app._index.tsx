@@ -42,12 +42,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     const colorMetafield = metafields.find((edge: any) => edge.node.key === "primary_color");
 
     return json({
-      currentColor: colorMetafield?.node?.value || "#007cba",
+      currentColor: colorMetafield?.node?.value || "#22C55E",
       shop: session.shop
     });
   } catch (error) {
     return json({
-      currentColor: "#007cba",
+      currentColor: "#22C55E",
       shop: session.shop
     });
   }

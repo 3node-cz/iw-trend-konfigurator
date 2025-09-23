@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Container, Box, Typography, CircularProgress } from '@mui/material'
+import { Container, Box, Typography, CircularProgress, ThemeProvider } from '@mui/material'
 import OrdersPage from './components/OrdersPage'
 import MaterialSelectionPage from './components/MaterialSelectionPage'
 import CuttingSpecificationPage from './components/CuttingSpecificationPage'
@@ -8,6 +8,7 @@ import OrderSuccessPage from './components/OrderSuccessPage'
 import CuttingLayoutDemo from './components/CuttingLayoutDemo'
 import { submitOrderToShopify } from './services/shopifyApi'
 import { loadOrderConfiguration } from './services/orderLoader'
+import { theme } from './theme/theme'
 import type {
   SelectedMaterial,
   OrderFormData,
@@ -145,16 +146,19 @@ function App() {
   // Show loading spinner while customer data is being fetched
   if (customerLoading) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8, textAlign: 'center' }}>
-        <CircularProgress size={40} />
-        <Typography variant="body1" sx={{ mt: 2 }}>
-          Načítavam údaje...
-        </Typography>
-      </Container>
+      <ThemeProvider theme={theme}>
+        <Container maxWidth="sm" sx={{ mt: 8, textAlign: 'center' }}>
+          <CircularProgress size={40} />
+          <Typography variant="body1" sx={{ mt: 2 }}>
+            Načítavam údaje...
+          </Typography>
+        </Container>
+      </ThemeProvider>
     )
   }
 
   return (
+    <ThemeProvider theme={theme}>
     <Container
       maxWidth={false}
       disableGutters
@@ -287,11 +291,15 @@ function App() {
         <OrderSuccessPage
           checkoutUrl={checkoutUrl}
           orderName={currentOrder.orderName}
+          orderInfo={currentOrder}
+          materials={selectedMaterials}
+          specifications={cuttingSpecifications}
           onCreateNewOrder={handleBackToOrders}
         />
       )}
       {currentView === 'cutting-demo' && <CuttingLayoutDemo />}
     </Container>
+    </ThemeProvider>
   )
 }
 
