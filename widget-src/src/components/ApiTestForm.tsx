@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Paper,
   TextField,
@@ -6,69 +6,81 @@ import {
   Typography,
   Box,
   Alert,
-  Divider
-} from '@mui/material';
+  Divider,
+} from "@mui/material";
 
 export const ApiTestForm: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('wood');
-  const [metafieldData, setMetafieldData] = useState(JSON.stringify({
-    customer_id: "9666187493717",
-    namespace: "custom",
-    key: "saved_configurations",
-    value: JSON.stringify({
-      version: "1.0",
-      savedConfigurations: [
-        {
-          id: "config_" + Date.now(),
-          name: "Test Configuration",
-          createdAt: new Date().toISOString(),
-          orderInfo: {
-            orderName: "Test Order",
-            company: "Test Company",
-            cuttingCenter: "Center A"
-          }
-        }
-      ],
-      lastUpdated: new Date().toISOString()
-    }),
-    type: "multi_line_text_field"
-  }, null, 2));
-
-  const [orderData, setOrderData] = useState(JSON.stringify({
-    items: [
+  const [searchQuery, setSearchQuery] = useState("wood");
+  const [metafieldData, setMetafieldData] = useState(
+    JSON.stringify(
       {
-        variantId: "gid://shopify/ProductVariant/51514284671317", // Update with real variant ID
-        quantity: 1,
-        attributes: [
-          {
-            key: "_material_specification",
-            value: JSON.stringify({
-              material: {
-                id: "gid://shopify/ProductVariant/51514284671317",
-                title: "Test Material - Wood Panel",
-                handle: "test-wood-panel"
+        customer_id: "9666187493717",
+        namespace: "custom",
+        key: "saved_configurations",
+        value: JSON.stringify({
+          version: "1.0",
+          savedConfigurations: [
+            {
+              id: "config_" + Date.now(),
+              name: "Test Configuration",
+              createdAt: new Date().toISOString(),
+              orderInfo: {
+                orderName: "Test Order",
+                company: "Test Company",
+                cuttingCenter: "Center A",
               },
-              pieces: [
-                {
-                  id: "test_piece_1",
-                  partName: "Test Piece",
-                  length: 500,
-                  width: 300,
-                  quantity: 1,
-                  notes: "API test piece"
-                }
-              ],
-              glueType: "PUR transparentná/bílá"
-            })
-          }
-        ]
-      }
-    ],
-    orderAttributes: {
-      _order_source: "api_test",
-      _test_order: "true"
-    }
-  }, null, 2));
+            },
+          ],
+          lastUpdated: new Date().toISOString(),
+        }),
+        type: "multi_line_text_field",
+      },
+      null,
+      2,
+    ),
+  );
+
+  const [orderData, setOrderData] = useState(
+    JSON.stringify(
+      {
+        items: [
+          {
+            variantId: "gid://shopify/ProductVariant/51514284671317", // Update with real variant ID
+            quantity: 1,
+            attributes: [
+              {
+                key: "_material_specification",
+                value: JSON.stringify({
+                  material: {
+                    id: "gid://shopify/ProductVariant/51514284671317",
+                    title: "Test Material - Wood Panel",
+                    handle: "test-wood-panel",
+                  },
+                  pieces: [
+                    {
+                      id: "test_piece_1",
+                      partName: "Test Piece",
+                      length: 500,
+                      width: 300,
+                      quantity: 1,
+                      notes: "API test piece",
+                    },
+                  ],
+                  glueType: "PUR transparentná/bílá",
+                }),
+              },
+            ],
+          },
+        ],
+        orderAttributes: {
+          _order_source: "api_test",
+          _test_order: "true",
+        },
+      },
+      null,
+      2,
+    ),
+  );
 
   const [searchResponse, setSearchResponse] = useState<any>(null);
   const [metafieldResponse, setMetafieldResponse] = useState<any>(null);
@@ -86,40 +98,41 @@ export const ApiTestForm: React.FC = () => {
     setSearchResponse(null);
 
     try {
-      const url = `/apps/konfigurator/api/search-materials?query=${encodeURIComponent(searchQuery)}&limit=10`;
-      console.log('🔍 Searching materials:', url);
+      const url = `/apps/configurator/api/search-materials?query=${encodeURIComponent(searchQuery)}&limit=10`;
+      console.log("🔍 Searching materials:", url);
 
       const res = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
-      console.log('🔍 Search response status:', res.status);
+      console.log("🔍 Search response status:", res.status);
 
       let data;
-      const contentType = res.headers.get('content-type');
+      const contentType = res.headers.get("content-type");
 
-      if (contentType && contentType.includes('application/json')) {
+      if (contentType && contentType.includes("application/json")) {
         data = await res.json();
       } else {
         data = {
           text: await res.text(),
           status: res.status,
-          statusText: res.statusText
+          statusText: res.statusText,
         };
       }
 
       setSearchResponse({
         status: res.status,
         ok: res.ok,
-        data
+        data,
       });
-
     } catch (err) {
-      console.error('🔍 Search failed:', err);
-      setSearchError(err instanceof Error ? err.message : 'Unknown error occurred');
+      console.error("🔍 Search failed:", err);
+      setSearchError(
+        err instanceof Error ? err.message : "Unknown error occurred",
+      );
     } finally {
       setSearchLoading(false);
     }
@@ -131,40 +144,41 @@ export const ApiTestForm: React.FC = () => {
     setMetafieldResponse(null);
 
     try {
-      console.log('💾 Updating metafield');
+      console.log("💾 Updating metafield");
 
-      const res = await fetch('/apps/konfigurator/api/update-metafield', {
-        method: 'POST',
+      const res = await fetch("/apps/configurator/api/update-metafield", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: metafieldData
+        body: metafieldData,
       });
 
-      console.log('💾 Metafield response status:', res.status);
+      console.log("💾 Metafield response status:", res.status);
 
       let data;
-      const contentType = res.headers.get('content-type');
+      const contentType = res.headers.get("content-type");
 
-      if (contentType && contentType.includes('application/json')) {
+      if (contentType && contentType.includes("application/json")) {
         data = await res.json();
       } else {
         data = {
           text: await res.text(),
           status: res.status,
-          statusText: res.statusText
+          statusText: res.statusText,
         };
       }
 
       setMetafieldResponse({
         status: res.status,
         ok: res.ok,
-        data
+        data,
       });
-
     } catch (err) {
-      console.error('💾 Metafield update failed:', err);
-      setMetafieldError(err instanceof Error ? err.message : 'Unknown error occurred');
+      console.error("💾 Metafield update failed:", err);
+      setMetafieldError(
+        err instanceof Error ? err.message : "Unknown error occurred",
+      );
     } finally {
       setMetafieldLoading(false);
     }
@@ -176,40 +190,41 @@ export const ApiTestForm: React.FC = () => {
     setOrderResponse(null);
 
     try {
-      console.log('🛒 Testing order creation');
+      console.log("🛒 Testing order creation");
 
-      const res = await fetch('/apps/konfigurator/api/cart-create', {
-        method: 'POST',
+      const res = await fetch("/apps/configurator/api/cart-create", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: orderData
+        body: orderData,
       });
 
-      console.log('🛒 Order response status:', res.status);
+      console.log("🛒 Order response status:", res.status);
 
       let data;
-      const contentType = res.headers.get('content-type');
+      const contentType = res.headers.get("content-type");
 
-      if (contentType && contentType.includes('application/json')) {
+      if (contentType && contentType.includes("application/json")) {
         data = await res.json();
       } else {
         data = {
           text: await res.text(),
           status: res.status,
-          statusText: res.statusText
+          statusText: res.statusText,
         };
       }
 
       setOrderResponse({
         status: res.status,
         ok: res.ok,
-        data
+        data,
       });
-
     } catch (err) {
-      console.error('🛒 Order creation failed:', err);
-      setOrderError(err instanceof Error ? err.message : 'Unknown error occurred');
+      console.error("🛒 Order creation failed:", err);
+      setOrderError(
+        err instanceof Error ? err.message : "Unknown error occurred",
+      );
     } finally {
       setOrderLoading(false);
     }
@@ -225,21 +240,20 @@ export const ApiTestForm: React.FC = () => {
 
       {response && (
         <Box sx={{ mt: 2 }}>
-          <Alert
-            severity={response.ok ? 'success' : 'warning'}
-            sx={{ mb: 2 }}
-          >
-            Status: {response.status} {response.ok ? '✅' : '❌'}
+          <Alert severity={response.ok ? "success" : "warning"} sx={{ mb: 2 }}>
+            Status: {response.status} {response.ok ? "✅" : "❌"}
           </Alert>
-          <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
-            <pre style={{
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-all',
-              fontSize: '11px',
-              margin: 0,
-              maxHeight: '300px',
-              overflow: 'auto'
-            }}>
+          <Paper sx={{ p: 2, bgcolor: "grey.50" }}>
+            <pre
+              style={{
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-all",
+                fontSize: "11px",
+                margin: 0,
+                maxHeight: "300px",
+                overflow: "auto",
+              }}
+            >
               {JSON.stringify(response.data, null, 2)}
             </pre>
           </Paper>
@@ -259,7 +273,7 @@ export const ApiTestForm: React.FC = () => {
         <Typography variant="h6" gutterBottom color="primary">
           🔍 Search Materials
         </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField
             label="Search Query"
             value={searchQuery}
@@ -271,9 +285,9 @@ export const ApiTestForm: React.FC = () => {
             variant="contained"
             onClick={handleSearchMaterials}
             disabled={searchLoading}
-            sx={{ alignSelf: 'flex-start' }}
+            sx={{ alignSelf: "flex-start" }}
           >
-            {searchLoading ? 'Searching...' : 'Search Materials'}
+            {searchLoading ? "Searching..." : "Search Materials"}
           </Button>
         </Box>
         {renderResponse(searchResponse, searchError)}
@@ -286,7 +300,7 @@ export const ApiTestForm: React.FC = () => {
         <Typography variant="h6" gutterBottom color="primary">
           🛒 Test Draft Order Creation
         </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField
             label="Order Data (JSON)"
             value={orderData}
@@ -300,9 +314,9 @@ export const ApiTestForm: React.FC = () => {
             variant="contained"
             onClick={handleTestOrderCreation}
             disabled={orderLoading}
-            sx={{ alignSelf: 'flex-start' }}
+            sx={{ alignSelf: "flex-start" }}
           >
-            {orderLoading ? 'Creating Cart...' : 'Create Test Cart'}
+            {orderLoading ? "Creating Cart..." : "Create Test Cart"}
           </Button>
         </Box>
         {renderResponse(orderResponse, orderError)}
@@ -315,7 +329,7 @@ export const ApiTestForm: React.FC = () => {
         <Typography variant="h6" gutterBottom color="primary">
           💾 Update Customer Metafield
         </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField
             label="Metafield Data (JSON)"
             value={metafieldData}
@@ -329,9 +343,9 @@ export const ApiTestForm: React.FC = () => {
             variant="contained"
             onClick={handleUpdateMetafield}
             disabled={metafieldLoading}
-            sx={{ alignSelf: 'flex-start' }}
+            sx={{ alignSelf: "flex-start" }}
           >
-            {metafieldLoading ? 'Updating...' : 'Update Metafield'}
+            {metafieldLoading ? "Updating..." : "Update Metafield"}
           </Button>
         </Box>
         {renderResponse(metafieldResponse, metafieldError)}
