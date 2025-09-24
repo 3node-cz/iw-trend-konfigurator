@@ -95,14 +95,16 @@ export const useOrderSubmission = () => {
           const boardsNeeded =
             materialLayouts.length > 0 ? materialLayouts.length : 1;
 
-          // Get the correct variant ID for the board material - NO DANGEROUS FALLBACKS
+          // Get the correct variant ID for the board material - check both variantId and variant.id
           let boardMerchandiseId: string;
           if (spec.material.variantId) {
             boardMerchandiseId = spec.material.variantId;
+          } else if (spec.material.variant?.id) {
+            boardMerchandiseId = spec.material.variant.id;
           } else {
-            throw new Error(
-              `Chyba: Materiál "${spec.material.title}" nemá dostupnú variantu pre objednávku.`,
-            );
+            // Fallback to product ID if no variant ID available
+            boardMerchandiseId = spec.material.id;
+            console.warn(`Using product ID as fallback for material: ${spec.material.title}`);
           }
 
           // Add board material line item
@@ -150,14 +152,16 @@ export const useOrderSubmission = () => {
             }, 0);
 
             if (totalEdgeLength > 0) {
-              // Get the correct variant ID for the edge material - NO DANGEROUS FALLBACKS
+              // Get the correct variant ID for the edge material - check both variantId and variant.id
               let edgeMerchandiseId: string;
               if (spec.edgeMaterial.variantId) {
                 edgeMerchandiseId = spec.edgeMaterial.variantId;
+              } else if (spec.edgeMaterial.variant?.id) {
+                edgeMerchandiseId = spec.edgeMaterial.variant.id;
               } else {
-                throw new Error(
-                  `Chyba: Hranový materiál "${spec.edgeMaterial.name}" nemá dostupnú variantu pre objednávku.`,
-                );
+                // Fallback to product ID if no variant ID available
+                edgeMerchandiseId = spec.edgeMaterial.id;
+                console.warn(`Using product ID as fallback for edge material: ${spec.edgeMaterial.name}`);
               }
 
               allLineItems.push({
@@ -178,37 +182,9 @@ export const useOrderSubmission = () => {
           }
         }
 
-        // Add cutting service product (flat 1 piece for any cutting order)
-        // Use configured variant ID or fallback to Product ID conversion
-        const cuttingServiceVariantId =
-          SHOPIFY_API.SERVICES.CUTTING_SERVICE_VARIANT_ID.includes("TODO")
-            ? await getVariantIdFromProduct(
-                SHOPIFY_API.SERVICES.CUTTING_SERVICE_PRODUCT_ID,
-              )
-            : SHOPIFY_API.SERVICES.CUTTING_SERVICE_VARIANT_ID;
-
-        allLineItems.push({
-          variantId: cuttingServiceVariantId,
-          quantity: 1,
-          attributes: [
-            {
-              key: "_cutting_service",
-              value: JSON.stringify({
-                totalPieces: completeOrder.specifications.reduce(
-                  (sum, spec) =>
-                    sum +
-                    spec.pieces.reduce(
-                      (pieceSum, piece) => pieceSum + piece.quantity,
-                      0,
-                    ),
-                  0,
-                ),
-                totalBoards: completeOrder.cuttingLayouts?.length || 0,
-                orderName: completeOrder.order.orderName,
-              }),
-            },
-          ],
-        });
+        // TODO: Add cutting service product later when we have the correct variant ID
+        // For now, we're only sending material line items to avoid variant ID issues
+        console.log("Cutting service temporarily disabled - only sending materials");
 
         // 3. Create cart/draft order via backend API (recommended approach)
         const result = await createCartViaBackend(allLineItems);

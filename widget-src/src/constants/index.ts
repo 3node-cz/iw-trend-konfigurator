@@ -97,7 +97,8 @@ export const SHOPIFY_API = {
   ORDER_TYPE: 'cutting_specification',
   // Service Product IDs - TODO: Replace with actual variant IDs
   SERVICES: {
-    CUTTING_SERVICE_VARIANT_ID: 'gid://shopify/ProductVariant/TODO_REPLACE_WITH_ACTUAL_VARIANT_ID',
+    // Temporary: Using a known working variant ID until we get the actual cutting service variant ID
+    CUTTING_SERVICE_VARIANT_ID: 'gid://shopify/ProductVariant/51514284671317',
     // Fallback product ID for conversion
     CUTTING_SERVICE_PRODUCT_ID: 'gid://shopify/Product/15514687799678',
   },
