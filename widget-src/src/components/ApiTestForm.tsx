@@ -34,12 +34,51 @@ export const ApiTestForm: React.FC = () => {
     type: "multi_line_text_field"
   }, null, 2));
 
+  const [orderData, setOrderData] = useState(JSON.stringify({
+    items: [
+      {
+        variantId: "gid://shopify/ProductVariant/51514284671317", // Update with real variant ID
+        quantity: 1,
+        attributes: [
+          {
+            key: "_material_specification",
+            value: JSON.stringify({
+              material: {
+                id: "gid://shopify/ProductVariant/51514284671317",
+                title: "Test Material - Wood Panel",
+                handle: "test-wood-panel"
+              },
+              pieces: [
+                {
+                  id: "test_piece_1",
+                  partName: "Test Piece",
+                  length: 500,
+                  width: 300,
+                  quantity: 1,
+                  notes: "API test piece"
+                }
+              ],
+              glueType: "PUR transparentná/bílá"
+            })
+          }
+        ]
+      }
+    ],
+    orderAttributes: {
+      _order_source: "api_test",
+      _test_order: "true"
+    }
+  }, null, 2));
+
   const [searchResponse, setSearchResponse] = useState<any>(null);
   const [metafieldResponse, setMetafieldResponse] = useState<any>(null);
+  const [orderResponse, setOrderResponse] = useState<any>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [metafieldLoading, setMetafieldLoading] = useState(false);
+  const [orderLoading, setOrderLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [metafieldError, setMetafieldError] = useState<string | null>(null);
+  const [orderError, setOrderError] = useState<string | null>(null);
 
   const handleSearchMaterials = async () => {
     setSearchLoading(true);
@@ -131,6 +170,51 @@ export const ApiTestForm: React.FC = () => {
     }
   };
 
+  const handleTestOrderCreation = async () => {
+    setOrderLoading(true);
+    setOrderError(null);
+    setOrderResponse(null);
+
+    try {
+      console.log('🛒 Testing order creation');
+
+      const res = await fetch('/apps/konfigurator/api/cart-create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: orderData
+      });
+
+      console.log('🛒 Order response status:', res.status);
+
+      let data;
+      const contentType = res.headers.get('content-type');
+
+      if (contentType && contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        data = {
+          text: await res.text(),
+          status: res.status,
+          statusText: res.statusText
+        };
+      }
+
+      setOrderResponse({
+        status: res.status,
+        ok: res.ok,
+        data
+      });
+
+    } catch (err) {
+      console.error('🛒 Order creation failed:', err);
+      setOrderError(err instanceof Error ? err.message : 'Unknown error occurred');
+    } finally {
+      setOrderLoading(false);
+    }
+  };
+
   const renderResponse = (response: any, error: string | null) => (
     <>
       {error && (
@@ -193,6 +277,35 @@ export const ApiTestForm: React.FC = () => {
           </Button>
         </Box>
         {renderResponse(searchResponse, searchError)}
+      </Box>
+
+      <Divider sx={{ my: 3 }} />
+
+      {/* Test Order Creation Section */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" gutterBottom color="primary">
+          🛒 Test Order Creation
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField
+            label="Order Data (JSON)"
+            value={orderData}
+            onChange={(e) => setOrderData(e.target.value)}
+            multiline
+            rows={12}
+            fullWidth
+            helperText="JSON payload for creating test draft order. Update variant IDs to match your store."
+          />
+          <Button
+            variant="contained"
+            onClick={handleTestOrderCreation}
+            disabled={orderLoading}
+            sx={{ alignSelf: 'flex-start' }}
+          >
+            {orderLoading ? 'Creating Order...' : 'Create Test Order'}
+          </Button>
+        </Box>
+        {renderResponse(orderResponse, orderError)}
       </Box>
 
       <Divider sx={{ my: 3 }} />

@@ -1,12 +1,18 @@
 import { useState, useCallback } from 'react'
 import { createCartViaBackend, createCartStorefront } from '../api/cart'
 import type { CompleteOrder } from '../types/shopify'
+import { SHOPIFY_API } from '../constants'
 
-// Helper function to get variant ID from product ID - now uses backend API
+// Helper function to get variant ID from product ID - only for service products
 const getVariantIdFromProduct = async (productId: string): Promise<string> => {
   try {
-    // Use our backend API to get variant information
-    const response = await fetch(`/apps/konfigurator/api/search-materials?query=${productId}&limit=1`)
+    // If it's already a variant ID, return as-is
+    if (productId.includes('ProductVariant')) {
+      return productId
+    }
+
+    // Search for the product using existing search API
+    const response = await fetch(`/apps/konfigurator/api/search-materials?query=${encodeURIComponent(productId)}&limit=1`)
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
@@ -15,13 +21,14 @@ const getVariantIdFromProduct = async (productId: string): Promise<string> => {
     const materials = await response.json()
 
     if (materials.length > 0 && materials[0].variant?.id) {
+      console.log(`✅ Converted Product ID ${productId} to Variant ID ${materials[0].variant.id}`)
       return materials[0].variant.id
     } else {
-      return productId // Fallback to product ID if no variant found
+      throw new Error(`Nemožno nájsť variantu pre službu s ID: ${productId}`)
     }
   } catch (error) {
-    console.warn('Failed to get variant ID via backend API:', error)
-    return productId // Fallback to product ID on error
+    console.error('Failed to get variant ID for service product:', error)
+    throw new Error(`Nemožno nájsť variantu pre službu s ID: ${productId}`)
   }
 }
 
@@ -79,8 +86,13 @@ export const useOrderSubmission = () => {
         // Use the number of boards from cutting layouts, or 1 as fallback
         const boardsNeeded = materialLayouts.length > 0 ? materialLayouts.length : 1
         
-        // Get the correct variant ID for the board material
-        const boardMerchandiseId = spec.material.variantId || await getVariantIdFromProduct(spec.material.id)
+        // Get the correct variant ID for the board material - NO DANGEROUS FALLBACKS
+        let boardMerchandiseId: string
+        if (spec.material.variantId) {
+          boardMerchandiseId = spec.material.variantId
+        } else {
+          throw new Error(`Chyba: Materiál "${spec.material.title}" nemá dostupnú variantu pre objednávku.`)
+        }
         
         // Add board material line item
         allLineItems.push({
@@ -119,8 +131,13 @@ export const useOrderSubmission = () => {
           }, 0)
 
           if (totalEdgeLength > 0) {
-            // Get the correct variant ID for the edge material
-            const edgeMerchandiseId = spec.edgeMaterial.variantId || await getVariantIdFromProduct(spec.edgeMaterial.id)
+            // Get the correct variant ID for the edge material - NO DANGEROUS FALLBACKS
+            let edgeMerchandiseId: string
+            if (spec.edgeMaterial.variantId) {
+              edgeMerchandiseId = spec.edgeMaterial.variantId
+            } else {
+              throw new Error(`Chyba: Hranový materiál "${spec.edgeMaterial.name}" nemá dostupnú variantu pre objednávku.`)
+            }
             
             allLineItems.push({
               variantId: edgeMerchandiseId,
@@ -141,8 +158,10 @@ export const useOrderSubmission = () => {
       }
 
       // Add cutting service product (flat 1 piece for any cutting order)
-      const cuttingServiceProductId = 'gid://shopify/Product/15514687799678'
-      const cuttingServiceVariantId = await getVariantIdFromProduct(cuttingServiceProductId)
+      // Use configured variant ID or fallback to Product ID conversion
+      const cuttingServiceVariantId = SHOPIFY_API.SERVICES.CUTTING_SERVICE_VARIANT_ID.includes('TODO')
+        ? await getVariantIdFromProduct(SHOPIFY_API.SERVICES.CUTTING_SERVICE_PRODUCT_ID)
+        : SHOPIFY_API.SERVICES.CUTTING_SERVICE_VARIANT_ID
 
       allLineItems.push({
         variantId: cuttingServiceVariantId,

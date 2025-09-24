@@ -250,16 +250,16 @@ function App() {
           <CuttingSpecificationPage
             materials={selectedMaterials.map((material) => ({
               id: material.id,
-              title: material.name || '[No Title]',
+              title: material.name,
               handle: material.code || 'unknown',
-              vendor: '[Unknown Vendor]',
+              vendor: 'Unknown Vendor',
               productType: 'Material',
               tags: [],
               image: material.image,
               images: material.image ? [material.image] : [],
               variant: {
                 id: material.variantId || material.id,
-                title: material.name || '[No Title]',
+                title: material.name,
                 sku: material.code || 'N/A',
                 price: material.price.toString(),
                 inventoryQuantity: 0,
@@ -267,7 +267,7 @@ function App() {
                 metafields: {}
               },
               metafields: {}
-            }))}
+            } as MaterialSearchResult))}
             orderName={currentOrder.orderName}
             existingSpecifications={cuttingSpecifications}
             onBack={handleBackToMaterialSelection}

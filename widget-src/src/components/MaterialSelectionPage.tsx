@@ -93,17 +93,30 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
       return // Don't add duplicate materials
     }
 
+    // Validate that essential variant data is present - NO FALLBACKS
+    if (!material.variant?.id) {
+      console.error('Material missing variant ID:', material)
+      alert('Chyba: Tento materiál nemá dostupnú variantu pre objednávku. Skúste iný materiál.')
+      return
+    }
+
+    if (!material.variant?.price) {
+      console.error('Material missing variant price:', material)
+      alert('Chyba: Tento materiál nemá dostupnú cenu. Skúste iný materiál.')
+      return
+    }
+
     const selectedMaterial: SelectedMaterial = {
       id: material.id,
-      code: material.variant?.sku || material.handle,
+      code: material.variant.sku || material.handle, // SKU can fallback to handle (both are descriptive)
       name: material.title,
-      quantity: material.variant?.inventoryQuantity || 1,
-      price: parseFloat(material.variant?.price || "0"),
-      totalPrice: parseFloat(material.variant?.price || "0"),
-      variantId: `variant-${material.id}`,
-      image: material.image // Preserve the image
+      quantity: material.variant.inventoryQuantity || 1, // Quantity can have reasonable default
+      price: parseFloat(material.variant.price), // No fallback - must have real price
+      totalPrice: parseFloat(material.variant.price),
+      variantId: material.variant.id, // NO FALLBACK - must have real variant ID
+      image: material.image
     }
-    
+
     setSelectedMaterials(prev => [...prev, selectedMaterial])
   }
 

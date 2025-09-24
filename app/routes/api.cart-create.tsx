@@ -30,7 +30,6 @@ export async function action({ request }: ActionFunctionArgs) {
           draftOrder {
             id
             name
-            webUrl
             invoiceUrl
             totalPrice {
               amount
@@ -146,7 +145,7 @@ export async function action({ request }: ActionFunctionArgs) {
       draftOrder: {
         id: draftOrderData.draftOrder.id,
         name: draftOrderData.draftOrder.name,
-        checkoutUrl: draftOrderData.draftOrder.webUrl, // Use webUrl for customer checkout
+        checkoutUrl: draftOrderData.draftOrder.invoiceUrl, // Use invoiceUrl for customer checkout
         invoiceUrl: draftOrderData.draftOrder.invoiceUrl, // For sending invoices
         totalPrice: draftOrderData.draftOrder.totalPrice,
         lineItems: draftOrderData.draftOrder.lineItems.edges.map((edge: any) => edge.node)
