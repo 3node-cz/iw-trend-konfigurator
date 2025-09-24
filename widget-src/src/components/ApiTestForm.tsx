@@ -284,7 +284,7 @@ export const ApiTestForm: React.FC = () => {
       {/* Test Order Creation Section */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h6" gutterBottom color="primary">
-          🛒 Test Order Creation
+          🛒 Test Draft Order Creation
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <TextField
@@ -294,7 +294,7 @@ export const ApiTestForm: React.FC = () => {
             multiline
             rows={12}
             fullWidth
-            helperText="JSON payload for creating test draft order. Update variant IDs to match your store."
+            helperText="JSON payload for creating Storefront cart. Update variant IDs to match your store."
           />
           <Button
             variant="contained"
@@ -302,7 +302,7 @@ export const ApiTestForm: React.FC = () => {
             disabled={orderLoading}
             sx={{ alignSelf: 'flex-start' }}
           >
-            {orderLoading ? 'Creating Order...' : 'Create Test Order'}
+            {orderLoading ? 'Creating Cart...' : 'Create Test Cart'}
           </Button>
         </Box>
         {renderResponse(orderResponse, orderError)}

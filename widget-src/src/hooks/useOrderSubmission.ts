@@ -183,7 +183,7 @@ export const useOrderSubmission = () => {
       // 3. Create cart/draft order via backend API (recommended approach)
       const result = await createCartViaBackend(allLineItems)
 
-      // Alternative: Use Storefront API via backend
+      // Alternative: Use Storefront API (requires manual token setup)
       // const result = await createCartStorefront(allLineItems)
 
       // 4. Set success state with checkout URL (no automatic redirect)

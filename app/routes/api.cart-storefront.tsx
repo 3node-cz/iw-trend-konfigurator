@@ -19,11 +19,44 @@ export async function action({ request }: ActionFunctionArgs) {
 
     console.log('🛒 Creating storefront cart with items:', items);
 
-    // Use Storefront API from server side (no CORS issues)
-    const storefrontAccessToken = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
+    // Get or create storefront access token dynamically
+    let storefrontAccessToken = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
 
     if (!storefrontAccessToken) {
-      return json({ error: "Storefront access token not configured" }, { status: 500 });
+      console.log('🔑 No storefront token in env, creating one dynamically...');
+
+      // Create storefront access token using Admin API
+      const tokenMutation = `
+        mutation storefrontAccessTokenCreate($input: StorefrontAccessTokenInput!) {
+          storefrontAccessTokenCreate(input: $input) {
+            storefrontAccessToken {
+              accessToken
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      const tokenResponse = await admin.graphql(tokenMutation, {
+        variables: {
+          input: {
+            title: "Dynamic Cart Creation Token"
+          }
+        }
+      });
+
+      const tokenResult = await tokenResponse.json() as any;
+
+      if (tokenResult.errors || tokenResult.data?.storefrontAccessTokenCreate?.userErrors?.length > 0) {
+        console.error('❌ Failed to create storefront token:', tokenResult);
+        return json({ error: "Could not create storefront access token" }, { status: 500 });
+      }
+
+      storefrontAccessToken = tokenResult.data.storefrontAccessTokenCreate.storefrontAccessToken.accessToken;
+      console.log('✅ Created dynamic storefront token');
     }
 
     const cartCreateMutation = `
@@ -34,10 +67,7 @@ export async function action({ request }: ActionFunctionArgs) {
             checkoutUrl
             totalQuantity
             estimatedCost {
-              totalAmount {
-                amount
-                currencyCode
-              }
+              totalAmount
             }
             lines(first: 100) {
               edges {
@@ -45,19 +75,13 @@ export async function action({ request }: ActionFunctionArgs) {
                   id
                   quantity
                   estimatedCost {
-                    totalAmount {
-                      amount
-                      currencyCode
-                    }
+                    totalAmount
                   }
                   merchandise {
                     ... on ProductVariant {
                       id
                       title
-                      price {
-                        amount
-                        currencyCode
-                      }
+                      price
                       product {
                         title
                         handle
@@ -120,7 +144,7 @@ export async function action({ request }: ActionFunctionArgs) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Shopify-Storefront-Access-Token': storefrontAccessToken,
+        'X-Shopify-Storefront-Access-Token': storefrontAccessToken!,
       },
       body: JSON.stringify({
         query: cartCreateMutation,

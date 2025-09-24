@@ -31,20 +31,14 @@ export async function action({ request }: ActionFunctionArgs) {
             id
             name
             invoiceUrl
-            totalPrice {
-              amount
-              currencyCode
-            }
+            totalPrice
             lineItems(first: 100) {
               edges {
                 node {
                   id
                   title
                   quantity
-                  originalUnitPrice {
-                    amount
-                    currencyCode
-                  }
+                  originalUnitPrice
                   variant {
                     id
                     title
