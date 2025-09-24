@@ -19,16 +19,21 @@ export interface SavedConfiguration {
   }>
   specifications: Array<{
     materialId: string
-    materialName: string
-    edgeMaterialId?: string
-    edgeMaterialName?: string
     glueType: string
+    edgeMaterialId: string | null
     pieces: Array<{
       id: string
+      partName: string
+      length: number
       width: number
-      height: number
       quantity: number
-      label?: string
+      edgeAllAround: boolean | null
+      edgeTop: boolean | null
+      edgeBottom: boolean | null
+      edgeLeft: boolean | null
+      edgeRight: boolean | null
+      allowRotation: boolean
+      notes: string
     }>
   }>
   summary: {
@@ -59,28 +64,45 @@ export const createSavedConfiguration = (
 ): SavedConfiguration => {
   const id = `config_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-  // Convert cutting specifications to simplified format
+  // Clean materials - only save essential fields for reconstruction
+  const cleanMaterials = materials.map(material => ({
+    id: material.id,
+    code: material.code,
+    name: material.name,
+    quantity: material.quantity,
+    price: material.price
+    // Remove computed fields: totalPrice, variantId, image
+  }))
+
+  // Convert cutting specifications to minimal format needed for reconstruction
   const savedSpecs = specifications.map(spec => ({
-    materialId: spec.material.id,
-    materialName: spec.material.name,
-    edgeMaterialId: spec.edgeMaterial?.id,
-    edgeMaterialName: spec.edgeMaterial?.name,
+    materialId: spec.material.variant?.id || spec.material.id, // Use variant ID if available
     glueType: spec.glueType,
+    edgeMaterialId: spec.edgeMaterial?.variantId || spec.edgeMaterial?.id || null,
+    // Only save essential piece data needed for reconstruction
     pieces: spec.pieces.map(piece => ({
       id: piece.id,
+      partName: piece.partName || '',
+      length: piece.length,
       width: piece.width,
-      height: piece.height,
       quantity: piece.quantity,
-      label: piece.label
+      // Save edge configuration if present
+      edgeAllAround: piece.edgeAllAround || null,
+      edgeTop: piece.edgeTop || null,
+      edgeBottom: piece.edgeBottom || null,
+      edgeLeft: piece.edgeLeft || null,
+      edgeRight: piece.edgeRight || null,
+      allowRotation: piece.allowRotation || false,
+      notes: piece.notes || ''
     }))
   }))
 
-  // Calculate summary
-  const totalMaterials = materials.length
+  // Calculate minimal summary (will be recalculated on load anyway)
+  const totalMaterials = cleanMaterials.length
   const totalPieces = specifications.reduce((sum, spec) =>
     sum + spec.pieces.reduce((pieceSum, piece) => pieceSum + piece.quantity, 0), 0
   )
-  const estimatedCost = materials.reduce((sum, material) =>
+  const estimatedCost = cleanMaterials.reduce((sum, material) =>
     sum + (material.price * material.quantity), 0
   )
 
@@ -89,7 +111,7 @@ export const createSavedConfiguration = (
     name,
     savedAt: new Date().toISOString(),
     orderInfo,
-    materials,
+    materials: cleanMaterials,
     specifications: savedSpecs,
     summary: {
       totalMaterials,
@@ -113,7 +135,37 @@ export const parseCustomerConfigurations = (metafieldValue: string | null): Cust
   }
 
   try {
-    const parsed = JSON.parse(metafieldValue)
+    console.log('🔍 Raw metafield value type:', typeof metafieldValue)
+    console.log('🔍 Raw metafield value length:', metafieldValue.length)
+    console.log('🔍 Raw metafield first 100 chars:', metafieldValue.substring(0, 100))
+
+    // Clean up the value - handle HTML encoding and double encoding
+    let cleanValue = metafieldValue.trim()
+
+    // Decode HTML entities first (this is the main issue)
+    if (cleanValue.includes('&quot;')) {
+      console.log('🔧 Decoding HTML entities - value is HTML-encoded')
+      cleanValue = cleanValue
+        .replace(/&quot;/g, '"')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&#39;/g, "'")
+    }
+
+    // If the value starts and ends with quotes, it might be double-encoded
+    if (cleanValue.startsWith('"') && cleanValue.endsWith('"')) {
+      console.log('🔧 Removing outer quotes - value appears double-encoded')
+      cleanValue = cleanValue.slice(1, -1)
+      // Unescape any escaped quotes
+      cleanValue = cleanValue.replace(/\\"/g, '"')
+    }
+
+    console.log('🔍 Cleaned value first 100 chars:', cleanValue.substring(0, 100))
+
+    const parsed = JSON.parse(cleanValue)
+    console.log('✅ Successfully parsed configurations:', parsed.savedConfigurations?.length || 0, 'configs')
+
     // Ensure it has the expected structure
     return {
       version: parsed.version || '1.0',
@@ -121,7 +173,8 @@ export const parseCustomerConfigurations = (metafieldValue: string | null): Cust
       lastUpdated: parsed.lastUpdated || new Date().toISOString()
     }
   } catch (error) {
-    console.error('Error parsing saved configurations:', error)
+    console.error('❌ Error parsing saved configurations:', error)
+    console.error('❌ Failed value:', metafieldValue?.substring(0, 200))
     return {
       version: '1.0',
       savedConfigurations: [],

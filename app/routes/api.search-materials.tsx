@@ -30,7 +30,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
     let searchQuery = '';
 
     if (query && query.trim()) {
-      searchQuery = `title:*${query}* OR vendor:*${query}* OR product_type:*${query}* OR tag:*${query}*`;
+      // Check if this is a Shopify GID search (for loading saved configurations)
+      if (query.startsWith('id:gid://shopify/')) {
+        const shopifyId = query.replace('id:', '');
+        console.log('🔍 Shopify GID search detected:', shopifyId);
+        searchQuery = `id:${shopifyId}`;
+      } else {
+        // Regular text search
+        searchQuery = `title:*${query}* OR vendor:*${query}* OR product_type:*${query}* OR tag:*${query}*`;
+      }
     } else {
       // If no query, return all products
       searchQuery = '*';
@@ -42,10 +50,113 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     console.log('🔍 Final search query:', searchQuery);
 
-    // GraphQL query to search products
-    const graphqlQuery = `
-      query searchProducts($query: String!, $first: Int!) {
-        products(first: $first, query: $query) {
+    // Choose GraphQL query based on search type
+    let graphqlQuery = '';
+    let variables = {};
+
+    if (query.startsWith('id:gid://shopify/')) {
+      // Direct node query for exact ID lookup
+      const shopifyId = query.replace('id:', '');
+      console.log('🔍 Using direct node query for ID:', shopifyId);
+
+      graphqlQuery = `
+        query getProductOrVariant($id: ID!) {
+          node(id: $id) {
+            id
+            ... on Product {
+              title
+              handle
+              vendor
+              productType
+              tags
+              featuredImage {
+                url
+                altText
+              }
+              images(first: 5) {
+                edges {
+                  node {
+                    url
+                    altText
+                  }
+                }
+              }
+              variants(first: 10) {
+                edges {
+                  node {
+                    id
+                    title
+                    sku
+                    price
+                    inventoryQuantity
+                    availableForSale
+                    image {
+                      url
+                      altText
+                    }
+                    metafields(first: 10) {
+                      edges {
+                        node {
+                          namespace
+                          key
+                          value
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            ... on ProductVariant {
+              id
+              title
+              sku
+              price
+              inventoryQuantity
+              availableForSale
+              image {
+                url
+                altText
+              }
+              product {
+                id
+                title
+                handle
+                vendor
+                productType
+                tags
+                featuredImage {
+                  url
+                  altText
+                }
+                images(first: 5) {
+                  edges {
+                    node {
+                      url
+                      altText
+                    }
+                  }
+                }
+              }
+              metafields(first: 10) {
+                edges {
+                  node {
+                    namespace
+                    key
+                    value
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+      variables = { id: shopifyId };
+    } else {
+      // Regular search query
+      graphqlQuery = `
+        query searchProducts($query: String!, $first: Int!) {
+          products(first: $first, query: $query) {
           edges {
             node {
               id
@@ -103,15 +214,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
             }
           }
         }
-      }
-    `;
+      `;
+      variables = {
+        query: searchQuery,
+        first: Math.min(limit, 250) // Shopify limit
+      };
+    }
 
-    const variables = {
-      query: searchQuery,
-      first: Math.min(limit, 250) // Shopify limit
-    };
-
-    console.log('🚀 Executing GraphQL query:', { searchQuery, first: variables.first });
+    console.log('🚀 Executing GraphQL query:', variables);
 
     const response = await admin.graphql(graphqlQuery, { variables });
     const result = await response.json();
@@ -122,10 +232,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
 
     // Transform the results to match our expected format
-    const materials = result.data.products.edges.map((edge: any) => {
-      const product = edge.node;
-      const variant = product.variants.edges[0]?.node; // Get first variant
-
+    const transformToMaterial = (product: any, variant: any) => {
       // Extract metafields into a more usable format
       const productMetafields = product.metafields.edges.reduce((acc: any, metafield: any) => {
         const { namespace, key, value } = metafield.node;
@@ -164,7 +271,31 @@ export async function loader({ request }: LoaderFunctionArgs) {
         } : undefined,
         metafields: productMetafields
       };
-    });
+    };
+
+    let materials = [];
+
+    if (query.startsWith('id:gid://shopify/')) {
+      // Handle direct node query result
+      const node = result.data.node;
+      if (node) {
+        if (node.__typename === 'Product') {
+          // It's a product
+          const variant = node.variants.edges[0]?.node;
+          materials.push(transformToMaterial(node, variant));
+        } else if (node.__typename === 'ProductVariant') {
+          // It's a variant - use the variant and its product
+          materials.push(transformToMaterial(node.product, node));
+        }
+      }
+    } else {
+      // Handle regular search results
+      materials = result.data.products.edges.map((edge: any) => {
+        const product = edge.node;
+        const variant = product.variants.edges[0]?.node;
+        return transformToMaterial(product, variant);
+      });
+    }
 
     console.log(`✅ Found ${materials.length} materials`);
 
