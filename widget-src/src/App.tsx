@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Container, Box, Typography, CircularProgress, ThemeProvider } from '@mui/material'
+import { Container, Box, Typography, CircularProgress, ThemeProvider, Backdrop } from '@mui/material'
 import OrdersPage from './components/OrdersPage'
 import MaterialSelectionPage from './components/MaterialSelectionPage'
 import CuttingSpecificationPage from './components/CuttingSpecificationPage'
@@ -9,6 +9,7 @@ import CuttingLayoutDemo from './components/CuttingLayoutDemo'
 import { ApiTestForm } from './components/ApiTestForm'
 import { submitOrderToShopify } from './services/shopifyApi'
 import { loadOrderConfiguration } from './services/orderLoader'
+import { transformToSelectedMaterial } from './utils/data-transformation'
 import { theme } from './theme/theme'
 import type {
   SelectedMaterial,
@@ -16,7 +17,7 @@ import type {
   CuttingSpecification,
   CompleteOrder,
 } from './types/shopify'
-import type { SavedOrder } from './types/savedOrder'
+import type { SavedConfiguration } from './types/optimized-saved-config'
 import { useCustomer } from './hooks/useCustomer'
 
 type AppView =
@@ -38,6 +39,7 @@ function App() {
     CuttingSpecification[]
   >([])
   const [checkoutUrl, setCheckoutUrl] = useState<string>('')
+  const [loadingConfiguration, setLoadingConfiguration] = useState(false)
 
   const handleOrderCreated = (orderData: OrderFormData) => {
     setCurrentOrder(orderData)
@@ -97,8 +99,8 @@ function App() {
     }
   }
 
-  const handleLoadConfiguration = async (savedOrder: SavedOrder) => {
-
+  const handleLoadConfiguration = async (savedOrder: SavedConfiguration) => {
+    setLoadingConfiguration(true)
     try {
       // Load configuration and fetch fresh material data
       const { orderInfo, specifications } = await loadOrderConfiguration(
@@ -126,18 +128,8 @@ function App() {
           console.log(`🔍 Processing spec ${index}:`, spec.material);
 
           try {
-            return {
-              id: spec.material.id,
-              code: spec.material.code || spec.material.variant?.sku || 'N/A',
-              name: spec.material.name || spec.material.title,
-              quantity: spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0),
-              price: spec.material.price?.amount || parseFloat(spec.material.variant?.price || '0'),
-              totalPrice:
-                (spec.material.price?.amount || parseFloat(spec.material.variant?.price || '0')) *
-                spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0),
-              variantId: spec.material.variantId || spec.material.variant?.id || spec.material.id,
-              image: spec.material.image || spec.material.featuredImage?.url || null,
-            }
+            const quantity = spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0);
+            return transformToSelectedMaterial(spec.material, quantity);
           } catch (err) {
             console.error(`❌ Error processing spec ${index}:`, err, spec.material);
             throw err;
@@ -151,6 +143,8 @@ function App() {
     } catch (error) {
       console.error('❌ Error loading configuration:', error)
       alert('Chyba pri načítaní uloženej konfigurácie.')
+    } finally {
+      setLoadingConfiguration(false)
     }
   }
 
@@ -318,6 +312,26 @@ function App() {
         />
       )}
       {currentView === 'cutting-demo' && <CuttingLayoutDemo />}
+
+      {/* Loading overlay for configuration loading */}
+      <Backdrop
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2
+        }}
+        open={loadingConfiguration}
+      >
+        <CircularProgress color="inherit" size={40} />
+        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+          Načítavam konfiguráciu...
+        </Typography>
+        <Typography variant="body2" sx={{ opacity: 0.8, textAlign: 'center', maxWidth: 300 }}>
+          Získavam najnovšie údaje o materiáloch zo Shopify
+        </Typography>
+      </Backdrop>
     </Container>
     </ThemeProvider>
   )

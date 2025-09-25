@@ -1,5 +1,5 @@
 import { searchMaterials, searchEdgeMaterials } from './shopifyApi'
-import type { SavedOrder, SavedCuttingSpecification } from '../types/savedOrder'
+import type { SavedConfiguration, SavedCuttingSpecification } from '../types/optimized-saved-config'
 import type {
   CuttingSpecification,
   MaterialSearchResult,
@@ -14,7 +14,7 @@ const edgeCache = new Map<string, EdgeMaterial>()
  * Loads a saved order configuration and fetches fresh material data from Shopify API
  */
 export const loadOrderConfiguration = async (
-  savedOrder: SavedOrder,
+  savedOrder: SavedConfiguration,
 ): Promise<{
   orderInfo: typeof savedOrder.orderInfo
   specifications: CuttingSpecification[]

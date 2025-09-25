@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { calculateTotalPieces } from '../utils/data-transformation'
 import {
   Box,
   Container,
@@ -109,11 +110,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     }
   }
 
-  const totalPieces = specifications.reduce(
-    (total, spec) =>
-      total + spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0),
-    0,
-  )
+  const totalPieces = calculateTotalPieces(specifications)
 
   // Check for unavailable products
   const unavailableProducts = specifications.reduce((acc, spec) => {

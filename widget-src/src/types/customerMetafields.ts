@@ -1,48 +1,12 @@
 import type { OrderFormData } from '../schemas/orderSchema'
 import type { CuttingSpecification } from './shopify'
+import type { SavedConfiguration, SavedCuttingSpecification } from './optimized-saved-config'
+import type { MaterialSearchResult } from './shopify'
+import { createMinimalSavedConfig } from '../utils/data-transformation'
+import { PRICING } from '../constants'
 
-/**
- * Simplified configuration for saving to customer metafields
- * This is a lightweight version optimized for storage in Shopify customer metafields
- */
-export interface SavedConfiguration {
-  id: string
-  name: string // User-provided name for the configuration
-  savedAt: string // ISO date string
-  orderInfo: OrderFormData
-  materials: Array<{
-    id: string
-    code: string
-    name: string
-    quantity: number
-    price: number
-  }>
-  specifications: Array<{
-    materialId: string
-    glueType: string
-    edgeMaterialId: string | null
-    pieces: Array<{
-      id: string
-      partName: string
-      length: number
-      width: number
-      quantity: number
-      edgeAllAround: boolean | null
-      edgeTop: boolean | null
-      edgeBottom: boolean | null
-      edgeLeft: boolean | null
-      edgeRight: boolean | null
-      allowRotation: boolean
-      notes: string
-    }>
-  }>
-  summary: {
-    totalMaterials: number
-    totalPieces: number
-    estimatedCost: number
-    currency: string
-  }
-}
+// Re-export optimized types for backward compatibility
+export type { SavedConfiguration } from './optimized-saved-config'
 
 /**
  * Root structure for customer metafield containing saved configurations
@@ -54,72 +18,16 @@ export interface CustomerSavedConfigurations {
 }
 
 /**
- * Helper function to create a new saved configuration
+ * Helper function to create a new saved configuration (using optimized format)
  */
 export const createSavedConfiguration = (
   name: string,
   orderInfo: OrderFormData,
-  materials: Array<{ id: string; code: string; name: string; quantity: number; price: number }>,
+  materials: MaterialSearchResult[],
   specifications: CuttingSpecification[]
 ): SavedConfiguration => {
-  const id = `config_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-
-  // Clean materials - only save essential fields for reconstruction
-  const cleanMaterials = materials.map(material => ({
-    id: material.id,
-    code: material.code,
-    name: material.name,
-    quantity: material.quantity,
-    price: material.price
-    // Remove computed fields: totalPrice, variantId, image
-  }))
-
-  // Convert cutting specifications to minimal format needed for reconstruction
-  const savedSpecs = specifications.map(spec => ({
-    materialId: spec.material.id, // Always use product ID for consistency with MaterialSearchResult
-    glueType: spec.glueType,
-    edgeMaterialId: spec.edgeMaterial?.id || null,
-    // Only save essential piece data needed for reconstruction
-    pieces: spec.pieces.map(piece => ({
-      id: piece.id,
-      partName: piece.partName || '',
-      length: piece.length,
-      width: piece.width,
-      quantity: piece.quantity,
-      // Save edge configuration if present
-      edgeAllAround: piece.edgeAllAround || null,
-      edgeTop: piece.edgeTop || null,
-      edgeBottom: piece.edgeBottom || null,
-      edgeLeft: piece.edgeLeft || null,
-      edgeRight: piece.edgeRight || null,
-      allowRotation: piece.allowRotation || false,
-      notes: piece.notes || ''
-    }))
-  }))
-
-  // Calculate minimal summary (will be recalculated on load anyway)
-  const totalMaterials = cleanMaterials.length
-  const totalPieces = specifications.reduce((sum, spec) =>
-    sum + spec.pieces.reduce((pieceSum, piece) => pieceSum + piece.quantity, 0), 0
-  )
-  const estimatedCost = cleanMaterials.reduce((sum, material) =>
-    sum + (material.price * material.quantity), 0
-  )
-
-  return {
-    id,
-    name,
-    savedAt: new Date().toISOString(),
-    orderInfo,
-    materials: cleanMaterials,
-    specifications: savedSpecs,
-    summary: {
-      totalMaterials,
-      totalPieces,
-      estimatedCost,
-      currency: 'EUR'
-    }
-  }
+  // Use DRY utility from data-transformation
+  return createMinimalSavedConfig(name, orderInfo, materials, specifications)
 }
 
 /**

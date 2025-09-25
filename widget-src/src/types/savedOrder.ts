@@ -1,6 +1,7 @@
 import type { OrderFormData } from '../schemas/orderSchema'
 import type { CuttingSpecification, CuttingPiece, OrderCalculations } from './shopify'
 import type { CuttingLayoutData } from '../hooks/useCuttingLayouts'
+import { PRICING } from '../constants'
 
 // Lightweight specification storing only IDs for materials/edges
 export interface SavedCuttingSpecification {
@@ -137,7 +138,7 @@ export const calculateOrderSummary = (
     totalPieces,
     totalBoards,
     estimatedCost,
-    currency: 'EUR' as const,
+    currency: PRICING.CURRENCY,
     materialNames
   }
 }

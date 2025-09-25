@@ -14,6 +14,7 @@ import MaterialSearch from './MaterialSearch'
 import MaterialResultsTable from './MaterialResultsTable'
 import { searchMaterials } from '../services/shopifyApi'
 import type { MaterialSearchResult, SelectedMaterial } from '../types/shopify'
+import { transformToSelectedMaterial } from '../utils/data-transformation'
 
 interface MaterialSelectionPageProps {
   orderName?: string
@@ -106,16 +107,8 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
       return
     }
 
-    const selectedMaterial: SelectedMaterial = {
-      id: material.id,
-      code: material.variant.sku || material.handle, // SKU can fallback to handle (both are descriptive)
-      name: material.title,
-      quantity: material.variant.inventoryQuantity || 1, // Quantity can have reasonable default
-      price: parseFloat(material.variant.price), // No fallback - must have real price
-      totalPrice: parseFloat(material.variant.price),
-      variantId: material.variant.id, // NO FALLBACK - must have real variant ID
-      image: material.image
-    }
+    const quantity = material.variant.inventoryQuantity || 1;
+    const selectedMaterial = transformToSelectedMaterial(material, quantity);
 
     setSelectedMaterials(prev => [...prev, selectedMaterial])
   }

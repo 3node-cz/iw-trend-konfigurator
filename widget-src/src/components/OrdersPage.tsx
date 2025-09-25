@@ -13,12 +13,12 @@ import OrdersHeader from './OrdersHeader'
 import OrdersFilters from './OrdersFilters'
 import OrdersTable from './OrdersTable'
 import type { OrderFormData } from '../types/shopify'
-import type { SavedOrder } from '../types/savedOrder'
+import type { SavedConfiguration } from '../types/optimized-saved-config'
 import type { CustomerOrderData } from '../services/customerApi'
 
 interface OrdersPageProps {
   onOrderCreated?: (orderData: OrderFormData) => void
-  onLoadConfiguration?: (order: SavedOrder) => void // Navigate to order summary with loaded config
+  onLoadConfiguration?: (order: SavedConfiguration) => void // Navigate to order summary with loaded config
   customer?: CustomerOrderData | null
 }
 
@@ -29,6 +29,11 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
 }) => {
   const [showAlert, setShowAlert] = useState(false)
   const [alertMessage, setAlertMessage] = useState('')
+  const [filters, setFilters] = useState<{ searchText: string; dateFrom: Date | null; dateTo: Date | null }>({
+    searchText: '',
+    dateFrom: null,
+    dateTo: null
+  })
 
   const handleOrderCreated = (orderData: OrderFormData) => {
     // Generate a mock order number for the success message
@@ -40,10 +45,14 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
     onOrderCreated?.(orderData)
   }
 
-  const handleDeleteOrder = (order: SavedOrder) => {
+  const handleDeleteOrder = (order: SavedConfiguration) => {
     // For now, just show an alert
-    setAlertMessage(`Zákazka ${order.orderNumber} bola označená na zmazanie`)
+    setAlertMessage(`Zákazka ${order.name} bola označená na zmazanie`)
     setShowAlert(true)
+  }
+
+  const handleFiltersChange = (newFilters: { searchText: string; dateFrom: Date | null; dateTo: Date | null }) => {
+    setFilters(newFilters)
   }
 
   // Auto-hide alert after 5 seconds
@@ -80,10 +89,11 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
 
       <Container maxWidth={false} sx={{ maxWidth: '1920px', mx: 'auto', py: 3 }}>
         <OrdersHeader onOrderCreated={handleOrderCreated} customer={customer} />
-        <OrdersFilters />
+        <OrdersFilters onFiltersChange={handleFiltersChange} />
         <OrdersTable
           onLoadConfiguration={onLoadConfiguration}
           onDeleteOrder={handleDeleteOrder}
+          filters={filters}
         />
       </Container>
     </Box>

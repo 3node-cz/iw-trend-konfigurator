@@ -19,15 +19,19 @@ import {
 } from '@mui/icons-material'
 import { createConfigurationService } from '../services/configurationService'
 import { useCustomer } from '../hooks/useCustomer'
-import type { SavedOrder } from '../types/savedOrder'
-import type { SavedConfiguration } from '../types/customerMetafields'
+import type { SavedConfiguration } from '../types/optimized-saved-config'
 
 interface OrdersTableProps {
-  onLoadConfiguration?: (order: SavedOrder) => void // Loads config and goes to order summary
-  onDeleteOrder?: (order: SavedOrder) => void
+  onLoadConfiguration?: (order: SavedConfiguration) => void // Loads config and goes to order summary
+  onDeleteOrder?: (order: SavedConfiguration) => void
+  filters?: {
+    searchText: string
+    dateFrom: Date | null
+    dateTo: Date | null
+  }
 }
 
-const getStateColor = (status: SavedOrder['status']) => {
+const getStateColor = (status: 'draft' | 'saved' | 'submitted' | 'processing' | 'completed' | 'cancelled') => {
   switch (status) {
     case 'draft':
       return 'default'
@@ -46,7 +50,7 @@ const getStateColor = (status: SavedOrder['status']) => {
   }
 }
 
-const getStateLabel = (status: SavedOrder['status']) => {
+const getStateLabel = (status: 'draft' | 'saved' | 'submitted' | 'processing' | 'completed' | 'cancelled') => {
   switch (status) {
     case 'draft':
       return 'Návrh'
@@ -73,39 +77,25 @@ const formatDate = (date: Date) => {
   })
 }
 
-// Convert SavedConfiguration to SavedOrder format for UI compatibility
-const convertSavedConfigurationToOrder = (config: SavedConfiguration): SavedOrder => {
-  return {
-    id: config.id,
-    orderNumber: config.id.split('_')[1] || config.id, // Use timestamp part as order number
-    createdAt: new Date(config.savedAt),
-    updatedAt: new Date(config.savedAt),
-    status: 'saved' as const,
-    version: '1.0',
-    orderInfo: config.orderInfo,
-    specifications: config.specifications.map(spec => ({
-      materialId: spec.materialId,
-      edgeMaterialId: spec.edgeMaterialId || null,
-      glueType: spec.glueType,
-      pieces: spec.pieces
-    })),
-    summary: {
-      totalMaterials: config.summary.totalMaterials,
-      totalPieces: config.summary.totalPieces,
-      totalBoards: 0, // Not available in SavedConfiguration
-      estimatedCost: config.summary.estimatedCost,
-      currency: config.summary.currency,
-      materialNames: config.materials.map(m => m.name)
-    }
-  }
+// Helper functions for SavedConfiguration display
+const getOrderNumber = (config: SavedConfiguration) => {
+  return config.id.split('_')[1] || config.id.slice(-8)
+}
+
+const getTotalPieces = (config: SavedConfiguration) => {
+  return config.specifications.reduce((sum, spec) =>
+    sum + spec.pieces.reduce((pieceSum, piece) => pieceSum + piece.quantity, 0), 0
+  )
 }
 
 const OrdersTable: React.FC<OrdersTableProps> = ({
   onLoadConfiguration,
-  onDeleteOrder
+  onDeleteOrder,
+  filters
 }) => {
   const { customer, isLoggedIn } = useCustomer()
-  const [savedOrders, setSavedOrders] = useState<SavedOrder[]>([])
+  const [savedConfigurations, setSavedConfigurations] = useState<SavedConfiguration[]>([])
+  const [filteredConfigurations, setFilteredConfigurations] = useState<SavedConfiguration[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -113,7 +103,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
   useEffect(() => {
     const loadSavedConfigurations = async () => {
       if (!isLoggedIn || !customer) {
-        setSavedOrders([])
+        setSavedConfigurations([])
         setLoading(false)
         return
       }
@@ -125,13 +115,13 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
         const configService = createConfigurationService()
         const configurations = await configService.getSavedConfigurations()
 
-        // Convert SavedConfiguration to SavedOrder format
-        const orders = configurations.map(convertSavedConfigurationToOrder)
-        setSavedOrders(orders)
+        setSavedConfigurations(configurations)
+        setFilteredConfigurations(configurations) // Initialize filtered data
       } catch (err) {
         console.error('Error loading saved configurations:', err)
         setError('Chyba pri načítavaní uložených konfigurácií')
-        setSavedOrders([])
+        setSavedConfigurations([])
+        setFilteredConfigurations([])
       } finally {
         setLoading(false)
       }
@@ -140,17 +130,43 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
     loadSavedConfigurations()
   }, [customer, isLoggedIn])
 
-  const handleDeleteOrder = async (order: SavedOrder) => {
+  // Apply filters whenever filters or saved configurations change
+  useEffect(() => {
+    if (!filters) {
+      setFilteredConfigurations(savedConfigurations)
+      return
+    }
+
+    const filtered = savedConfigurations.filter(config => {
+      // Text search in order name and configuration name
+      const searchMatch = !filters.searchText ||
+        config.orderInfo.orderName.toLowerCase().includes(filters.searchText.toLowerCase()) ||
+        config.name.toLowerCase().includes(filters.searchText.toLowerCase()) ||
+        getOrderNumber(config).includes(filters.searchText)
+
+      // Date range filtering (check savedAt date)
+      const configDate = new Date(config.savedAt)
+      const dateFromMatch = !filters.dateFrom || configDate >= filters.dateFrom
+      const dateToMatch = !filters.dateTo || configDate <= filters.dateTo
+
+      return searchMatch && dateFromMatch && dateToMatch
+    })
+
+    setFilteredConfigurations(filtered)
+  }, [filters, savedConfigurations])
+
+  const handleDeleteOrder = async (config: SavedConfiguration) => {
     if (!customer) return
 
     try {
       const configService = createConfigurationService()
-      const result = await configService.removeConfiguration(customer.id, order.id)
+      const result = await configService.deleteSavedConfiguration(config.id)
 
       if (result.success) {
-        // Remove from local state
-        setSavedOrders(orders => orders.filter(o => o.id !== order.id))
-        onDeleteOrder?.(order)
+        // Remove from both local states
+        setSavedConfigurations(configs => configs.filter(c => c.id !== config.id))
+        setFilteredConfigurations(configs => configs.filter(c => c.id !== config.id))
+        onDeleteOrder?.(config)
       } else {
         setError(result.error || 'Chyba pri mazaní konfigurácie')
       }
@@ -191,11 +207,21 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
     )
   }
 
-  if (savedOrders.length === 0) {
+  if (savedConfigurations.length === 0) {
     return (
       <Paper sx={{ p: 4, textAlign: 'center' }}>
         <Typography variant="body2" color="text.secondary">
           Zatiaľ nemáte žiadne uložené konfigurácie
+        </Typography>
+      </Paper>
+    )
+  }
+
+  if (filteredConfigurations.length === 0 && savedConfigurations.length > 0) {
+    return (
+      <Paper sx={{ p: 4, textAlign: 'center' }}>
+        <Typography variant="body2" color="text.secondary">
+          Žiadne konfigurácie nevyhovujú zadaným filtrom
         </Typography>
       </Paper>
     )
@@ -216,31 +242,31 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {savedOrders.map((order) => (
-              <TableRow key={order.id} hover>
+            {filteredConfigurations.map((config) => (
+              <TableRow key={config.id} hover>
                 <TableCell>
                   <Typography variant="body2" color="primary" sx={{ fontWeight: 500 }}>
-                    {order.orderNumber}
+                    {getOrderNumber(config)}
                   </Typography>
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {order.orderInfo.orderName}
+                    {config.orderInfo.orderName}
                   </Typography>
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2">
-                    {formatDate(order.createdAt)}
+                    {formatDate(new Date(config.savedAt))}
                   </Typography>
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2">
-                    {order.summary.totalPieces}
+                    {getTotalPieces(config)}
                   </Typography>
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2">
-                    €{order.summary.estimatedCost.toFixed(2)}
+                    {config.materials.length} mats
                   </Typography>
                 </TableCell>
                 <TableCell>
@@ -248,7 +274,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                     <IconButton
                       size="small"
                       color="primary"
-                      onClick={() => onLoadConfiguration?.(order)}
+                      onClick={() => onLoadConfiguration?.(config)}
                       title="Načítať a pokračovať"
                     >
                       <PlayArrowIcon fontSize="small" />
@@ -256,7 +282,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                     <IconButton
                       size="small"
                       color="error"
-                      onClick={() => handleDeleteOrder(order)}
+                      onClick={() => handleDeleteOrder(config)}
                       title="Zmazať"
                     >
                       <DeleteIcon fontSize="small" />
@@ -272,7 +298,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
       {/* Table Footer with Pagination Info */}
       <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e0e0e0' }}>
         <Typography variant="body2" color="text.secondary">
-          Zobrazuje sa 1 až {savedOrders.length} z {savedOrders.length} záznamov
+          Zobrazuje sa 1 až {filteredConfigurations.length} z {savedConfigurations.length} záznamov
         </Typography>
         <Typography variant="body2" color="text.secondary">
           Stránka 1 z 1
