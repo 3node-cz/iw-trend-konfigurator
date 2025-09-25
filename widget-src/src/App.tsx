@@ -105,22 +105,44 @@ function App() {
         savedOrder,
       )
 
-      // Set the loaded configuration into app state
-      setCurrentOrder(orderInfo)
+      // Check if we have any valid specifications
+      if (specifications.length === 0) {
+        console.warn('⚠️ No valid materials found for saved order. All materials may have been deleted from Shopify.')
+        alert('Nie je možné načítať uložené nastavenie. Materiály už nie sú dostupné v obchode.')
+        return
+      }
+
+      // Set the loaded configuration into app state - fix date deserialization
+      const fixedOrderInfo = {
+        ...orderInfo,
+        deliveryDate: new Date(orderInfo.deliveryDate) // Convert string back to Date object
+      };
+      setCurrentOrder(fixedOrderInfo)
+
+      console.log('🔍 Processing specifications for app state:', specifications);
 
       setSelectedMaterials(
-        specifications.map((spec) => ({
-          id: spec.material.id,
-          code: spec.material.code,
-          name: spec.material.name,
-          quantity: spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0),
-          price: spec.material.price.amount,
-          totalPrice:
-            spec.material.price.amount *
-            spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0),
-          variantId: spec.material.variantId || spec.material.id,
-          image: spec.material.image,
-        })),
+        specifications.map((spec, index) => {
+          console.log(`🔍 Processing spec ${index}:`, spec.material);
+
+          try {
+            return {
+              id: spec.material.id,
+              code: spec.material.code || spec.material.variant?.sku || 'N/A',
+              name: spec.material.name || spec.material.title,
+              quantity: spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0),
+              price: spec.material.price?.amount || parseFloat(spec.material.variant?.price || '0'),
+              totalPrice:
+                (spec.material.price?.amount || parseFloat(spec.material.variant?.price || '0')) *
+                spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0),
+              variantId: spec.material.variantId || spec.material.variant?.id || spec.material.id,
+              image: spec.material.image || spec.material.featuredImage?.url || null,
+            }
+          } catch (err) {
+            console.error(`❌ Error processing spec ${index}:`, err, spec.material);
+            throw err;
+          }
+        }),
       )
       setCuttingSpecifications(specifications)
 
@@ -128,7 +150,7 @@ function App() {
       setCurrentView('recapitulation')
     } catch (error) {
       console.error('❌ Error loading configuration:', error)
-      // Could show error message to user here
+      alert('Chyba pri načítaní uloženej konfigurácie.')
     }
   }
 

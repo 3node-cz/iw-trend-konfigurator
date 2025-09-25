@@ -279,8 +279,54 @@ export const ApiTestForm: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             fullWidth
-            helperText="Enter keywords to search for materials (e.g., 'wood', 'metal', 'plastic')"
+            helperText="Test different search patterns: keywords (dub), IDs (id:gid://shopify/...), numeric IDs (51514...), or product codes (118-00978)"
           />
+
+          {/* Quick search buttons for common patterns */}
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => setSearchQuery('dub')}
+            >
+              Search "dub"
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => setSearchQuery('wood')}
+            >
+              Search "wood"
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => setSearchQuery('id:gid://shopify/ProductVariant/51514284671317')}
+            >
+              Test Problem ID
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => setSearchQuery('51514284671317')}
+            >
+              Search Numeric Only
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => setSearchQuery('118-00978')}
+            >
+              Search by Code
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => setSearchQuery('id:gid://shopify/Product/10169197986133')}
+            >
+              Test Real Product ID
+            </Button>
+          </Box>
           <Button
             variant="contained"
             onClick={handleSearchMaterials}

@@ -76,9 +76,9 @@ export const createSavedConfiguration = (
 
   // Convert cutting specifications to minimal format needed for reconstruction
   const savedSpecs = specifications.map(spec => ({
-    materialId: spec.material.variant?.id || spec.material.id, // Use variant ID if available
+    materialId: spec.material.id, // Always use product ID for consistency with MaterialSearchResult
     glueType: spec.glueType,
-    edgeMaterialId: spec.edgeMaterial?.variantId || spec.edgeMaterial?.id || null,
+    edgeMaterialId: spec.edgeMaterial?.id || null,
     // Only save essential piece data needed for reconstruction
     pieces: spec.pieces.map(piece => ({
       id: piece.id,

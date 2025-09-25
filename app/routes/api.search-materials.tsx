@@ -36,8 +36,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
         console.log('🔍 Shopify GID search detected:', shopifyId);
         searchQuery = `id:${shopifyId}`;
       } else {
-        // Regular text search
-        searchQuery = `title:*${query}* OR vendor:*${query}* OR product_type:*${query}* OR tag:*${query}*`;
+        // Check if it's a numeric ID (like from old variant IDs)
+        if (/^\d+$/.test(query)) {
+          // For numeric queries, search across multiple fields including variant IDs and SKUs
+          searchQuery = `title:*${query}* OR vendor:*${query}* OR product_type:*${query}* OR tag:*${query}* OR sku:*${query}* OR variant_id:${query} OR barcode:${query}`;
+          console.log('🔍 Numeric ID detected, using enhanced search for:', query);
+        } else {
+          // Regular text search - include SKU field for product codes
+          searchQuery = `title:*${query}* OR vendor:*${query}* OR product_type:*${query}* OR tag:*${query}* OR sku:*${query}*`;
+        }
       }
     } else {
       // If no query, return all products
@@ -157,57 +164,58 @@ export async function loader({ request }: LoaderFunctionArgs) {
       graphqlQuery = `
         query searchProducts($query: String!, $first: Int!) {
           products(first: $first, query: $query) {
-          edges {
-            node {
-              id
-              title
-              handle
-              vendor
-              productType
-              tags
-              featuredImage {
-                url
-                altText
-              }
-              images(first: 5) {
-                edges {
-                  node {
-                    url
-                    altText
-                  }
+            edges {
+              node {
+                id
+                title
+                handle
+                vendor
+                productType
+                tags
+                featuredImage {
+                  url
+                  altText
                 }
-              }
-              variants(first: 10) {
-                edges {
-                  node {
-                    id
-                    title
-                    sku
-                    price
-                    inventoryQuantity
-                    availableForSale
-                    image {
+                images(first: 5) {
+                  edges {
+                    node {
                       url
                       altText
                     }
-                    metafields(first: 10) {
-                      edges {
-                        node {
-                          namespace
-                          key
-                          value
+                  }
+                }
+                variants(first: 10) {
+                  edges {
+                    node {
+                      id
+                      title
+                      sku
+                      price
+                      inventoryQuantity
+                      availableForSale
+                      image {
+                        url
+                        altText
+                      }
+                      metafields(first: 10) {
+                        edges {
+                          node {
+                            namespace
+                            key
+                            value
+                          }
                         }
                       }
                     }
                   }
                 }
-              }
-              metafields(first: 10) {
-                edges {
-                  node {
-                    namespace
-                    key
-                    value
+                metafields(first: 10) {
+                  edges {
+                    node {
+                      namespace
+                      key
+                      value
+                    }
                   }
                 }
               }
