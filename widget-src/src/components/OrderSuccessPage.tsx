@@ -24,6 +24,7 @@ import {
 } from '@mui/icons-material'
 import type { OrderFormData } from '../schemas/orderSchema'
 import type { CuttingSpecification } from '../types/shopify'
+import { formatPriceNumber } from '../utils/formatting'
 import { createConfigurationService } from '../services/configurationService'
 import { useCustomer } from '../hooks/useCustomer'
 
@@ -150,7 +151,7 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
                     variant="outlined"
                   />
                   <Chip
-                    label={`€${summary.totalCost.toFixed(2)}`}
+                    label={`€${formatPriceNumber(summary.totalCost)}`}
                     size="small"
                     variant="outlined"
                     color="primary"

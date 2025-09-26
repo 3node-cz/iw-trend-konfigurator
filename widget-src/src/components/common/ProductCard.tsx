@@ -11,6 +11,7 @@ import {
 import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material'
 import type { MaterialSearchResult } from '../../types/shopify'
 import { AvailabilityChip } from './'
+import { formatPriceNumber } from '../../utils/formatting'
 
 interface ProductCardProps {
   material: MaterialSearchResult
@@ -98,7 +99,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             per unit
           </Typography>
           <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 600 }}>
-            €{parseFloat(material.variant?.price || "0").toFixed(2)}
+            €{formatPriceNumber(material.variant?.price || "0")}
           </Typography>
         </Box>
 
@@ -107,11 +108,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
             <Typography variant="caption" color="text.secondary">
               Pôvodná cena
             </Typography>
-            <Typography 
-              variant="body2" 
+            <Typography
+              variant="body2"
               sx={{ textDecoration: 'line-through', color: 'text.secondary' }}
             >
-              €{parseFloat(material.variant?.price || "0").toFixed(2)}
+              €{formatPriceNumber(material.variant?.price || "0")}
             </Typography>
           </Box>
         )}

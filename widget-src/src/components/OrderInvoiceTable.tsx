@@ -16,6 +16,7 @@ import type {
   OrderFormData,
 } from '../types/shopify'
 import type { CuttingLayoutData } from '../hooks/useCuttingLayouts'
+import { formatPriceNumber } from '../utils/formatting'
 
 interface OrderItem {
   id: string
@@ -190,7 +191,7 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
               sx={{ color: 'success.dark', fontWeight: 500 }}
             >
               ✓ Aplikovaná zľava zákazníka: {order.discountPercentage}% (úspora:{' '}
-              {totalDiscountAmount.toFixed(2)} €)
+              {formatPriceNumber(totalDiscountAmount)} €)
             </Typography>
           </Box>
         )}
@@ -311,7 +312,7 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {item.unitPrice.toFixed(2)} €
+                      {formatPriceNumber(item.unitPrice)} €
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
@@ -319,7 +320,7 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
                       variant="body2"
                       sx={{ fontWeight: 500 }}
                     >
-                      {item.totalPrice.toFixed(2)} €
+                      {formatPriceNumber(item.totalPrice)} €
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -341,7 +342,7 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
                   variant="subtitle1"
                   sx={{ fontWeight: 600, color: 'primary.main' }}
                 >
-                  {grandTotal.toFixed(2)} €
+                  {formatPriceNumber(grandTotal)} €
                 </Typography>
               </TableCell>
             </TableRow>

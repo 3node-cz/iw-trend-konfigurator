@@ -9,6 +9,7 @@ import {
 } from '@mui/material'
 import type { MaterialSearchResult } from '../types/shopify'
 import { AvailabilityChip } from './common'
+import { formatPrice } from '../utils/formatting'
 
 interface MaterialInfoCardProps {
   material: MaterialSearchResult
@@ -83,7 +84,7 @@ const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
               variant="body2"
               sx={{ fontWeight: 600, color: '#2e7d32' }}
             >
-              {material.variant?.price ? `${parseFloat(material.variant.price).toFixed(4)} EUR per unit` : '[No Price]'}
+              {material.variant?.price ? `${formatPrice(material.variant.price)} per unit` : '[No Price]'}
             </Typography>
           </Box>
         </Box>

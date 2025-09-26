@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { calculateTotalPieces } from '../utils/data-transformation'
+import { formatPriceNumber } from '../utils/formatting'
 import {
   Box,
   Container,
@@ -466,7 +467,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
               variant="h6"
               sx={{ fontWeight: 600, color: 'warning.main' }}
             >
-              {(overallStats.totalWasteArea / 1000000).toFixed(2)} m²
+              {formatPriceNumber(overallStats.totalWasteArea / 1000000)} m²
             </Typography>
           </Box>
           {overallStats.totalUnplacedPieces > 0 && (
@@ -497,7 +498,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
                 variant="h6"
                 sx={{ fontWeight: 600, color: 'info.main' }}
               >
-                {orderCalculations.totals.totalEdgeLength.toFixed(2)} m
+                {formatPriceNumber(orderCalculations.totals.totalEdgeLength)} m
               </Typography>
             </Box>
           )}
@@ -517,7 +518,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
                 const discountedCost = order.discountPercentage > 0
                   ? rawCost * (1 - order.discountPercentage / 100)
                   : rawCost
-                return discountedCost.toFixed(2)
+                return formatPriceNumber(discountedCost)
               })()} €
             </Typography>
           </Box>

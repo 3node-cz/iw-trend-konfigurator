@@ -14,12 +14,13 @@ import {
 } from '@mui/material'
 import {
   Add as AddIcon,
-  Remove as RemoveIcon,
+  Delete as DeleteIcon,
   Visibility as VisibilityIcon
 } from '@mui/icons-material'
 import type { MaterialSearchResult } from '../types/shopify'
 import MaterialAllResultsModal from './MaterialAllResultsModal'
 import { AvailabilityChip } from './common'
+import { formatPrice } from '../utils/formatting'
 
 interface MaterialResultsTableProps {
   results: MaterialSearchResult[]
@@ -94,7 +95,10 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                   
                   <TableCell>
                     <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                      {material.variant?.sku || material.handle || '-'}
+                      {material.dimensions
+                        ? `${material.dimensions.height} × ${material.dimensions.width} × ${material.dimensions.thickness} mm`
+                        : material.variant?.sku || material.handle || '-'
+                      }
                     </Typography>
                   </TableCell>
                   
@@ -125,7 +129,7 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                   <TableCell sx={{ textAlign: 'right' }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {parseFloat(material.variant?.price || "0").toFixed(4)} EUR
+                        {formatPrice(material.variant?.price || "0")}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         per unit
@@ -136,7 +140,7 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                   <TableCell sx={{ textAlign: 'right' }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {parseFloat(material.variant?.price || "0").toFixed(4)} EUR
+                        {formatPrice(material.variant?.price || "0")}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         / ks
@@ -162,7 +166,7 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                         color="error"
                         onClick={() => onRemoveMaterial?.(material.id)}
                       >
-                        <RemoveIcon />
+                        <DeleteIcon />
                       </IconButton>
                     ) : (
                       <Button

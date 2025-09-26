@@ -20,6 +20,7 @@ import {
   Straighten as EdgeIcon
 } from '@mui/icons-material'
 import type { OrderCalculations } from '../../hooks/useOrderCalculations'
+import { formatPriceNumber } from '../../utils/formatting'
 
 interface OrderCalculationsSummaryProps {
   calculations: OrderCalculations
@@ -54,7 +55,7 @@ const OrderCalculationsSummary: React.FC<OrderCalculationsSummaryProps> = ({
                 Spotreba hranového materiálu
               </Typography>
               <Chip 
-                label={`${totals.totalEdgeLength.toFixed(2)} m celkom`}
+                label={`${formatPriceNumber(totals.totalEdgeLength)} m celkom`}
                 color="primary"
                 size="small"
               />
@@ -90,7 +91,7 @@ const OrderCalculationsSummary: React.FC<OrderCalculationsSummaryProps> = ({
                           />
                         </TableCell>
                         <TableCell sx={{ fontWeight: 500 }}>
-                          {thickness.totalLengthMeters.toFixed(2)} m
+                          {formatPriceNumber(thickness.totalLengthMeters)} m
                         </TableCell>
                         <TableCell>
                           {thickness.pieceCount}
@@ -117,7 +118,7 @@ const OrderCalculationsSummary: React.FC<OrderCalculationsSummaryProps> = ({
               Náklady na rezanie
             </Typography>
             <Chip 
-              label={`${totals.totalCuttingCost.toFixed(2)} €`}
+              label={`${formatPriceNumber(totals.totalCuttingCost)} €`}
               color="secondary"
               size="small"
             />
@@ -144,16 +145,16 @@ const OrderCalculationsSummary: React.FC<OrderCalculationsSummaryProps> = ({
                     </TableCell>
                     <TableCell>{cost.piecesCount}</TableCell>
                     <TableCell>
-                      {cost.baseCuttingCost.toFixed(2)} €
+                      {formatPriceNumber(cost.baseCuttingCost)} €
                     </TableCell>
                     <TableCell>
-                      {cost.complexityCost.toFixed(2)} €
+                      {formatPriceNumber(cost.complexityCost)} €
                     </TableCell>
                     <TableCell>
-                      {cost.edgingCost.toFixed(2)} € ({cost.edgingLength.toFixed(1)} m)
+                      {formatPriceNumber(cost.edgingCost)} € ({formatPriceNumber(cost.edgingLength)} m)
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>
-                      {cost.totalCost.toFixed(2)} €
+                      {formatPriceNumber(cost.totalCost)} €
                     </TableCell>
                   </TableRow>
                 ))}
@@ -198,14 +199,14 @@ const OrderCalculationsSummary: React.FC<OrderCalculationsSummaryProps> = ({
           <Box>
             <Typography variant="caption" color="text.secondary">Hranový materiál</Typography>
             <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main' }}>
-              {totals.totalEdgeLength.toFixed(2)} m
+              {formatPriceNumber(totals.totalEdgeLength)} m
             </Typography>
           </Box>
         )}
         <Box>
           <Typography variant="caption" color="text.secondary">Náklady na rezanie</Typography>
           <Typography variant="h6" sx={{ fontWeight: 600, color: 'secondary.main' }}>
-            {totals.totalCuttingCost.toFixed(2)} €
+            {formatPriceNumber(totals.totalCuttingCost)} €
           </Typography>
         </Box>
       </Box>

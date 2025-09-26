@@ -54,6 +54,11 @@ export interface MaterialSearchResult {
   image?: string // Featured product image URL
   images?: string[] // Additional product images
   description?: string // Product description
+  dimensions?: {
+    width: number
+    height: number
+    thickness: number
+  } // Product dimensions in mm
 }
 
 export interface CollectionHierarchy {

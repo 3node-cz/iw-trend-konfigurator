@@ -141,8 +141,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
       // Text search in order name and configuration name
       const searchMatch = !filters.searchText ||
         config.orderInfo.orderName.toLowerCase().includes(filters.searchText.toLowerCase()) ||
-        config.name.toLowerCase().includes(filters.searchText.toLowerCase()) ||
-        getOrderNumber(config).includes(filters.searchText)
+        config.name.toLowerCase().includes(filters.searchText.toLowerCase())
 
       // Date range filtering (check savedAt date)
       const configDate = new Date(config.savedAt)
@@ -237,7 +236,6 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
               <TableCell sx={{ fontWeight: 600 }}>Názov zákazky</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Dátum vytvorenia</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Kusov</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Cena</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Akcie</TableCell>
             </TableRow>
           </TableHead>
@@ -246,7 +244,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
               <TableRow key={config.id} hover>
                 <TableCell>
                   <Typography variant="body2" color="primary" sx={{ fontWeight: 500 }}>
-                    {getOrderNumber(config)}
+                    {config.name}
                   </Typography>
                 </TableCell>
                 <TableCell>
@@ -262,11 +260,6 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                 <TableCell>
                   <Typography variant="body2">
                     {getTotalPieces(config)}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2">
-                    {config.materials.length} mats
                   </Typography>
                 </TableCell>
                 <TableCell>
@@ -295,15 +288,6 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
         </Table>
       </TableContainer>
 
-      {/* Table Footer with Pagination Info */}
-      <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e0e0e0' }}>
-        <Typography variant="body2" color="text.secondary">
-          Zobrazuje sa 1 až {filteredConfigurations.length} z {savedConfigurations.length} záznamov
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Stránka 1 z 1
-        </Typography>
-      </Box>
     </Paper>
   )
 }
