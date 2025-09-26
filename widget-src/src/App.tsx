@@ -173,11 +173,11 @@ function App() {
       maxWidth={false}
       disableGutters
     >
-      {/* API Test Form */}
-      <ApiTestForm />
+      {/* API Test Form - Hidden for now */}
+      {/* <ApiTestForm /> */}
 
-      {/* Customer Info Bar - Debug Metafields */}
-      <Box sx={{ p: 2, bgcolor: '#f5f5f5', mb: 1 }}>
+      {/* Customer Info Bar - Debug Metafields - Hidden for now */}
+      {/* <Box sx={{ p: 2, bgcolor: '#f5f5f5', mb: 1 }}>
         {isLoggedIn && customer ? (
           <Box>
             <Typography variant="caption" sx={{ display: 'block' }}>
@@ -243,7 +243,7 @@ function App() {
         ) : (
           <Typography variant="caption">🔓 Nie je prihlásený zákazník</Typography>
         )}
-      </Box>
+      </Box> */}
 
       {currentView === 'orders' && (
         <OrdersPage

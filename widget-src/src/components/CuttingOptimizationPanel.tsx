@@ -15,6 +15,7 @@ import {
 } from '@mui/icons-material'
 import Grid from '@mui/system/Grid'
 import type { CuttingPiece, MaterialSearchResult } from '../types/shopify'
+import { formatPriceNumber } from '../utils/formatting'
 
 interface CuttingOptimizationPanelProps {
   material: MaterialSearchResult
@@ -102,7 +103,7 @@ const CuttingOptimizationPanel: React.FC<CuttingOptimizationPanelProps> = ({
         <Grid size={{ xs: 12, sm: 4 }}>
           <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
             <Typography variant="h4" color="primary" sx={{ fontWeight: 600 }}>
-              {(parseFloat(material.variant?.price || "0") * totalArea).toFixed(2)}
+              {formatPriceNumber(parseFloat(material.variant?.price || "0") * totalArea)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               Odhadovaná cena (EUR)
@@ -171,7 +172,7 @@ const CuttingOptimizationPanel: React.FC<CuttingOptimizationPanelProps> = ({
             <Grid size={{ xs: 12, sm: 3 }}>
               <Box sx={{ textAlign: 'center', p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
                 <Typography variant="h5" color="primary" sx={{ fontWeight: 600 }}>
-                  {results.totalCost.toFixed(2)}€
+                  {formatPriceNumber(results.totalCost)}€
                 </Typography>
                 <Typography variant="caption">
                   Celková cena

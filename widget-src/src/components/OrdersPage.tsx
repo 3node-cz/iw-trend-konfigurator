@@ -1,75 +1,75 @@
-import React, { useState, useEffect } from 'react'
-import {
-  Box,
-  Container,
-  Alert,
-  Collapse,
-  IconButton
-} from '@mui/material'
-import {
-  Close as CloseIcon
-} from '@mui/icons-material'
-import OrdersHeader from './OrdersHeader'
-import OrdersFilters from './OrdersFilters'
-import OrdersTable from './OrdersTable'
-import type { OrderFormData } from '../types/shopify'
-import type { SavedConfiguration } from '../types/optimized-saved-config'
-import type { CustomerOrderData } from '../services/customerApi'
+import React, { useState, useEffect } from "react";
+import { Box, Container, Alert, Collapse, IconButton } from "@mui/material";
+import { Close as CloseIcon } from "@mui/icons-material";
+import OrdersHeader from "./OrdersHeader";
+import OrdersFilters from "./OrdersFilters";
+import OrdersTable from "./OrdersTable";
+import type { OrderFormData } from "../types/shopify";
+import type { SavedConfiguration } from "../types/optimized-saved-config";
+import type { CustomerOrderData } from "../services/customerApi";
 
 interface OrdersPageProps {
-  onOrderCreated?: (orderData: OrderFormData) => void
-  onLoadConfiguration?: (order: SavedConfiguration) => void // Navigate to order summary with loaded config
-  customer?: CustomerOrderData | null
+  onOrderCreated?: (orderData: OrderFormData) => void;
+  onLoadConfiguration?: (order: SavedConfiguration) => void; // Navigate to order summary with loaded config
+  customer?: CustomerOrderData | null;
 }
 
 const OrdersPage: React.FC<OrdersPageProps> = ({
   onOrderCreated,
   onLoadConfiguration,
-  customer
+  customer,
 }) => {
-  const [showAlert, setShowAlert] = useState(false)
-  const [alertMessage, setAlertMessage] = useState('')
-  const [filters, setFilters] = useState<{ searchText: string; dateFrom: Date | null; dateTo: Date | null }>({
-    searchText: '',
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [filters, setFilters] = useState<{
+    searchText: string;
+    dateFrom: Date | null;
+    dateTo: Date | null;
+  }>({
+    searchText: "",
     dateFrom: null,
-    dateTo: null
-  })
+    dateTo: null,
+  });
 
   const handleOrderCreated = (orderData: OrderFormData) => {
     // Generate a mock order number for the success message
-    const orderNumber = Math.floor(Math.random() * 900000000) + 100000000
-    setAlertMessage(`Zákazka ${orderNumber} byla uložena`)
-    setShowAlert(true)
-    
+    const orderNumber = Math.floor(Math.random() * 900000000) + 100000000;
+    setAlertMessage(`Zákazka ${orderNumber} byla uložena`);
+    setShowAlert(true);
+
     // Call the parent callback
-    onOrderCreated?.(orderData)
-  }
+    onOrderCreated?.(orderData);
+  };
 
   const handleDeleteOrder = (order: SavedConfiguration) => {
     // For now, just show an alert
-    setAlertMessage(`Zákazka ${order.name} bola označená na zmazanie`)
-    setShowAlert(true)
-  }
+    setAlertMessage(`Zákazka ${order.name} bola označená na zmazanie`);
+    setShowAlert(true);
+  };
 
-  const handleFiltersChange = (newFilters: { searchText: string; dateFrom: Date | null; dateTo: Date | null }) => {
-    setFilters(newFilters)
-  }
+  const handleFiltersChange = (newFilters: {
+    searchText: string;
+    dateFrom: Date | null;
+    dateTo: Date | null;
+  }) => {
+    setFilters(newFilters);
+  };
 
   // Auto-hide alert after 5 seconds
   useEffect(() => {
     if (showAlert) {
       const timer = setTimeout(() => {
-        setShowAlert(false)
-      }, 5000)
-      return () => clearTimeout(timer)
+        setShowAlert(false);
+      }, 5000);
+      return () => clearTimeout(timer);
     }
-  }, [showAlert])
+  }, [showAlert]);
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5' }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#f5f5f5" }}>
       {/* Success/Error Alert Bar */}
       <Collapse in={showAlert}>
-        <Alert 
+        <Alert
           severity="success"
           action={
             <IconButton
@@ -87,7 +87,10 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
         </Alert>
       </Collapse>
 
-      <Container maxWidth={false} sx={{ maxWidth: '1920px', mx: 'auto', py: 3 }}>
+      <Container
+        maxWidth={false}
+        sx={{ maxWidth: "1920px", mx: "auto", py: 3 }}
+      >
         <OrdersHeader onOrderCreated={handleOrderCreated} customer={customer} />
         <OrdersFilters onFiltersChange={handleFiltersChange} />
         <OrdersTable
@@ -97,7 +100,7 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
         />
       </Container>
     </Box>
-  )
-}
+  );
+};
 
-export default OrdersPage
+export default OrdersPage;

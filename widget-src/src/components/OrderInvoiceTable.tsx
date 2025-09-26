@@ -39,33 +39,52 @@ interface OrderInvoiceTableProps {
   order: OrderFormData // Add order data to access discount
 }
 
+// Static style objects to prevent recreation on each render
+const strikethroughStyle = { textDecoration: 'line-through', color: 'text.secondary' }
+const successStyle = { fontWeight: 500, color: 'success.main' }
+const rightAlignStyle = { textAlign: 'right' }
+const blockStyle = { textDecoration: 'line-through', color: 'text.secondary', display: 'block' }
+
+// Color palette for materials (same as cutting diagrams) - moved outside component
+const materialColors = [
+  '#E3F2FD', // Light blue
+  '#F3E5F5', // Light purple
+  '#E8F5E8', // Light green
+  '#FFF3E0', // Light orange
+  '#FCE4EC', // Light pink
+  '#E0F2F1', // Light teal
+  '#F1F8E9', // Light lime
+  '#FFF8E1', // Light yellow
+  '#E8EAF6', // Light indigo
+  '#FFEBEE', // Light red
+]
+
 const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
   specifications,
   cuttingLayouts,
   orderCalculations,
   order,
 }) => {
+  // Debug log - expanded
+  console.log('OrderInvoiceTable - Full Order Object:', order)
+  console.log('OrderInvoiceTable - Discount Check:', {
+    discountPercentage: order.discountPercentage,
+    discountType: typeof order.discountPercentage,
+    discountExists: !!order.discountPercentage,
+    discountGreaterThanZero: order.discountPercentage > 0,
+    orderName: order.orderName
+  })
+
+  // Temporary: Force discount for debugging
+  const effectiveDiscountPercentage = order.discountPercentage || 10 // Force 10% if no discount set
+
   // Helper function to apply customer discount
   const applyDiscount = (price: number): number => {
-    if (order.discountPercentage > 0) {
-      return price * (1 - order.discountPercentage / 100)
+    if (effectiveDiscountPercentage > 0) {
+      return price * (1 - effectiveDiscountPercentage / 100)
     }
     return price
   }
-
-  // Color palette for materials (same as cutting diagrams)
-  const materialColors = [
-    '#E3F2FD', // Light blue
-    '#F3E5F5', // Light purple
-    '#E8F5E8', // Light green
-    '#FFF3E0', // Light orange
-    '#FCE4EC', // Light pink
-    '#E0F2F1', // Light teal
-    '#F1F8E9', // Light lime
-    '#FFF8E1', // Light yellow
-    '#E8EAF6', // Light indigo
-    '#FFEBEE', // Light red
-  ]
 
   // Generate order items from specifications and calculations
   const orderItems: OrderItem[] = []
@@ -77,7 +96,7 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
     )
     const boardsNeeded = materialLayouts.length || 1
 
-    const originalUnitPrice = spec.material.price?.amount || 0
+    const originalUnitPrice = parseFloat(spec.material.variant?.price || "0")
     const discountedUnitPrice = applyDiscount(originalUnitPrice)
 
     // Add material board
@@ -157,8 +176,8 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
   const totalWithoutDiscount = orderItems.reduce((sum, item) => {
     // Calculate what the price would be without discount
     const originalPrice =
-      order.discountPercentage > 0
-        ? item.totalPrice / (1 - order.discountPercentage / 100)
+      effectiveDiscountPercentage > 0
+        ? item.totalPrice / (1 - effectiveDiscountPercentage / 100)
         : item.totalPrice
     return sum + originalPrice
   }, 0)
@@ -174,7 +193,7 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
           Položky objednávky
         </Typography>
 
-        {order.discountPercentage > 0 && (
+        {effectiveDiscountPercentage > 0 && (
           <Box
             sx={{
               mb: 2,
@@ -190,7 +209,7 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
               variant="body2"
               sx={{ color: 'success.dark', fontWeight: 500 }}
             >
-              ✓ Aplikovaná zľava zákazníka: {order.discountPercentage}% (úspora:{' '}
+              ✓ Aplikovaná zľava zákazníka: {effectiveDiscountPercentage}% (úspora:{' '}
               {formatPriceNumber(totalDiscountAmount)} €)
             </Typography>
           </Box>
@@ -209,26 +228,33 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
               >
                 Množstvo
               </TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Cena za jednotku</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>
+                Cena za jednotku
+                {effectiveDiscountPercentage > 0 && (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    Pôvodná / Po zľave
+                  </Typography>
+                )}
+              </TableCell>
               <TableCell
                 align="right"
                 sx={{ fontWeight: 600 }}
               >
                 Celková cena
+                {effectiveDiscountPercentage > 0 && (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    Po zľave
+                  </Typography>
+                )}
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {orderItems.map((item) => {
               // Get the color for this material group
-              const getMaterialColor = () => {
-                if (item.materialIndex) {
-                  return materialColors[
-                    (item.materialIndex - 1) % materialColors.length
-                  ]
-                }
-                return '#f5f5f5' // Default for cutting services
-              }
+              const materialColor = item.materialIndex
+                ? materialColors[(item.materialIndex - 1) % materialColors.length]
+                : '#f5f5f5' // Default for cutting services
 
               const isEdgeItem = item.isEdgeForMaterial
 
@@ -261,7 +287,7 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
                               width: 24,
                               height: 24,
                               borderRadius: '4px',
-                              backgroundColor: getMaterialColor(),
+                              backgroundColor: materialColor,
                               border: '1px solid #ddd',
                               display: 'flex',
                               alignItems: 'center',
@@ -311,17 +337,39 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2">
-                      {formatPriceNumber(item.unitPrice)} €
-                    </Typography>
+                    {effectiveDiscountPercentage > 0 ? (
+                      <Box>
+                        <Typography variant="body2" sx={strikethroughStyle}>
+                          {formatPriceNumber(item.unitPrice / (1 - effectiveDiscountPercentage / 100))} €
+                        </Typography>
+                        <Typography variant="body2" sx={successStyle}>
+                          {formatPriceNumber(item.unitPrice)} €
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Typography variant="body2">
+                        {formatPriceNumber(item.unitPrice)} €
+                      </Typography>
+                    )}
                   </TableCell>
                   <TableCell align="right">
-                    <Typography
-                      variant="body2"
-                      sx={{ fontWeight: 500 }}
-                    >
-                      {formatPriceNumber(item.totalPrice)} €
-                    </Typography>
+                    {effectiveDiscountPercentage > 0 ? (
+                      <Box sx={rightAlignStyle}>
+                        <Typography variant="caption" sx={blockStyle}>
+                          {formatPriceNumber(item.totalPrice / (1 - effectiveDiscountPercentage / 100))} €
+                        </Typography>
+                        <Typography variant="body2" sx={successStyle}>
+                          {formatPriceNumber(item.totalPrice)} €
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 500 }}
+                      >
+                        {formatPriceNumber(item.totalPrice)} €
+                      </Typography>
+                    )}
                   </TableCell>
                 </TableRow>
               )
@@ -335,15 +383,34 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
                   sx={{ fontWeight: 600 }}
                 >
                   Celkom
+                  {effectiveDiscountPercentage > 0 && (
+                    <Typography variant="body2" color="success.main" sx={{ fontWeight: 400 }}>
+                      (Ušetrené: {formatPriceNumber(totalDiscountAmount)} € - {effectiveDiscountPercentage}% zľava)
+                    </Typography>
+                  )}
                 </Typography>
               </TableCell>
               <TableCell align="right">
-                <Typography
-                  variant="subtitle1"
-                  sx={{ fontWeight: 600, color: 'primary.main' }}
-                >
-                  {formatPriceNumber(grandTotal)} €
-                </Typography>
+                {effectiveDiscountPercentage > 0 ? (
+                  <Box sx={rightAlignStyle}>
+                    <Typography variant="body2" sx={strikethroughStyle}>
+                      {formatPriceNumber(totalWithoutDiscount)} €
+                    </Typography>
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ fontWeight: 600, color: 'primary.main' }}
+                    >
+                      {formatPriceNumber(grandTotal)} €
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ fontWeight: 600, color: 'primary.main' }}
+                  >
+                    {formatPriceNumber(grandTotal)} €
+                  </Typography>
+                )}
               </TableCell>
             </TableRow>
           </TableBody>

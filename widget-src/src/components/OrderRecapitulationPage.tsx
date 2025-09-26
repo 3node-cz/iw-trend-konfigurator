@@ -113,6 +113,12 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
 
   const totalPieces = calculateTotalPieces(specifications)
 
+  // Calculate discounted cutting cost
+  const rawCuttingCost = orderCalculations.totals.totalCuttingCost
+  const discountedCuttingCost = order.discountPercentage > 0
+    ? rawCuttingCost * (1 - order.discountPercentage / 100)
+    : rawCuttingCost
+
   // Check for unavailable products
   const unavailableProducts = specifications.reduce((acc, spec) => {
     if (!spec.material.variant?.availableForSale) {
@@ -513,13 +519,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
               variant="h6"
               sx={{ fontWeight: 600, color: 'secondary.main' }}
             >
-              {(() => {
-                const rawCost = orderCalculations.totals.totalCuttingCost
-                const discountedCost = order.discountPercentage > 0
-                  ? rawCost * (1 - order.discountPercentage / 100)
-                  : rawCost
-                return formatPriceNumber(discountedCost)
-              })()} €
+              {formatPriceNumber(discountedCuttingCost)} €
             </Typography>
           </Box>
         </Box>
