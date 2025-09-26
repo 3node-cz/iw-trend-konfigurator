@@ -20,7 +20,7 @@ export const transformToSelectedMaterial = (
     price,
     totalPrice: price * quantity,
     variantId: material.variant?.id || material.id,
-    image: material.featuredImage?.url || material.images?.[0]?.url
+    image: material.image || material.images?.[0]
   }
 }
 
