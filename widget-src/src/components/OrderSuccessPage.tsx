@@ -138,26 +138,6 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
                 Uložte si túto konfiguráciu pre budúce použitie
               </Typography>
 
-              {summary && (
-                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', mb: 3 }}>
-                  <Chip
-                    label={`${materials.length} materiálov`}
-                    size="small"
-                    variant="outlined"
-                  />
-                  <Chip
-                    label={`${summary.totalPieces} kusov`}
-                    size="small"
-                    variant="outlined"
-                  />
-                  <Chip
-                    label={`€${formatPriceNumber(summary.totalCost)}`}
-                    size="small"
-                    variant="outlined"
-                    color="primary"
-                  />
-                </Box>
-              )}
 
               <Button
                 variant="outlined"
@@ -219,49 +199,62 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
         fullWidth
       >
         <DialogTitle>
-          Uložiť konfiguráciu
+          {saveMessage?.type === 'success' ? 'Konfigurácia uložená' : 'Uložiť konfiguráciu'}
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
-            Zadajte názov pre túto konfiguráciu. Budete si ju môcť neskôr znovu načítať.
-          </Typography>
-
-          {saveMessage && (
+          {saveMessage ? (
             <Alert
               severity={saveMessage.type}
               sx={{ mb: 2 }}
             >
               {saveMessage.text}
             </Alert>
-          )}
+          ) : (
+            <>
+              <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
+                Zadajte názov pre túto konfiguráciu. Budete si ju môcť neskôr znovu načítať.
+              </Typography>
 
-          <TextField
-            autoFocus
-            label="Názov konfigurácie"
-            fullWidth
-            value={configurationName}
-            onChange={(e) => setConfigurationName(e.target.value)}
-            placeholder="napr. Kuchynské skrinky - projekt 2024"
-            disabled={saving}
-            error={!configurationName.trim() && configurationName.length > 0}
-            helperText={!configurationName.trim() && configurationName.length > 0 ? 'Názov je povinný' : ''}
-          />
+              <TextField
+                autoFocus
+                label="Názov konfigurácie"
+                fullWidth
+                value={configurationName}
+                onChange={(e) => setConfigurationName(e.target.value)}
+                placeholder="napr. Kuchynské skrinky - projekt 2024"
+                disabled={saving}
+                error={!configurationName.trim() && configurationName.length > 0}
+                helperText={!configurationName.trim() && configurationName.length > 0 ? 'Názov je povinný' : ''}
+              />
+            </>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={() => setSaveDialogOpen(false)}
-            disabled={saving}
-          >
-            Zrušiť
-          </Button>
-          <Button
-            onClick={handleSaveConfiguration}
-            variant="contained"
-            disabled={!configurationName.trim() || saving}
-            startIcon={saving ? undefined : <SaveIcon />}
-          >
-            {saving ? 'Ukladám...' : 'Uložiť'}
-          </Button>
+          {saveMessage?.type === 'success' ? (
+            <Button
+              onClick={() => setSaveDialogOpen(false)}
+              variant="contained"
+            >
+              Zavrieť
+            </Button>
+          ) : (
+            <>
+              <Button
+                onClick={() => setSaveDialogOpen(false)}
+                disabled={saving}
+              >
+                Zrušiť
+              </Button>
+              <Button
+                onClick={handleSaveConfiguration}
+                variant="contained"
+                disabled={!configurationName.trim() || saving}
+                startIcon={saving ? undefined : <SaveIcon />}
+              >
+                {saving ? 'Ukladám...' : 'Uložiť'}
+              </Button>
+            </>
+          )}
         </DialogActions>
       </Dialog>
     </Container>

@@ -155,29 +155,59 @@ async function fetchMaterialById(
 async function fetchEdgeMaterialById(
   edgeMaterialId: string,
 ): Promise<EdgeMaterial | null> {
+  console.log('🔍 Fetching edge material by ID:', edgeMaterialId);
+
   try {
-    // Pass the full edgeMaterialId (GID) to the search, let the API handle the format
-    const results = await searchEdgeMaterials({
+    // Strategy 1: Try direct GID search first (for valid GIDs)
+    let results = await searchEdgeMaterials({
       query: `id:${edgeMaterialId}`,
       limit: 1,
     })
+
+    console.log('🔍 Direct GID search results for edge', edgeMaterialId, ':', results);
+
+    // Strategy 2: If direct search fails, try enhanced numeric search
+    if (results.length === 0) {
+      let numericId = edgeMaterialId;
+
+      // Extract numeric part if it's a GID
+      if (edgeMaterialId.includes('gid://shopify/')) {
+        numericId = edgeMaterialId.replace(/^gid:\/\/shopify\/(Product|ProductVariant)\//, '');
+        console.log('🔄 Edge GID search failed, trying numeric search for:', numericId);
+      } else {
+        console.log('🔄 Edge direct search failed, trying as numeric ID:', numericId);
+      }
+
+      // Use the enhanced numeric search (same as what's working for materials)
+      const fallbackResults = await searchEdgeMaterials({
+        query: numericId,
+        limit: 5,
+      });
+
+      console.log('🔍 Edge numeric search results:', fallbackResults);
+
+      if (fallbackResults.length > 0) {
+        console.log('✅ Found edge material via numeric search:', fallbackResults[0]);
+        results = [fallbackResults[0]];
+      }
+    }
 
     if (results.length > 0) {
       const result = results[0]
       return {
         id: result.id,
-        name: result.name,
-        productCode: result.productCode || result.code,
-        availability: result.availability,
+        name: result.title,
+        productCode: result.variant?.sku || result.handle,
+        availability: 'available',
         thickness: 0.8,
         availableThicknesses: [0.4, 0.8, 2],
-        warehouse: result.warehouse,
-        price: result.price,
+        warehouse: 'default',
+        price: result.variant?.price || '0',
         image: result.image,
       }
     }
 
-    console.warn(`Edge material not found for ID ${edgeMaterialId}`)
+    console.warn(`❌ Edge material not found for ID ${edgeMaterialId} (tried both GID and numeric search)`)
     return null
   } catch (error) {
     console.error('Error fetching edge material by ID:', error)

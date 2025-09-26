@@ -101,12 +101,15 @@ export const createMinimalSavedConfig = (
         length: piece.length,
         width: piece.width,
         quantity: piece.quantity,
-        // Simplified edge config (TODO: Use enum)
-        edgeConfig: {
-          type: piece.edgeAllAround ? 'all_around' : 'none' as any,
-          thickness: piece.edgeAllAround as any
-        },
         allowRotation: piece.allowRotation,
+        withoutEdge: piece.withoutEdge,
+        duplicate: piece.duplicate,
+        // Preserve all edge settings
+        edgeAllAround: piece.edgeAllAround,
+        edgeTop: piece.edgeTop,
+        edgeBottom: piece.edgeBottom,
+        edgeLeft: piece.edgeLeft,
+        edgeRight: piece.edgeRight,
         notes: piece.notes
       }))
     }))
@@ -133,11 +136,15 @@ export const migrateToOptimizedFormat = (oldConfig: any): SavedConfiguration => 
         length: piece.length,
         width: piece.width,
         quantity: piece.quantity,
-        edgeConfig: {
-          type: piece.edgeAllAround ? 'all_around' : 'none' as any,
-          thickness: piece.edgeAllAround
-        },
         allowRotation: piece.allowRotation || false,
+        withoutEdge: piece.withoutEdge || false,
+        duplicate: piece.duplicate || false,
+        // Preserve all edge settings
+        edgeAllAround: piece.edgeAllAround || null,
+        edgeTop: piece.edgeTop || null,
+        edgeBottom: piece.edgeBottom || null,
+        edgeLeft: piece.edgeLeft || null,
+        edgeRight: piece.edgeRight || null,
         notes: piece.notes || ''
       }))
     }))

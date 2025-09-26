@@ -67,16 +67,7 @@ const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
               color="primary"
               sx={{ fontWeight: 500, mb: 1 }}
             >
-              {material.variant?.sku || material.handle || '[No SKU/Handle]'} - {material.vendor || '[No Vendor]'}
-            </Typography>
-
-            {/* SKU / Product Code */}
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mb: 1 }}
-            >
-              SKU: {material.variant?.sku || material.handle || 'N/A'}
+              {material.variant?.sku || material.handle || '[No SKU/Handle]'}
             </Typography>
 
             {/* Price highlight */}

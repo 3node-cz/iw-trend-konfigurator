@@ -306,7 +306,7 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
                   color="primary"
                   sx={{ display: 'block', mb: 0.5 }}
                 >
-                  {selectedEdge.productCode} - Hranipex
+                  {selectedEdge.productCode}
                 </Typography>
 
                 <Box

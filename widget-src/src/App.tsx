@@ -16,6 +16,7 @@ import type {
   OrderFormData,
   CuttingSpecification,
   CompleteOrder,
+  MaterialSearchResult,
 } from './types/shopify'
 import type { SavedConfiguration } from './types/optimized-saved-config'
 import { useCustomer } from './hooks/useCustomer'
@@ -72,6 +73,23 @@ function App() {
     if (materials.length > 0) {
       setCurrentView('cutting-specification')
     }
+  }
+
+  const handleAddMaterialToCuttingSpec = (material: SelectedMaterial) => {
+    console.log('🔍 handleAddMaterialToCuttingSpec received material:', material);
+
+    // Add the new material to the selected materials list
+    setSelectedMaterials(prevMaterials => {
+      // Check if material is already in the list (by id)
+      const exists = prevMaterials.find(m => m.id === material.id)
+      if (exists) {
+        console.log('⚠️ Material already exists, not adding duplicate')
+        return prevMaterials
+      }
+
+      console.log('✅ Adding new material to list')
+      return [...prevMaterials, material]
+    })
   }
 
   const handleCuttingSpecificationComplete = (
@@ -264,11 +282,12 @@ function App() {
         currentOrder &&
         selectedMaterials.length > 0 && (
           <CuttingSpecificationPage
+            key={selectedMaterials.map(m => m.id).join(',')}
             materials={selectedMaterials.map((material) => ({
               id: material.id,
               title: material.name,
               handle: material.code || 'unknown',
-              vendor: 'Unknown Vendor',
+              vendor: '',
               productType: 'Material',
               tags: [],
               image: material.image,
@@ -288,6 +307,7 @@ function App() {
             existingSpecifications={cuttingSpecifications}
             onBack={handleBackToMaterialSelection}
             onContinue={handleCuttingSpecificationComplete}
+            onAddMaterial={handleAddMaterialToCuttingSpec}
           />
         )}
       {currentView === 'recapitulation' &&

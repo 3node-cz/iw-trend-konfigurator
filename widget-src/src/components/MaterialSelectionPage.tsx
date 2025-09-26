@@ -12,7 +12,7 @@ import {
 } from '@mui/icons-material'
 import MaterialSearch from './MaterialSearch'
 import MaterialResultsTable from './MaterialResultsTable'
-import { searchMaterials } from '../services/shopifyApi'
+import { useMaterialSearch } from '../hooks/useMaterialSearch'
 import type { MaterialSearchResult, SelectedMaterial } from '../types/shopify'
 import { transformToSelectedMaterial } from '../utils/data-transformation'
 
@@ -29,63 +29,18 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
   onBack,
   onContinue
 }) => {
-  const [searchResults, setSearchResults] = useState<MaterialSearchResult[]>([])
   const [selectedMaterials, setSelectedMaterials] = useState<SelectedMaterial[]>(initialSelectedMaterials)
-  const [isLoading, setIsLoading] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [showingAvailableOnly, setShowingAvailableOnly] = useState(true)
 
-  const handleSearch = useCallback(async (query: string) => {
-    setSearchQuery(query) // Track the current search query
-    
-    if (query.length < 2) {
-      setSearchResults([])
-      return
-    }
-    
-    setIsLoading(true)
-    try {
-      console.log('🔍 Starting material search for:', query)
-      
-      // Use the real Shopify API with filtering
-      const results = await searchMaterials({ 
-        query: query,
-        availableOnly: showingAvailableOnly,
-        limit: showingAvailableOnly ? 10 : undefined, // 10 for available only, unlimited for all
-        collection: 'dekorativne-plosne-materialy' // Filter to board materials only
-      })
-      
-      console.log('✅ Search completed. Found', results.length, 'results')
-      setSearchResults(results)
-    } catch (error) {
-      console.error('❌ Search error:', error)
-      setSearchResults([])
-    } finally {
-      setIsLoading(false)
-    }
-  }, [showingAvailableOnly])
+  // Material search hook
+  const {
+    searchResults,
+    isLoadingSearch,
+    searchQuery,
+    showingAvailableOnly,
+    handleSearch,
+    handleShowAll,
+  } = useMaterialSearch()
 
-  const handleShowAll = useCallback(async () => {
-    setShowingAvailableOnly(false)
-    // Re-search with current query but showing all products
-    if (searchQuery.length >= 2) {
-      setIsLoading(true)
-      try {
-        const results = await searchMaterials({ 
-          query: searchQuery,
-          availableOnly: false,
-          limit: undefined,
-          collection: 'dekorativne-plosne-materialy' // Filter to board materials only
-        })
-        console.log('✅ Show all completed. Found', results.length, 'results')
-        setSearchResults(results)
-      } catch (error) {
-        console.error('❌ Show all error:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-  }, [searchQuery])
 
   const handleAddMaterial = (material: MaterialSearchResult) => {
     // Check if material is already selected
@@ -141,7 +96,7 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
       <Paper sx={{ p: 3, mb: 3 }}>
         <MaterialSearch 
           onSearch={handleSearch}
-          isLoading={isLoading}
+          isLoading={isLoadingSearch}
           placeholder="Zadajte kód produktu alebo hľadaný výraz, napr. StrongMax"
           searchValue={searchQuery}
         />
@@ -171,7 +126,7 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
                 variant="outlined"
                 color="primary"
                 onClick={handleShowAll}
-                disabled={isLoading}
+                disabled={isLoadingSearch}
                 sx={{ 
                   borderRadius: 3,
                   textTransform: 'none',

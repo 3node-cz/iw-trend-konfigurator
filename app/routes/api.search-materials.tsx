@@ -61,8 +61,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     let graphqlQuery = '';
     let variables = {};
 
-    if (query.startsWith('id:gid://shopify/')) {
-      // Direct node query for exact ID lookup
+    if (query.startsWith('id:gid://shopify/') && !collection) {
+      // Direct node query for exact ID lookup (but only if no collection filter is needed)
       const shopifyId = query.replace('id:', '');
       console.log('🔍 Using direct node query for ID:', shopifyId);
 
@@ -283,7 +283,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     let materials = [];
 
-    if (query.startsWith('id:gid://shopify/')) {
+    if (query.startsWith('id:gid://shopify/') && !collection) {
       // Handle direct node query result
       const node = result.data.node;
       if (node) {

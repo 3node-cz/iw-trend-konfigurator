@@ -91,6 +91,12 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
 
   // Add material boards with their edges
   specifications.forEach((spec, specIndex) => {
+    console.log(`🔍 Processing specification ${specIndex}:`, {
+      material: spec.material.title,
+      edgeMaterial: spec.edgeMaterial,
+      pieces: spec.pieces.length
+    })
+
     const materialLayouts = cuttingLayouts.filter(
       (layout) => layout.materialIndex === specIndex + 1,
     )
@@ -115,6 +121,8 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
 
     // Add edge material if present (grouped with the material)
     if (spec.edgeMaterial) {
+      console.log(`🔍 Found edge material for spec ${specIndex}:`, spec.edgeMaterial)
+
       const totalEdgeLength = spec.pieces.reduce((sum, piece) => {
         let pieceEdgeLength = 0
 
@@ -124,8 +132,19 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
         if (piece.edgeLeft) pieceEdgeLength += (piece.width * piece.quantity) / 1000
         if (piece.edgeRight) pieceEdgeLength += (piece.width * piece.quantity) / 1000
 
+        console.log(`🔍 Piece edge calculation:`, {
+          piece: piece.partName,
+          edgeTop: piece.edgeTop,
+          edgeBottom: piece.edgeBottom,
+          edgeLeft: piece.edgeLeft,
+          edgeRight: piece.edgeRight,
+          pieceEdgeLength
+        })
+
         return sum + pieceEdgeLength
       }, 0)
+
+      console.log(`🔍 Total edge length for spec ${specIndex}:`, totalEdgeLength)
 
       if (totalEdgeLength > 0) {
         const originalEdgeUnitPrice = spec.edgeMaterial.price?.amount || 0

@@ -17,11 +17,11 @@ export const getEdgeColor = (thickness: number): string => {
 }
 
 /**
- * Get stroke width for edge visualization based on thickness
+ * Get stroke width for edge visualization - consistent width for all edges
  */
 export const getEdgeStrokeWidth = (thickness: number): number => {
-  // Scale thickness for better visibility (minimum 2px, maximum 8px)
-  return Math.max(2, Math.min(8, thickness * 2))
+  // Return consistent stroke width for all edges (only color differs)
+  return 3
 }
 
 /**

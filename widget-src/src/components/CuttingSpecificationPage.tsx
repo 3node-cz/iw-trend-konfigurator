@@ -1,22 +1,28 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import {
   Box,
   Container,
   Typography,
   Paper,
-  Button
+  Button,
+  Divider
 } from '@mui/material'
 import Grid from '@mui/system/Grid'
 import {
   ArrowBack as ArrowBackIcon,
-  Add as AddIcon
+  Add as AddIcon,
+  Search as SearchIcon
 } from '@mui/icons-material'
 import MaterialInfoCard from './MaterialInfoCard'
 import EdgeSelectionCard from './EdgeSelectionCard'
 import CuttingPiecesTable from './CuttingPiecesTable'
 import PiecePreviewDialog from './PiecePreviewDialog'
+import MaterialSearch from './MaterialSearch'
+import MaterialResultsTable from './MaterialResultsTable'
 import { useMaterialSpecs } from '../hooks/useMaterialSpecs'
-import type { MaterialSearchResult, CuttingSpecification, CuttingPiece } from '../types/shopify'
+import { useMaterialSearch } from '../hooks/useMaterialSearch'
+import type { MaterialSearchResult, CuttingSpecification, CuttingPiece, SelectedMaterial } from '../types/shopify'
+import { transformToSelectedMaterial } from '../utils/data-transformation'
 
 interface CuttingSpecificationPageProps {
   materials: MaterialSearchResult[]
@@ -24,6 +30,7 @@ interface CuttingSpecificationPageProps {
   existingSpecifications?: CuttingSpecification[]
   onBack?: () => void
   onContinue?: (specifications: CuttingSpecification[]) => void
+  onAddMaterial?: (material: SelectedMaterial) => void
 }
 
 const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
@@ -31,7 +38,8 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
   orderName,
   existingSpecifications = [],
   onBack,
-  onContinue
+  onContinue,
+  onAddMaterial
 }) => {
   console.log('🔍 CuttingSpecificationPage received materials:', materials);
   console.log('🔍 CuttingSpecificationPage existingSpecifications:', existingSpecifications);
@@ -39,6 +47,17 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
   const [previewPiece, setPreviewPiece] = useState<CuttingPiece | null>(null)
   const [previewMaterial, setPreviewMaterial] = useState<MaterialSearchResult | null>(null)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+
+  // Material search hook
+  const {
+    searchResults,
+    isLoadingSearch,
+    searchQuery,
+    showingAvailableOnly,
+    handleSearch,
+    handleShowAll,
+    clearResults
+  } = useMaterialSearch()
 
   // Use custom hook for material specs management
   const {
@@ -68,6 +87,16 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
     setIsPreviewOpen(false)
     setPreviewPiece(null)
     setPreviewMaterial(null)
+  }
+
+  const handleAddMaterialToOrder = (material: MaterialSearchResult) => {
+    if (onAddMaterial) {
+      const selectedMaterial = transformToSelectedMaterial(material)
+      onAddMaterial(selectedMaterial)
+
+      // Clear search results after adding
+      clearResults()
+    }
   }
 
   return (
@@ -147,6 +176,44 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
           </Box>
         )
       })}
+
+      {/* Add More Materials Section */}
+      {onAddMaterial && (
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+            <SearchIcon color="primary" />
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Pridať ďalšie materiály
+            </Typography>
+          </Box>
+
+          <MaterialSearch
+            onSearch={handleSearch}
+            isLoading={isLoadingSearch}
+            placeholder="Vyhľadajte materiály na pridanie..."
+            searchValue={searchQuery}
+          />
+
+          {searchResults.length > 0 && (
+            <Box sx={{ mt: 3 }}>
+              <MaterialResultsTable
+                results={searchResults}
+                onAddMaterial={handleAddMaterialToOrder}
+                selectedMaterialIds={materials.map(m => m.id)} // Pass current material IDs to prevent duplicates
+              />
+            </Box>
+          )}
+
+          {searchQuery.length >= 2 && searchResults.length === 0 && !isLoadingSearch && (
+            <Typography
+              variant="body2"
+              sx={{ mt: 2, color: 'text.secondary', textAlign: 'center' }}
+            >
+              Nenašli sa žiadne materiály pre "{searchQuery}"
+            </Typography>
+          )}
+        </Paper>
+      )}
 
       {/* Action Buttons */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, position: 'sticky', bottom: 20, backgroundColor: 'white', p: 2, borderRadius: 1, boxShadow: 2 }}>
