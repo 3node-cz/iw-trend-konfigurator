@@ -26,6 +26,7 @@ import { SaveOrderButton } from "./common";
 import { useMaterialSpecs } from "../hooks/useMaterialSpecs";
 import { useMaterialSearch } from "../hooks/useMaterialSearch";
 import { useCustomer } from "../hooks/useCustomer";
+import { useScrollOnStepChange } from "../hooks/useScrollIntoView";
 import type {
   MaterialSearchResult,
   CuttingSpecification,
@@ -57,6 +58,9 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
   onRemoveMaterial,
 }) => {
   const { customer } = useCustomer();
+
+  // Auto-scroll when component mounts (step change)
+  useScrollOnStepChange();
 
   // State for piece preview dialog
   const [previewPiece, setPreviewPiece] = useState<CuttingPiece | null>(null);

@@ -39,6 +39,7 @@ import OrderInvoiceTable from './OrderInvoiceTable'
 import { useCuttingLayouts, useOrderCalculations } from '../hooks'
 import { useOrderSubmission } from '../hooks/useOrderSubmission'
 import { useCustomer } from '../hooks/useCustomer'
+import { useScrollOnStepChange } from '../hooks/useScrollIntoView'
 import {
   groupCuttingLayouts,
   getGroupedLayoutTitle,
@@ -68,6 +69,9 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     title: string
     globalPieceTypes?: string[]
   } | null>(null)
+
+  // Auto-scroll when component mounts (step change)
+  useScrollOnStepChange()
 
   // Use custom hooks for cutting layouts and order calculations
   const { cuttingLayouts, overallStats } = useCuttingLayouts(specifications)

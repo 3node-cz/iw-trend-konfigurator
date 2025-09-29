@@ -15,6 +15,7 @@ import MaterialResultsTable from './MaterialResultsTable'
 import { SaveOrderButton } from './common'
 import { useMaterialSearch } from '../hooks/useMaterialSearch'
 import { useCustomer } from '../hooks/useCustomer'
+import { useScrollOnStepChange } from '../hooks/useScrollIntoView'
 import type { MaterialSearchResult, SelectedMaterial } from '../types/shopify'
 import type { OrderFormData } from '../schemas/orderSchema'
 import { transformToSelectedMaterial } from '../utils/data-transformation'
@@ -36,6 +37,9 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
 }) => {
   const [selectedMaterials, setSelectedMaterials] = useState<SelectedMaterial[]>(initialSelectedMaterials)
   const { customer } = useCustomer()
+
+  // Auto-scroll when component mounts (step change)
+  useScrollOnStepChange()
 
   // Material search hook
   const {

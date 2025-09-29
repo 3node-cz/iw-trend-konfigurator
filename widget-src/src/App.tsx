@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Container, Box, Typography, CircularProgress, ThemeProvider, Backdrop } from '@mui/material'
 import OrdersPage from './components/OrdersPage'
 import MaterialSelectionPage from './components/MaterialSelectionPage'
@@ -20,6 +20,7 @@ import type {
 } from './types/shopify'
 import type { SavedConfiguration, AppView } from './types/optimized-saved-config'
 import { useCustomer } from './hooks/useCustomer'
+import { useScrollIntoView } from './hooks/useScrollIntoView'
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('orders')
@@ -33,6 +34,24 @@ function App() {
   >([])
   const [checkoutUrl, setCheckoutUrl] = useState<string>('')
   const [loadingConfiguration, setLoadingConfiguration] = useState(false)
+
+  // Scroll functionality
+  const { scrollToWidget } = useScrollIntoView({
+    behavior: 'smooth',
+    offset: 20
+  })
+
+  // Scroll to widget whenever the view changes (step changes)
+  useEffect(() => {
+    if (currentView !== 'orders') {
+      // Small delay to ensure content is rendered before scrolling
+      const timer = setTimeout(() => {
+        scrollToWidget()
+      }, 200)
+
+      return () => clearTimeout(timer)
+    }
+  }, [currentView, scrollToWidget])
 
   const handleOrderCreated = (orderData: OrderFormData) => {
     setCurrentOrder(orderData)
