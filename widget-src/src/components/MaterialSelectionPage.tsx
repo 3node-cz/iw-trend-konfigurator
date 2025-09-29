@@ -12,12 +12,16 @@ import {
 } from '@mui/icons-material'
 import MaterialSearch from './MaterialSearch'
 import MaterialResultsTable from './MaterialResultsTable'
+import { SaveOrderButton } from './common'
 import { useMaterialSearch } from '../hooks/useMaterialSearch'
+import { useCustomer } from '../hooks/useCustomer'
 import type { MaterialSearchResult, SelectedMaterial } from '../types/shopify'
+import type { OrderFormData } from '../schemas/orderSchema'
 import { transformToSelectedMaterial } from '../utils/data-transformation'
 
 interface MaterialSelectionPageProps {
   orderName?: string
+  orderData?: OrderFormData | null
   initialSelectedMaterials?: SelectedMaterial[]
   onBack?: () => void
   onContinue?: (selectedMaterials: SelectedMaterial[]) => void
@@ -25,11 +29,13 @@ interface MaterialSelectionPageProps {
 
 const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
   orderName = "Aricoma",
+  orderData,
   initialSelectedMaterials = [],
   onBack,
   onContinue
 }) => {
   const [selectedMaterials, setSelectedMaterials] = useState<SelectedMaterial[]>(initialSelectedMaterials)
+  const { customer } = useCustomer()
 
   // Material search hook
   const {
@@ -80,16 +86,33 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
   return (
     <Container maxWidth={false} sx={{ maxWidth: '1920px', mx: 'auto', py: 3 }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={onBack}
-        >
-          Späť
-        </Button>
-        <Typography variant="h4" component="h1" sx={{ color: 'primary.main', fontWeight: 500 }}>
-          {orderName}
-        </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={onBack}
+          >
+            Späť
+          </Button>
+          <Typography variant="h4" component="h1" sx={{ color: 'primary.main', fontWeight: 500 }}>
+            {orderName}
+          </Typography>
+        </Box>
+
+        <SaveOrderButton
+          currentStep="material-selection"
+          orderData={orderData}
+          selectedMaterials={selectedMaterials}
+          cuttingSpecifications={[]}
+          customerId={customer?.id}
+          onSaveSuccess={() => {
+            // Could show a success message or refresh saved orders list
+          }}
+          onSaveError={(error) => {
+            // Could show error in a snackbar
+            console.error('Save error:', error)
+          }}
+        />
       </Box>
 
       {/* Search Section */}
@@ -104,20 +127,7 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
 
       {/* Results Section */}
       {searchResults.length > 0 && (
-        <Paper sx={{ mb: 3 }}>
-          <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e0e0e0' }}>
-            <Typography variant="h6">
-              Výsledky vyhľadávania ({searchResults.length})
-            </Typography>
-            <Button
-              variant="outlined"
-              startIcon={<ClearIcon />}
-              onClick={handleClearSearch}
-              size="small"
-            >
-              Vymazať výsledky
-            </Button>
-          </Box>
+        <Paper sx={{ mb: 3, p: 3 }}>
 
           {/* Show All Button - only when showing available products and we have results */}
           {showingAvailableOnly && searchResults.length >= 10 && (

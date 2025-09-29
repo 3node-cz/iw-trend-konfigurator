@@ -1,52 +1,68 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback } from "react";
 import {
   Box,
   Container,
   Typography,
   Paper,
   Button,
-  Divider
-} from '@mui/material'
-import Grid from '@mui/system/Grid'
+  Divider,
+  Alert,
+  IconButton,
+} from "@mui/material";
+import Grid from "@mui/system/Grid";
 import {
   ArrowBack as ArrowBackIcon,
   Add as AddIcon,
-  Search as SearchIcon
-} from '@mui/icons-material'
-import MaterialInfoCard from './MaterialInfoCard'
-import EdgeSelectionCard from './EdgeSelectionCard'
-import CuttingPiecesTable from './CuttingPiecesTable'
-import PiecePreviewDialog from './PiecePreviewDialog'
-import MaterialSearch from './MaterialSearch'
-import MaterialResultsTable from './MaterialResultsTable'
-import { useMaterialSpecs } from '../hooks/useMaterialSpecs'
-import { useMaterialSearch } from '../hooks/useMaterialSearch'
-import type { MaterialSearchResult, CuttingSpecification, CuttingPiece, SelectedMaterial } from '../types/shopify'
-import { transformToSelectedMaterial } from '../utils/data-transformation'
+  Search as SearchIcon,
+  Delete as DeleteIcon,
+} from "@mui/icons-material";
+import MaterialInfoCard from "./MaterialInfoCard";
+import EdgeSelectionCard from "./EdgeSelectionCard";
+import CuttingPiecesTable from "./CuttingPiecesTable";
+import PiecePreviewDialog from "./PiecePreviewDialog";
+import MaterialSearch from "./MaterialSearch";
+import MaterialResultsTable from "./MaterialResultsTable";
+import { SaveOrderButton } from "./common";
+import { useMaterialSpecs } from "../hooks/useMaterialSpecs";
+import { useMaterialSearch } from "../hooks/useMaterialSearch";
+import { useCustomer } from "../hooks/useCustomer";
+import type {
+  MaterialSearchResult,
+  CuttingSpecification,
+  CuttingPiece,
+  SelectedMaterial,
+} from "../types/shopify";
+import type { OrderFormData } from "../schemas/orderSchema";
+import { transformToSelectedMaterial } from "../utils/data-transformation";
 
 interface CuttingSpecificationPageProps {
-  materials: MaterialSearchResult[]
-  orderName: string
-  existingSpecifications?: CuttingSpecification[]
-  onBack?: () => void
-  onContinue?: (specifications: CuttingSpecification[]) => void
-  onAddMaterial?: (material: SelectedMaterial) => void
+  materials: MaterialSearchResult[];
+  orderName: string;
+  orderData?: OrderFormData | null;
+  existingSpecifications?: CuttingSpecification[];
+  onBack?: () => void;
+  onContinue?: (specifications: CuttingSpecification[]) => void;
+  onAddMaterial?: (material: SelectedMaterial) => void;
+  onRemoveMaterial?: (materialId: string) => void;
 }
 
 const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
   materials,
   orderName,
+  orderData,
   existingSpecifications = [],
   onBack,
   onContinue,
-  onAddMaterial
+  onAddMaterial,
+  onRemoveMaterial,
 }) => {
-  console.log('🔍 CuttingSpecificationPage received materials:', materials);
-  console.log('🔍 CuttingSpecificationPage existingSpecifications:', existingSpecifications);
+  const { customer } = useCustomer();
+
   // State for piece preview dialog
-  const [previewPiece, setPreviewPiece] = useState<CuttingPiece | null>(null)
-  const [previewMaterial, setPreviewMaterial] = useState<MaterialSearchResult | null>(null)
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [previewPiece, setPreviewPiece] = useState<CuttingPiece | null>(null);
+  const [previewMaterial, setPreviewMaterial] =
+    useState<MaterialSearchResult | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Material search hook
   const {
@@ -56,8 +72,8 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
     showingAvailableOnly,
     handleSearch,
     handleShowAll,
-    clearResults
-  } = useMaterialSearch()
+    clearResults,
+  } = useMaterialSearch();
 
   // Use custom hook for material specs management
   const {
@@ -69,61 +85,172 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
     handleRemovePiece,
     clearAllPieces,
     generateSpecifications,
-    getTotalPieces
-  } = useMaterialSpecs(materials, existingSpecifications)
+    getTotalPieces,
+    getTotalPiecesForMaterial,
+    getValidPieces,
+    hasValidPiecesForAllMaterials,
+    getPieceValidationErrors,
+    removeMaterial,
+    isValidPiece,
+  } = useMaterialSpecs(materials, existingSpecifications);
+
+  // Check if there are any validation errors across all materials
+  const hasAnyValidationErrors = useCallback(() => {
+    return materials.some(material => {
+      const validationErrors = getPieceValidationErrors(material.id);
+      return Object.keys(validationErrors).length > 0;
+    });
+  }, [materials, getPieceValidationErrors]);
 
   const handleContinue = () => {
-    const specifications = generateSpecifications()
-    onContinue?.(specifications)
-  }
+    // Check if all materials have at least one valid piece
+    if (!hasValidPiecesForAllMaterials()) {
+      alert(
+        "Každý materiál musí mať aspoň jeden platný kus s dĺžkou a šírkou.",
+      );
+      return;
+    }
 
-  const handlePreviewPiece = (piece: CuttingPiece, material: MaterialSearchResult) => {
-    setPreviewPiece(piece)
-    setPreviewMaterial(material)
-    setIsPreviewOpen(true)
-  }
+    // Check if there are any validation errors
+    if (hasAnyValidationErrors()) {
+      alert(
+        "Opravte chyby v kusoch pred pokračovaním.",
+      );
+      return;
+    }
+
+    const specifications = generateSpecifications();
+    onContinue?.(specifications);
+  };
+
+  const handleRemoveMaterial = (materialId: string, materialName: string) => {
+    const confirmed = window.confirm(
+      `Odstrániť materiál "${materialName}" a všetky jeho kusy?`,
+    );
+    if (confirmed) {
+      removeMaterial(materialId);
+      // Notify parent component to remove from materials array
+      onRemoveMaterial?.(materialId);
+    }
+  };
+
+  const handlePreviewPiece = (
+    piece: CuttingPiece,
+    material: MaterialSearchResult,
+  ) => {
+    setPreviewPiece(piece);
+    setPreviewMaterial(material);
+    setIsPreviewOpen(true);
+  };
 
   const handleClosePreview = () => {
-    setIsPreviewOpen(false)
-    setPreviewPiece(null)
-    setPreviewMaterial(null)
-  }
+    setIsPreviewOpen(false);
+    setPreviewPiece(null);
+    setPreviewMaterial(null);
+  };
 
   const handleAddMaterialToOrder = (material: MaterialSearchResult) => {
     if (onAddMaterial) {
-      const selectedMaterial = transformToSelectedMaterial(material)
-      onAddMaterial(selectedMaterial)
+      const selectedMaterial = transformToSelectedMaterial(material);
+      onAddMaterial(selectedMaterial);
 
       // Clear search results after adding
-      clearResults()
+      clearResults();
     }
-  }
+  };
 
   return (
-    <Container maxWidth={false} sx={{ maxWidth: '1920px', mx: 'auto', py: 3 }}>
+    <Container maxWidth={false} sx={{ maxWidth: "1920px", mx: "auto", py: 3 }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={onBack}
-        >
-          Späť
-        </Button>
-        <Typography variant="h4" component="h1" sx={{ color: 'primary.main', fontWeight: 500 }}>
-          {orderName} - Špecifikácia rezania
-        </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 3,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Button startIcon={<ArrowBackIcon />} onClick={onBack}>
+            Späť
+          </Button>
+          <Typography
+            variant="h4"
+            component="h1"
+            sx={{ color: "primary.main", fontWeight: 500 }}
+          >
+            {orderName} - Špecifikácia rezania
+          </Typography>
+        </Box>
+
+        <SaveOrderButton
+          currentStep="cutting-specification"
+          orderData={orderData}
+          selectedMaterials={materials.map((m) =>
+            transformToSelectedMaterial(m),
+          )}
+          cuttingSpecifications={Object.values(materialSpecs)}
+          customerId={customer?.id}
+          onSaveSuccess={() => {
+            // Could show a success message
+          }}
+          onSaveError={(error) => {
+            console.error("Save error:", error);
+          }}
+        />
       </Box>
 
       {/* Multiple Materials - Scrollable Cards */}
       {materials.map((material, index) => {
-        const materialSpec = materialSpecs[material.id]
-        
+        const materialSpec = materialSpecs[material.id];
+
+        // Skip this material if it has been removed from materialSpecs
+        if (!materialSpec) {
+          return null;
+        }
+
+        const validPiecesCount = getTotalPiecesForMaterial(material.id);
+        const validationErrors = getPieceValidationErrors(material.id);
+        const hasValidationErrors = Object.keys(validationErrors).length > 0;
+
         return (
           <Box key={material.id} sx={{ mb: 4 }}>
             {/* Material Header */}
-            <Typography variant="h5" sx={{ color: 'primary.main', fontWeight: 500, mb: 2 }}>
-              Materiál {index + 1} z {materials.length}
-            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 2,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Typography
+                  variant="h5"
+                  sx={{ color: "primary.main", fontWeight: 500 }}
+                >
+                  Materiál {index + 1} z {materials.length}
+                </Typography>
+                {validPiecesCount > 0 && (
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    ({validPiecesCount} platných kusov)
+                  </Typography>
+                )}
+              </Box>
+
+              {materials.length > 1 && (
+                <IconButton
+                  onClick={() =>
+                    handleRemoveMaterial(material.id, material.title)
+                  }
+                  color="error"
+                  size="small"
+                  sx={{ ml: 2 }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              )}
+            </Box>
 
             {/* Material and Edge Selection */}
             <Grid container spacing={3} sx={{ mb: 3 }}>
@@ -131,22 +258,32 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
               <Grid size={{ xs: 12, md: 6 }}>
                 <MaterialInfoCard material={material} />
               </Grid>
-              
+
               {/* Edge Selection Card */}
               <Grid size={{ xs: 12, md: 6 }}>
                 <EdgeSelectionCard
                   selectedEdge={materialSpec.selectedEdgeMaterial}
                   glueType={materialSpec.glueType}
-                  onEdgeChange={(edge) => handleEdgeMaterialChange(material.id, edge)}
-                  onGlueTypeChange={(glue) => handleGlueTypeChange(material.id, glue)}
+                  onEdgeChange={(edge) =>
+                    handleEdgeMaterialChange(material.id, edge)
+                  }
+                  onGlueTypeChange={(glue) =>
+                    handleGlueTypeChange(material.id, glue)
+                  }
                 />
               </Grid>
             </Grid>
 
-
             {/* Cutting Pieces Section */}
             <Paper sx={{ p: 3, mb: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 3,
+                }}
+              >
                 <Typography variant="h6">
                   Kusy na rezanie ({materialSpec.cuttingPieces.length})
                 </Typography>
@@ -162,25 +299,29 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
               <CuttingPiecesTable
                 pieces={materialSpec.cuttingPieces}
                 edgeMaterial={materialSpec.selectedEdgeMaterial}
-                onPieceChange={(pieceId, updatedPiece) => handlePieceChange(material.id, pieceId, updatedPiece)}
-                onRemovePiece={(pieceId) => handleRemovePiece(material.id, pieceId)}
+                onPieceChange={(pieceId, updatedPiece) =>
+                  handlePieceChange(material.id, pieceId, updatedPiece)
+                }
+                onRemovePiece={(pieceId) =>
+                  handleRemovePiece(material.id, pieceId)
+                }
                 onPreviewPiece={(piece) => handlePreviewPiece(piece, material)}
+                validationErrors={validationErrors}
               />
             </Paper>
 
-
             {/* Divider between materials (except last one) */}
             {index < materials.length - 1 && (
-              <Box sx={{ borderBottom: '2px solid #e0e0e0', mx: 2, mb: 4 }} />
+              <Box sx={{ borderBottom: "2px solid #e0e0e0", mx: 2, mb: 4 }} />
             )}
           </Box>
-        )
+        );
       })}
 
       {/* Add More Materials Section */}
       {onAddMaterial && (
         <Paper sx={{ p: 3, mb: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
             <SearchIcon color="primary" />
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
               Pridať ďalšie materiály
@@ -199,37 +340,84 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
               <MaterialResultsTable
                 results={searchResults}
                 onAddMaterial={handleAddMaterialToOrder}
-                selectedMaterialIds={materials.map(m => m.id)} // Pass current material IDs to prevent duplicates
+                selectedMaterialIds={materials.map((m) => m.id)} // Pass current material IDs to prevent duplicates
               />
             </Box>
           )}
 
-          {searchQuery.length >= 2 && searchResults.length === 0 && !isLoadingSearch && (
-            <Typography
-              variant="body2"
-              sx={{ mt: 2, color: 'text.secondary', textAlign: 'center' }}
-            >
-              Nenašli sa žiadne materiály pre "{searchQuery}"
-            </Typography>
-          )}
+          {searchQuery.length >= 2 &&
+            searchResults.length === 0 &&
+            !isLoadingSearch && (
+              <Typography
+                variant="body2"
+                sx={{ mt: 2, color: "text.secondary", textAlign: "center" }}
+              >
+                Nenašli sa žiadne materiály pre "{searchQuery}"
+              </Typography>
+            )}
         </Paper>
       )}
 
       {/* Action Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, position: 'sticky', bottom: 20, backgroundColor: 'white', p: 2, borderRadius: 1, boxShadow: 2 }}>
-        <Button
-          variant="outlined"
-          onClick={clearAllPieces}
+      <Box
+        sx={{
+          position: "sticky",
+          bottom: 20,
+          backgroundColor: "white",
+          p: 2,
+          borderRadius: 1,
+          boxShadow: 2,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            "@media (max-width: 768px)": {
+              flexDirection: "column",
+              alignItems: "stretch",
+            },
+          }}
         >
-          Vymazať všetko
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleContinue}
-          disabled={getTotalPieces() === 0}
-        >
-          Pokračovať ({getTotalPieces()} kusov)
-        </Button>
+          {/* Help Message */}
+          <Alert
+            severity="info"
+            sx={{
+              flex: 1,
+              minWidth: { xs: "auto", md: "300px" },
+              mb: 0,
+            }}
+          >
+            <Typography variant="body2">
+              💡 Pre pokračovanie musia mať všetky kusy vyplnenú dĺžku aj šírku
+            </Typography>
+          </Alert>
+
+          {/* Buttons */}
+          <Box
+            sx={{
+              display: "flex",
+              gap: 2,
+
+              justifyContent: { xs: "center", md: "flex-end" },
+              minWidth: { xs: "auto", md: "200px" },
+            }}
+          >
+            <Button variant="outlined" onClick={clearAllPieces}>
+              Vymazať všetko
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleContinue}
+              disabled={
+                getTotalPieces() === 0 || !hasValidPiecesForAllMaterials() || hasAnyValidationErrors()
+              }
+            >
+              Pokračovať ({getTotalPieces()} platných kusov)
+            </Button>
+          </Box>
+        </Box>
       </Box>
 
       {/* Piece Preview Dialog */}
@@ -240,7 +428,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
         onClose={handleClosePreview}
       />
     </Container>
-  )
-}
+  );
+};
 
-export default CuttingSpecificationPage
+export default CuttingSpecificationPage;

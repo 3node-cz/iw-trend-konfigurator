@@ -87,12 +87,6 @@ const MaterialSearch: React.FC<MaterialSearchProps> = ({
         />
       </Box>
 
-      {/* Search Instructions */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-        <Typography variant="body2" color="text.secondary">
-          Produkty
-        </Typography>
-      </Box>
     </Box>
   )
 }

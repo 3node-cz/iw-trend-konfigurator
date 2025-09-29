@@ -1,6 +1,6 @@
 // DRY DATA TRANSFORMATION UTILITIES
 import type { MaterialSearchResult, CuttingSpecification, SelectedMaterial } from '../types/shopify'
-import type { SavedConfiguration, CalculatedSummary } from '../types/optimized-saved-config'
+import type { SavedConfiguration, CalculatedSummary, AppView } from '../types/optimized-saved-config'
 import { PRICING } from '../constants'
 
 /**
@@ -82,12 +82,14 @@ export const createMinimalSavedConfig = (
   name: string,
   orderInfo: any,
   materials: MaterialSearchResult[],
-  specifications: CuttingSpecification[]
+  specifications: CuttingSpecification[],
+  savedFromStep: AppView = 'recapitulation'
 ): SavedConfiguration => {
   return {
     id: `config_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     name,
     savedAt: new Date().toISOString(),
+    savedFromStep,
     orderInfo,
     // Store only IDs - everything else will be fetched fresh
     materials: materials.map(m => ({ id: m.id })),

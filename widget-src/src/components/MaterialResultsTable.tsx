@@ -43,11 +43,6 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
 
   return (
     <>
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="body2" color="text.secondary">
-          {results.length} materiálov
-        </Typography>
-      </Box>
         <TableContainer>
           <Table size="small">
             <TableHead>

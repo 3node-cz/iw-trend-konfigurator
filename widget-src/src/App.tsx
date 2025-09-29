@@ -18,16 +18,8 @@ import type {
   CompleteOrder,
   MaterialSearchResult,
 } from './types/shopify'
-import type { SavedConfiguration } from './types/optimized-saved-config'
+import type { SavedConfiguration, AppView } from './types/optimized-saved-config'
 import { useCustomer } from './hooks/useCustomer'
-
-type AppView =
-  | 'orders'
-  | 'material-selection'
-  | 'cutting-specification'
-  | 'recapitulation'
-  | 'success'
-  | 'cutting-demo'
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('orders')
@@ -65,8 +57,6 @@ function App() {
   }
 
   const handleMaterialSelectionComplete = (materials: SelectedMaterial[]) => {
-    console.log('🔍 handleMaterialSelectionComplete received materials:', materials);
-
     // Store all selected materials
     setSelectedMaterials(materials)
 
@@ -76,19 +66,27 @@ function App() {
   }
 
   const handleAddMaterialToCuttingSpec = (material: SelectedMaterial) => {
-    console.log('🔍 handleAddMaterialToCuttingSpec received material:', material);
-
     // Add the new material to the selected materials list
     setSelectedMaterials(prevMaterials => {
       // Check if material is already in the list (by id)
       const exists = prevMaterials.find(m => m.id === material.id)
       if (exists) {
-        console.log('⚠️ Material already exists, not adding duplicate')
         return prevMaterials
       }
 
-      console.log('✅ Adding new material to list')
       return [...prevMaterials, material]
+    })
+  }
+
+  const handleRemoveMaterialFromCuttingSpec = (materialId: string) => {
+    // Remove the material from the selected materials list
+    setSelectedMaterials(prevMaterials => {
+      return prevMaterials.filter(m => m.id !== materialId)
+    })
+
+    // Also remove any cutting specifications for this material
+    setCuttingSpecifications(prevSpecs => {
+      return prevSpecs.filter(spec => spec.material.id !== materialId)
     })
   }
 
@@ -127,7 +125,6 @@ function App() {
 
       // Check if we have any valid specifications
       if (specifications.length === 0) {
-        console.warn('⚠️ No valid materials found for saved order. All materials may have been deleted from Shopify.')
         alert('Nie je možné načítať uložené nastavenie. Materiály už nie sú dostupné v obchode.')
         return
       }
@@ -139,27 +136,24 @@ function App() {
       };
       setCurrentOrder(fixedOrderInfo)
 
-      console.log('🔍 Processing specifications for app state:', specifications);
-
       setSelectedMaterials(
         specifications.map((spec, index) => {
-          console.log(`🔍 Processing spec ${index}:`, spec.material);
-
           try {
             const quantity = spec.pieces.reduce((sum, piece) => sum + piece.quantity, 0);
             return transformToSelectedMaterial(spec.material, quantity);
           } catch (err) {
-            console.error(`❌ Error processing spec ${index}:`, err, spec.material);
+            console.error(`Error processing spec ${index}:`, err, spec.material);
             throw err;
           }
         }),
       )
       setCuttingSpecifications(specifications)
 
-      // Navigate directly to order recap/summary
-      setCurrentView('recapitulation')
+      // Navigate to the step where the order was saved, or recapitulation as fallback
+      const targetView = savedOrder.savedFromStep || 'recapitulation'
+      setCurrentView(targetView)
     } catch (error) {
-      console.error('❌ Error loading configuration:', error)
+      console.error('Error loading configuration:', error)
       alert('Chyba pri načítaní uloženej konfigurácie.')
     } finally {
       setLoadingConfiguration(false)
@@ -273,6 +267,7 @@ function App() {
       {currentView === 'material-selection' && currentOrder && (
         <MaterialSelectionPage
           orderName={currentOrder.orderName}
+          orderData={currentOrder}
           initialSelectedMaterials={selectedMaterials}
           onBack={handleBackToOrders}
           onContinue={handleMaterialSelectionComplete}
@@ -304,10 +299,12 @@ function App() {
               metafields: {}
             } as MaterialSearchResult))}
             orderName={currentOrder.orderName}
+            orderData={currentOrder}
             existingSpecifications={cuttingSpecifications}
             onBack={handleBackToMaterialSelection}
             onContinue={handleCuttingSpecificationComplete}
             onAddMaterial={handleAddMaterialToCuttingSpec}
+            onRemoveMaterial={handleRemoveMaterialFromCuttingSpec}
           />
         )}
       {currentView === 'recapitulation' &&

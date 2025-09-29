@@ -15,6 +15,50 @@ const getPrimaryColor = () => {
   }
 };
 
+// Function to detect font from Shopify theme
+const getShopifyThemeFont = () => {
+  try {
+    // First check if ConfiguratorConfig has fontFamily
+    const widgetConfigs = (window as any).ConfiguratorConfig;
+    if (widgetConfigs) {
+      const firstBlockId = Object.keys(widgetConfigs)[0];
+      const config = widgetConfigs[firstBlockId];
+      if (config?.settings?.fontFamily) {
+        return config.settings.fontFamily;
+      }
+    }
+
+    // Fallback: try to detect from body element
+    const bodyFont = window.getComputedStyle(document.body).fontFamily;
+    if (bodyFont && bodyFont !== '') {
+      return bodyFont;
+    }
+
+    // Fallback: check common Shopify theme selectors
+    const selectors = [
+      '.main-content',
+      '.page-width',
+      '.shopify-section',
+      'main',
+      '#shopify-section-header'
+    ];
+
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        const font = window.getComputedStyle(element).fontFamily;
+        if (font && font !== '' && font !== 'inherit') {
+          return font;
+        }
+      }
+    }
+
+    return 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+  } catch (error) {
+    return 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+  }
+};
+
 export const theme = createTheme({
   palette: {
     mode: "light",
@@ -24,6 +68,9 @@ export const theme = createTheme({
     secondary: {
       main: "#dc004e",
     },
+  },
+  typography: {
+    fontFamily: getShopifyThemeFont(),
   },
   components: {
     // TextField default props
@@ -66,6 +113,11 @@ export const theme = createTheme({
     MuiTable: {
       defaultProps: {
         size: "small",
+      },
+      styleOverrides: {
+        root: {
+          isolation: "isolate",
+        },
       },
     },
     // Chip default props

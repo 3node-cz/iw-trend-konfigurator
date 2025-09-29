@@ -1,5 +1,6 @@
 import type { OrderFormData } from "../schemas/orderSchema";
 import type { CuttingSpecification } from "../types/shopify";
+import type { AppView } from "../types/optimized-saved-config";
 import type {
   SavedConfiguration,
   CustomerSavedConfigurations,
@@ -35,6 +36,7 @@ export class ConfigurationService {
       price: number;
     }>,
     specifications: CuttingSpecification[],
+    savedFromStep: AppView = 'recapitulation',
   ): Promise<{ success: boolean; error?: string }> {
     try {
       // Get current saved configurations
@@ -46,6 +48,7 @@ export class ConfigurationService {
         orderInfo,
         materials,
         specifications,
+        savedFromStep,
       );
 
       // Add to existing configurations
@@ -169,6 +172,44 @@ export class ConfigurationService {
       );
     } catch (error) {
       console.error("Error removing configuration:", error);
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
+      };
+    }
+  }
+
+  /**
+   * Delete a saved configuration (alias for removeConfiguration)
+   */
+  async deleteSavedConfiguration(
+    configurationId: string,
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      // Get customer ID from the global config
+      const widgetConfigs = (window as any).ConfiguratorConfig;
+      if (widgetConfigs) {
+        const firstBlockId = Object.keys(widgetConfigs)[0];
+        const config = widgetConfigs[firstBlockId];
+        const customerId = config?.customer?.id;
+
+        if (!customerId) {
+          return {
+            success: false,
+            error: "Customer ID not found",
+          };
+        }
+
+        return await this.removeConfiguration(customerId, configurationId);
+      }
+
+      return {
+        success: false,
+        error: "Configuration not available",
+      };
+    } catch (error) {
+      console.error("Error deleting configuration:", error);
       return {
         success: false,
         error:

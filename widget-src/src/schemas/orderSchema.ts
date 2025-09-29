@@ -38,7 +38,12 @@ export const orderSchema = z.object({
     .default(0),
   
   // Company is always the same, make it optional with default
-  company: z.string().default('IW TREND, s.r.o')
+  company: z.string().default('IW TREND, s.r.o'),
+
+  // Customer name - who is placing the order
+  customerName: z.string()
+    .min(1, REQUIRED_FIELD_MESSAGE)
+    .min(2, MIN_LENGTH_MESSAGE)
 })
 
 // Infer TypeScript type from schema
@@ -65,12 +70,14 @@ export const createOrderWithCustomerDefaults = (customer: CustomerOrderData | nu
   if (!customer) {
     return {
       company: 'IW TREND, s.r.o',
+      customerName: '',
       discountPercentage: 0
     }
   }
 
   return {
     company: customer.defaultCompany || 'IW TREND, s.r.o',
+    customerName: `${customer.firstName} ${customer.lastName}`.trim(),
     transferLocation: customer.defaultTransferLocation,
     costCenter: customer.defaultCostCenter,
     cuttingCenter: customer.defaultCuttingCenter,

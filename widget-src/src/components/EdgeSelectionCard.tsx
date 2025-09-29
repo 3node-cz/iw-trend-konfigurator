@@ -119,12 +119,19 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
     result: MaterialSearchResult,
   ): EdgeMaterial & { image?: string } => ({
     id: result.id,
+    variantId: result.variant?.id,
+    code: result.variant?.sku || result.handle,
     name: result.title,
     productCode: result.variant?.sku || result.handle,
     availability: result.variant?.availableForSale ? 'available' : 'unavailable',
     thickness: 0.8, // Default thickness, could be extracted from dimensions
     availableThicknesses: [0.4, 0.8, 2], // Common edge thickness variants
     warehouse: result.warehouse,
+    price: result.variant?.price ? {
+      amount: parseFloat(result.variant.price),
+      currency: 'EUR',
+      perUnit: 'm'
+    } : undefined,
     image: result.image, // Add image from search result
   })
 

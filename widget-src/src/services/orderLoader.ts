@@ -19,8 +19,6 @@ export const loadOrderConfiguration = async (
   orderInfo: typeof savedOrder.orderInfo
   specifications: CuttingSpecification[]
 }> => {
-  console.log('🔍 Loading order configuration for:', savedOrder.id);
-  console.log('🔍 Saved order specifications:', savedOrder.specifications);
 
   materialCache.clear()
   edgeCache.clear()
@@ -28,7 +26,6 @@ export const loadOrderConfiguration = async (
   const uniqueMaterialIds = [
     ...new Set(savedOrder.specifications.map((spec) => spec.materialId)),
   ]
-  console.log('🔍 Unique material IDs to fetch:', uniqueMaterialIds);
   const uniqueEdgeIds = [
     ...new Set(
       savedOrder.specifications
@@ -61,7 +58,7 @@ export const loadOrderConfiguration = async (
     const material = materialCache.get(savedSpec.materialId)
     if (!material) {
       console.warn(
-        `⚠️ Material ${savedSpec.materialId} not found - skipping specification`,
+        `Material ${savedSpec.materialId} not found - skipping specification`,
       )
       continue
     }
@@ -102,7 +99,6 @@ export const convertToSavedSpecification = (
 async function fetchMaterialById(
   materialId: string,
 ): Promise<MaterialSearchResult | null> {
-  console.log('🔍 Fetching material by ID:', materialId);
 
   try {
     // Strategy 1: Try direct GID search first (for valid GIDs)
@@ -111,7 +107,6 @@ async function fetchMaterialById(
       limit: 1,
     })
 
-    console.log('🔍 Direct GID search results for', materialId, ':', results);
 
     // Strategy 2: If direct search fails, try enhanced numeric search
     if (results.length === 0) {
@@ -120,9 +115,7 @@ async function fetchMaterialById(
       // Extract numeric part if it's a GID
       if (materialId.includes('gid://shopify/')) {
         numericId = materialId.replace(/^gid:\/\/shopify\/(Product|ProductVariant)\//, '');
-        console.log('🔄 GID search failed, trying numeric search for:', numericId);
       } else {
-        console.log('🔄 Direct search failed, trying as numeric ID:', numericId);
       }
 
       // Use the enhanced numeric search (same as what's working in the API)
@@ -131,20 +124,17 @@ async function fetchMaterialById(
         limit: 5,
       });
 
-      console.log('🔍 Numeric search results:', fallbackResults);
 
       if (fallbackResults.length > 0) {
-        console.log('✅ Found material via numeric search:', fallbackResults[0]);
         return fallbackResults[0];
       }
     }
 
     if (results.length === 0) {
-      console.warn(`❌ Material not found for ID ${materialId} (tried both GID and numeric search)`);
+      console.warn(`Material not found for ID ${materialId} (tried both GID and numeric search)`);
       return null
     }
 
-    console.log('✅ Found material via direct search:', results[0]);
     return results[0]
   } catch (error) {
     console.error('Error fetching material by ID:', error)
@@ -155,7 +145,6 @@ async function fetchMaterialById(
 async function fetchEdgeMaterialById(
   edgeMaterialId: string,
 ): Promise<EdgeMaterial | null> {
-  console.log('🔍 Fetching edge material by ID:', edgeMaterialId);
 
   try {
     // Strategy 1: Try direct GID search first (for valid GIDs)
@@ -164,7 +153,6 @@ async function fetchEdgeMaterialById(
       limit: 1,
     })
 
-    console.log('🔍 Direct GID search results for edge', edgeMaterialId, ':', results);
 
     // Strategy 2: If direct search fails, try enhanced numeric search
     if (results.length === 0) {
@@ -173,9 +161,7 @@ async function fetchEdgeMaterialById(
       // Extract numeric part if it's a GID
       if (edgeMaterialId.includes('gid://shopify/')) {
         numericId = edgeMaterialId.replace(/^gid:\/\/shopify\/(Product|ProductVariant)\//, '');
-        console.log('🔄 Edge GID search failed, trying numeric search for:', numericId);
       } else {
-        console.log('🔄 Edge direct search failed, trying as numeric ID:', numericId);
       }
 
       // Use the enhanced numeric search (same as what's working for materials)
@@ -184,10 +170,8 @@ async function fetchEdgeMaterialById(
         limit: 5,
       });
 
-      console.log('🔍 Edge numeric search results:', fallbackResults);
 
       if (fallbackResults.length > 0) {
-        console.log('✅ Found edge material via numeric search:', fallbackResults[0]);
         results = [fallbackResults[0]];
       }
     }
@@ -196,18 +180,24 @@ async function fetchEdgeMaterialById(
       const result = results[0]
       return {
         id: result.id,
+        variantId: result.variant?.id,
+        code: result.variant?.sku || result.handle,
         name: result.title,
         productCode: result.variant?.sku || result.handle,
         availability: 'available',
         thickness: 0.8,
         availableThicknesses: [0.4, 0.8, 2],
         warehouse: 'default',
-        price: result.variant?.price || '0',
+        price: result.variant?.price ? {
+          amount: parseFloat(result.variant.price),
+          currency: 'EUR',
+          perUnit: 'm'
+        } : undefined,
         image: result.image,
       }
     }
 
-    console.warn(`❌ Edge material not found for ID ${edgeMaterialId} (tried both GID and numeric search)`)
+    console.warn(`Edge material not found for ID ${edgeMaterialId} (tried both GID and numeric search)`)
     return null
   } catch (error) {
     console.error('Error fetching edge material by ID:', error)

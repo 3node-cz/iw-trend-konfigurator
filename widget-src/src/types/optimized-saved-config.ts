@@ -1,6 +1,17 @@
 import type { OrderFormData } from '../schemas/orderSchema'
 
 /**
+ * App view/step types
+ */
+export type AppView =
+  | 'orders'
+  | 'material-selection'
+  | 'cutting-specification'
+  | 'recapitulation'
+  | 'success'
+  | 'cutting-demo'
+
+/**
  * Optimized SavedConfiguration - Store only essential, non-calculable data
  * 75% smaller than previous format - only essentials
  */
@@ -9,6 +20,9 @@ export interface SavedConfiguration {
   id: string
   name: string
   savedAt: string
+
+  // Step tracking - which step was the order saved from
+  savedFromStep: AppView
 
   // Essential order info (non-calculable)
   orderInfo: OrderFormData

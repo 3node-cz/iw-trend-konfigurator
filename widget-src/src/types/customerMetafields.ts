@@ -1,6 +1,6 @@
 import type { OrderFormData } from '../schemas/orderSchema'
 import type { CuttingSpecification } from './shopify'
-import type { SavedConfiguration, SavedCuttingSpecification } from './optimized-saved-config'
+import type { SavedConfiguration, SavedCuttingSpecification, AppView } from './optimized-saved-config'
 import type { MaterialSearchResult } from './shopify'
 import { createMinimalSavedConfig } from '../utils/data-transformation'
 import { PRICING } from '../constants'
@@ -24,10 +24,11 @@ export const createSavedConfiguration = (
   name: string,
   orderInfo: OrderFormData,
   materials: MaterialSearchResult[],
-  specifications: CuttingSpecification[]
+  specifications: CuttingSpecification[],
+  savedFromStep: AppView = 'recapitulation'
 ): SavedConfiguration => {
   // Use DRY utility from data-transformation
-  return createMinimalSavedConfig(name, orderInfo, materials, specifications)
+  return createMinimalSavedConfig(name, orderInfo, materials, specifications, savedFromStep)
 }
 
 /**
@@ -43,16 +44,11 @@ export const parseCustomerConfigurations = (metafieldValue: string | null): Cust
   }
 
   try {
-    console.log('🔍 Raw metafield value type:', typeof metafieldValue)
-    console.log('🔍 Raw metafield value length:', metafieldValue.length)
-    console.log('🔍 Raw metafield first 100 chars:', metafieldValue.substring(0, 100))
-
     // Clean up the value - handle HTML encoding and double encoding
     let cleanValue = metafieldValue.trim()
 
     // Decode HTML entities first (this is the main issue)
     if (cleanValue.includes('&quot;')) {
-      console.log('🔧 Decoding HTML entities - value is HTML-encoded')
       cleanValue = cleanValue
         .replace(/&quot;/g, '"')
         .replace(/&amp;/g, '&')
@@ -63,16 +59,12 @@ export const parseCustomerConfigurations = (metafieldValue: string | null): Cust
 
     // If the value starts and ends with quotes, it might be double-encoded
     if (cleanValue.startsWith('"') && cleanValue.endsWith('"')) {
-      console.log('🔧 Removing outer quotes - value appears double-encoded')
       cleanValue = cleanValue.slice(1, -1)
       // Unescape any escaped quotes
       cleanValue = cleanValue.replace(/\\"/g, '"')
     }
 
-    console.log('🔍 Cleaned value first 100 chars:', cleanValue.substring(0, 100))
-
     const parsed = JSON.parse(cleanValue)
-    console.log('✅ Successfully parsed configurations:', parsed.savedConfigurations?.length || 0, 'configs')
 
     // Ensure it has the expected structure
     return {
@@ -81,8 +73,7 @@ export const parseCustomerConfigurations = (metafieldValue: string | null): Cust
       lastUpdated: parsed.lastUpdated || new Date().toISOString()
     }
   } catch (error) {
-    console.error('❌ Error parsing saved configurations:', error)
-    console.error('❌ Failed value:', metafieldValue?.substring(0, 200))
+    console.error('Error parsing saved configurations:', error)
     return {
       version: '1.0',
       savedConfigurations: [],

@@ -151,16 +151,17 @@ export function groupCuttingLayouts(layouts: Array<{
 export function getGroupedLayoutTitle(group: GroupedLayoutData): string {
   if (group.count === 1) {
     // Single instance - use original title format
+    const materialName = group.instances[0].materialName || 'Neznámy materiál'
     return group.isMultiBoard
-      ? `Plán č. ${group.materialIndex}.${group.boardNumber} - ${group.materialName} (${group.boardNumber}/${group.totalBoards})`
-      : `Plán č. ${group.materialIndex} - ${group.materialName}`
+      ? `Plán č. ${group.materialIndex}.${group.boardNumber} - ${materialName} (${group.boardNumber}/${group.totalBoards})`
+      : `Plán č. ${group.materialIndex} - ${materialName}`
   } else {
     // Multiple instances - show grouped title
-    const uniqueMaterials = [...new Set(group.instances.map(i => i.materialName))]
+    const uniqueMaterials = [...new Set(group.instances.map(i => i.materialName || 'Neznámy materiál'))]
 
     if (uniqueMaterials.length === 1) {
       // All same material
-      return `Rozrezový plán - ${group.materialName} (×${group.count} dosiek)`
+      return `Rozrezový plán - ${uniqueMaterials[0]} (×${group.count} dosiek)`
     } else {
       // Mixed materials
       return `Identický rozrezový plán (×${group.count} dosiek)`
@@ -188,9 +189,7 @@ export function getGroupedLayoutDescription(group: GroupedLayoutData): string {
 
   // List just the board numbers in a concise way
   const boardNumbers = group.instances.map(instance => {
-    return instance.boardNumber > 1
-      ? `${instance.materialIndex}.${instance.boardNumber}`
-      : `${instance.materialIndex}`
+    return `${instance.materialIndex}.${instance.boardNumber}`
   })
 
   return `Dosky: ${boardNumbers.join(', ')}`

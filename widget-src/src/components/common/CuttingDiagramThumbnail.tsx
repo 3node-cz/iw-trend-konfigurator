@@ -64,6 +64,10 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
         cursor: 'pointer',
         transition: 'all 0.2s',
         position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        minHeight: 280, // Ensure consistent height
         '&:hover': {
           transform: 'scale(1.05)',
           boxShadow: 4,
@@ -127,7 +131,13 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
         </Typography>
       )}
 
-      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        marginTop: description ? 0 : 'auto',
+        flexGrow: description ? 0 : 1,
+        alignItems: description ? 'flex-start' : 'flex-end'
+      }}>
         <svg
           width={svgWidth}
           height={svgHeight}

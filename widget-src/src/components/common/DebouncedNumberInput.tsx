@@ -7,6 +7,8 @@ interface DebouncedNumberInputProps {
   min?: number
   sx?: any
   debounceMs?: number
+  error?: boolean
+  helperText?: string
 }
 
 /**
@@ -19,7 +21,9 @@ const DebouncedNumberInput: React.FC<DebouncedNumberInputProps> = ({
   onChange,
   min,
   sx,
-  debounceMs = 600
+  debounceMs = 600,
+  error = false,
+  helperText
 }) => {
   const [value, setValue] = useState(initialValue.toString())
 
@@ -62,6 +66,8 @@ const DebouncedNumberInput: React.FC<DebouncedNumberInputProps> = ({
         // Prevent browser from auto-scrolling to input
         e.target.scrollIntoView({ block: "nearest", behavior: "instant" })
       }}
+      error={error}
+      helperText={helperText}
       sx={sx}
       slotProps={{ htmlInput: { min } }}
     />

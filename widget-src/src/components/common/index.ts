@@ -5,6 +5,7 @@ export { default as EdgeSelect } from './EdgeSelect'
 export { default as EdgeThicknessSelect } from './EdgeThicknessSelect'
 export { default as FormSelect } from './FormSelect'
 export { default as FormTextField } from './FormTextField'
+export { default as SaveOrderButton } from './SaveOrderButton'
 
 // Shared display components
 export { default as AvailabilityChip } from './AvailabilityChip'

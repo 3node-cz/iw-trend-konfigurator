@@ -44,8 +44,6 @@ export const useMaterialSearch = (
 
     setIsLoadingSearch(true)
     try {
-      console.log('🔍 Starting material search for:', query)
-
       const results = await searchMaterials({
         query: query,
         availableOnly: showingAvailableOnly,
@@ -53,10 +51,9 @@ export const useMaterialSearch = (
         collection
       })
 
-      console.log('✅ Search completed. Found', results.length, 'results')
       setSearchResults(results)
     } catch (error) {
-      console.error('❌ Search error:', error)
+      console.error('Search error:', error)
       setSearchResults([])
     } finally {
       setIsLoadingSearch(false)
@@ -74,10 +71,9 @@ export const useMaterialSearch = (
           limit: undefined,
           collection
         })
-        console.log('✅ Show all completed. Found', results.length, 'results')
         setSearchResults(results)
       } catch (error) {
-        console.error('❌ Show all search error:', error)
+        console.error('Show all search error:', error)
         setSearchResults([])
       } finally {
         setIsLoadingSearch(false)

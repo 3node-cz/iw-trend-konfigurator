@@ -37,6 +37,7 @@ interface CuttingPiecesTableProps {
   onPieceChange: (pieceId: string, updatedPiece: Partial<CuttingPiece>) => void
   onRemovePiece: (pieceId: string) => void
   onPreviewPiece?: (piece: CuttingPiece) => void
+  validationErrors?: { [pieceId: string]: string[] }
 }
 
 const columnHelper = createColumnHelper<CuttingPiece>()
@@ -47,6 +48,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   onPieceChange,
   onRemovePiece,
   onPreviewPiece,
+  validationErrors = {},
 }) => {
   // Helper function to check if all edges have the same value
   const getEdgeAllAroundValue = useCallback(
@@ -142,7 +144,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
           // Only show preview if piece has valid dimensions
           if (!piece.length || !piece.width) {
             return (
-              <Box sx={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Box sx={{ width: 80, height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Typography variant="caption" color="text.disabled">-</Typography>
               </Box>
             )
@@ -162,7 +164,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
             >
               <PieceShapePreview
                 piece={piece}
-                containerSize={40}
+                containerSize={80}
                 showBackground={false}
                 showRotationIndicator={false}
                 showEdges={true}
@@ -170,119 +172,149 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
             </Box>
           )
         },
-        size: 50,
+        size: 90,
       }),
 
-      // Part Name
-      columnHelper.accessor('partName', {
-        header: 'Názov dielca',
-        size: 130,
-        cell: ({ row, getValue }) => (
-          <DebouncedTextInput
-            initialValue={getValue() || ''}
-            onChange={(value) =>
-              handlePieceChange(row.original.id, { partName: value })
-            }
-            sx={{ minWidth: 120 }}
-            placeholder="Názov dielca"
-          />
+      // Part Name and Quantity
+      columnHelper.display({
+        id: 'nameAndQuantity',
+        header: () => (
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>Názov dielca</Typography>
+            <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>Počet</Typography>
+          </Box>
         ),
+        size: 150,
+        cell: ({ row }) => {
+          const piece = row.original
+          return (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+              <DebouncedTextInput
+                initialValue={piece.partName || ''}
+                onChange={(value) =>
+                  handlePieceChange(row.original.id, { partName: value })
+                }
+                sx={{ minWidth: 130 }}
+                placeholder="Názov dielca"
+              />
+              <DebouncedNumberInput
+                initialValue={piece.quantity}
+                onChange={(value) =>
+                  handlePieceChange(row.original.id, { quantity: value })
+                }
+                sx={{ minWidth: 130 }}
+                min={1}
+                placeholder="Počet"
+              />
+            </Box>
+          )
+        },
       }),
 
-      // Length
-      columnHelper.accessor('length', {
-        header: 'Dĺžka',
-        size: 100,
-        cell: ({ row, getValue }) => (
-          <DebouncedNumberInput
-            initialValue={getValue() || 0}
-            onChange={(value) =>
-              handlePieceChange(row.original.id, { length: value })
-            }
-            sx={{ width: 90 }}
-            min={0}
-          />
+      // Dimensions (Length x Width)
+      columnHelper.display({
+        id: 'dimensions',
+        header: () => (
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>Dĺžka</Typography>
+            <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>Šírka</Typography>
+          </Box>
         ),
+        size: 120,
+        cell: ({ row }) => {
+          const piece = row.original
+          const errors = validationErrors[piece.id] || []
+          const hasLengthError = errors.some(error => error.includes('Dĺžka') || error.includes('Rozmery presahujú'))
+          const hasWidthError = errors.some(error => error.includes('Šírka') || error.includes('Rozmery presahujú'))
+
+          return (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+              <DebouncedNumberInput
+                initialValue={piece.length || 0}
+                onChange={(value) =>
+                  handlePieceChange(row.original.id, { length: value })
+                }
+                sx={{
+                  width: 100,
+                  '& .MuiOutlinedInput-root': hasLengthError ? {
+                    borderColor: 'error.main',
+                    '&:hover': { borderColor: 'error.main' }
+                  } : {}
+                }}
+                min={0}
+                error={hasLengthError}
+                placeholder="Dĺžka"
+              />
+              <DebouncedNumberInput
+                initialValue={piece.width || 0}
+                onChange={(value) =>
+                  handlePieceChange(row.original.id, { width: value })
+                }
+                sx={{
+                  width: 100,
+                  '& .MuiOutlinedInput-root': hasWidthError ? {
+                    borderColor: 'error.main',
+                    '&:hover': { borderColor: 'error.main' }
+                  } : {}
+                }}
+                min={0}
+                error={hasWidthError}
+                placeholder="Šírka"
+              />
+            </Box>
+          )
+        },
       }),
 
-      // Width
-      columnHelper.accessor('width', {
-        header: 'Šírka',
-        size: 100,
-        cell: ({ row, getValue }) => (
-          <DebouncedNumberInput
-            initialValue={getValue() || 0}
-            onChange={(value) =>
-              handlePieceChange(row.original.id, { width: value })
-            }
-            sx={{ width: 90 }}
-            min={0}
-          />
-        ),
-      }),
 
-      // Quantity
-      columnHelper.accessor('quantity', {
-        header: 'Počet',
-        size: 80,
-        cell: ({ row, getValue }) => (
-          <DebouncedNumberInput
-            initialValue={getValue()}
-            onChange={(value) =>
-              handlePieceChange(row.original.id, { quantity: value })
-            }
-            sx={{ width: 70 }}
-            min={1}
-          />
-        ),
-      }),
-
-      // Povoliť rotáciu
-      columnHelper.accessor('allowRotation', {
-        header: 'Rotácia',
-        size: 80,
-        cell: ({ row, getValue }) => (
-          <Switch
-            checked={getValue()}
-            onChange={(e) =>
-              handlePieceChange(row.original.id, {
-                allowRotation: e.target.checked,
-              })
-            }
-          />
-        ),
-      }),
-
-      // Without Edge
-      columnHelper.accessor('withoutEdge', {
-        header: 'Bez orezu',
-        size: 80,
-        cell: ({ row, getValue }) => (
-          <Switch
-            checked={getValue()}
-            onChange={(e) =>
-              handlePieceChange(row.original.id, {
-                withoutEdge: e.target.checked,
-              })
-            }
-          />
-        ),
-      }),
-
-      // Dupel
-      columnHelper.accessor('duplicate', {
-        header: 'Dupel',
-        size: 70,
-        cell: ({ row, getValue }) => (
-          <Switch
-            checked={getValue()}
-            onChange={(e) =>
-              handlePieceChange(row.original.id, {
-                duplicate: e.target.checked,
-              })
-            }
-          />
-        ),
+      // Options (Rotation, Without Edge, Dupel)
+      columnHelper.display({
+        id: 'options',
+        header: 'Nastavenia',
+        size: 120,
+        cell: ({ row }) => {
+          const piece = row.original
+          return (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Switch
+                  size="small"
+                  checked={piece.allowRotation}
+                  onChange={(e) =>
+                    handlePieceChange(row.original.id, {
+                      allowRotation: e.target.checked,
+                    })
+                  }
+                />
+                <Typography variant="caption">Rotácia</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Switch
+                  size="small"
+                  checked={piece.withoutEdge}
+                  onChange={(e) =>
+                    handlePieceChange(row.original.id, {
+                      withoutEdge: e.target.checked,
+                    })
+                  }
+                />
+                <Typography variant="caption">Bez orezu</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Switch
+                  size="small"
+                  checked={piece.duplicate}
+                  onChange={(e) =>
+                    handlePieceChange(row.original.id, {
+                      duplicate: e.target.checked,
+                    })
+                  }
+                />
+                <Typography variant="caption">Dupel</Typography>
+              </Box>
+            </Box>
+          )
+        },
       }),
 
       // Edge All Around
@@ -301,107 +333,99 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         ),
       }),
 
-      // Edge Top
-      columnHelper.accessor('edgeTop', {
+      // Individual Edges (2x2 grid)
+      columnHelper.display({
+        id: 'individualEdges',
         header: () => (
-          <HeaderWithHint
-            title="Hrana vrch"
-            hintTitle="Orientácia hrán"
-            hintContent={<EdgeOrientationHint />}
-          />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600 }}>Hrany</Typography>
+            <HeaderWithHint
+              title=""
+              hintTitle="Orientácia hrán"
+              hintContent={<EdgeOrientationHint />}
+            />
+          </Box>
         ),
-        size: 90,
-        cell: ({ row, getValue }) => (
-          <EdgeThicknessSelect
-            value={getValue()}
-            onChange={(value) =>
-              handlePieceChange(row.original.id, { edgeTop: value })
-            }
-            edgeMaterial={edgeMaterial}
-            minWidth={80}
-          />
-        ),
-      }),
-
-      // Edge Bottom
-      columnHelper.accessor('edgeBottom', {
-        header: () => (
-          <HeaderWithHint
-            title="Hrana spodok"
-            hintTitle="Orientácia hrán"
-            hintContent={<EdgeOrientationHint />}
-          />
-        ),
-        size: 90,
-        cell: ({ row, getValue }) => (
-          <EdgeThicknessSelect
-            value={getValue()}
-            onChange={(value) =>
-              handlePieceChange(row.original.id, { edgeBottom: value })
-            }
-            edgeMaterial={edgeMaterial}
-            minWidth={80}
-          />
-        ),
-      }),
-
-      // Edge Left
-      columnHelper.accessor('edgeLeft', {
-        header: () => (
-          <HeaderWithHint
-            title="Hrana ľavá"
-            hintTitle="Orientácia hrán"
-            hintContent={<EdgeOrientationHint />}
-          />
-        ),
-        size: 90,
-        cell: ({ row, getValue }) => (
-          <EdgeThicknessSelect
-            value={getValue()}
-            onChange={(value) =>
-              handlePieceChange(row.original.id, { edgeLeft: value })
-            }
-            edgeMaterial={edgeMaterial}
-            minWidth={80}
-          />
-        ),
-      }),
-
-      // Edge Right
-      columnHelper.accessor('edgeRight', {
-        header: () => (
-          <HeaderWithHint
-            title="Hrana pravá"
-            hintTitle="Orientácia hrán"
-            hintContent={<EdgeOrientationHint />}
-          />
-        ),
-        size: 90,
-        cell: ({ row, getValue }) => (
-          <EdgeThicknessSelect
-            value={getValue()}
-            onChange={(value) =>
-              handlePieceChange(row.original.id, { edgeRight: value })
-            }
-            edgeMaterial={edgeMaterial}
-            minWidth={80}
-          />
-        ),
+        size: 160,
+        cell: ({ row }) => {
+          const piece = row.original
+          return (
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0.5 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <Typography variant="caption" sx={{ fontSize: '0.65rem', mb: 0.5 }}>Vrchná</Typography>
+                <EdgeThicknessSelect
+                  value={piece.edgeTop}
+                  onChange={(value) =>
+                    handlePieceChange(row.original.id, { edgeTop: value })
+                  }
+                  edgeMaterial={edgeMaterial}
+                  minWidth={60}
+                />
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <Typography variant="caption" sx={{ fontSize: '0.65rem', mb: 0.5 }}>Spodná</Typography>
+                <EdgeThicknessSelect
+                  value={piece.edgeBottom}
+                  onChange={(value) =>
+                    handlePieceChange(row.original.id, { edgeBottom: value })
+                  }
+                  edgeMaterial={edgeMaterial}
+                  minWidth={60}
+                />
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <Typography variant="caption" sx={{ fontSize: '0.65rem', mb: 0.5 }}>Ľavá</Typography>
+                <EdgeThicknessSelect
+                  value={piece.edgeLeft}
+                  onChange={(value) =>
+                    handlePieceChange(row.original.id, { edgeLeft: value })
+                  }
+                  edgeMaterial={edgeMaterial}
+                  minWidth={60}
+                />
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <Typography variant="caption" sx={{ fontSize: '0.65rem', mb: 0.5 }}>Pravá</Typography>
+                <EdgeThicknessSelect
+                  value={piece.edgeRight}
+                  onChange={(value) =>
+                    handlePieceChange(row.original.id, { edgeRight: value })
+                  }
+                  edgeMaterial={edgeMaterial}
+                  minWidth={60}
+                />
+              </Box>
+            </Box>
+          )
+        },
       }),
 
       // Notes
       columnHelper.accessor('notes', {
         header: 'Poznámka',
-        size: 160,
+        size: 200,
         cell: ({ row, getValue }) => (
           <DebouncedTextInput
-            initialValue={getValue()}
+            initialValue={getValue() || ''}
             onChange={(value) =>
               handlePieceChange(row.original.id, { notes: value })
             }
-            sx={{ minWidth: 150 }}
+            sx={{
+              minWidth: 180,
+              height: '100%',
+              '& .MuiOutlinedInput-root': {
+                height: '100%',
+                alignItems: 'flex-start',
+                padding: '8px'
+              },
+              '& .MuiInputBase-inputMultiline': {
+                height: '100% !important',
+                minHeight: '44px !important',
+                resize: 'vertical'
+              }
+            }}
             multiline
-            rows={1}
+            placeholder="Poznámka ku kusu..."
           />
         ),
       }),
@@ -429,6 +453,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       handleRemovePiece,
       handlePreviewPiece,
       onPreviewPiece,
+      validationErrors,
     ],
   )
 
@@ -476,6 +501,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                     minWidth: header.column.columnDef.size || 'auto',
                     py: 1,
                     px: 1,
+                    textAlign: 'center',
                   }}
                 >
                   {flexRender(
@@ -488,25 +514,68 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
           ))}
         </TableHead>
         <TableBody>
-          {table.getRowModel().rows.map((row) => (
-            <TableRow
-              key={row.id}
-              hover
-            >
-              {row.getVisibleCells().map((cell) => (
-                <TableCell
-                  key={cell.id}
-                  sx={{
-                    py: 0.5,
-                    px: 1,
-                    verticalAlign: 'middle',
-                  }}
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
+          {table.getRowModel().rows.map((row) => {
+            const piece = row.original
+            const errors = validationErrors[piece.id] || []
+            const hasErrors = errors.length > 0
+
+            return (
+              <React.Fragment key={row.id}>
+                {/* Main piece row */}
+                <TableRow hover>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell
+                      key={cell.id}
+                      sx={{
+                        py: 0.5,
+                        px: 1,
+                        verticalAlign: 'middle',
+                        borderBottom: hasErrors ? 'none' : '1px solid rgba(224, 224, 224, 1)',
+                        height: '80px',
+                      }}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+
+                {/* Error row - shown below the piece if there are errors */}
+                {hasErrors && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={table.getAllColumns().length}
+                      sx={{
+                        py: 1,
+                        px: 2,
+                        backgroundColor: '#fff3e0',
+                        borderBottom: '1px solid rgba(224, 224, 224, 1)',
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: 'error.main',
+                            fontWeight: 600,
+                          }}
+                        >
+                          ⚠️ Chyby pre kus {row.index + 1}:
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: 'error.main',
+                          }}
+                        >
+                          {errors.join(', ')}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </React.Fragment>
+            )
+          })}
         </TableBody>
       </Table>
     </TableContainer>

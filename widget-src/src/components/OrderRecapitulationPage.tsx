@@ -33,10 +33,12 @@ import {
   CuttingDiagramThumbnail,
   CuttingDiagramDialog,
   OrderCalculationsSummary,
+  SaveOrderButton,
 } from './common'
 import OrderInvoiceTable from './OrderInvoiceTable'
 import { useCuttingLayouts, useOrderCalculations } from '../hooks'
 import { useOrderSubmission } from '../hooks/useOrderSubmission'
+import { useCustomer } from '../hooks/useCustomer'
 import {
   groupCuttingLayouts,
   getGroupedLayoutTitle,
@@ -59,6 +61,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
   onSubmitOrder,
   onOrderSuccess,
 }) => {
+  const { customer } = useCustomer()
   const [submitSuccess, setSubmitSuccess] = useState(false)
   const [selectedDiagram, setSelectedDiagram] = useState<{
     layout: CuttingLayout
@@ -167,21 +170,47 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
       sx={{ maxWidth: '1920px', mx: 'auto', py: 3 }}
     >
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={onBack}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={onBack}
+            disabled={isSubmitting}
+          >
+            Späť
+          </Button>
+          <Typography
+            variant="h4"
+            component="h1"
+            sx={{ color: 'primary.main', fontWeight: 500 }}
+          >
+            {order.orderName} - Rekapitulácia zákazky
+          </Typography>
+        </Box>
+
+        <SaveOrderButton
+          currentStep="recapitulation"
+          orderData={order}
+          selectedMaterials={specifications.map(spec => ({
+            id: spec.material.id,
+            code: spec.material.variant?.sku || spec.material.handle,
+            name: spec.material.title,
+            quantity: calculateTotalPieces([spec]),
+            price: parseFloat(spec.material.variant?.price || '0'),
+            totalPrice: parseFloat(spec.material.variant?.price || '0') * calculateTotalPieces([spec]),
+            variantId: spec.material.variant?.id || spec.material.id,
+            image: spec.material.image || spec.material.images?.[0]
+          }))}
+          cuttingSpecifications={specifications}
+          customerId={customer?.id}
           disabled={isSubmitting}
-        >
-          Späť
-        </Button>
-        <Typography
-          variant="h4"
-          component="h1"
-          sx={{ color: 'primary.main', fontWeight: 500 }}
-        >
-          {order.orderName} - Rekapitulácia zákazky
-        </Typography>
+          onSaveSuccess={() => {
+            // Could show a success message
+          }}
+          onSaveError={(error) => {
+            console.error('Save error:', error)
+          }}
+        />
       </Box>
 
       <Grid
@@ -311,16 +340,6 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
                   >
                     Rozrezové plány
                   </Typography>
-                  <Box sx={{ textAlign: 'right' }}>
-                    <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600 }}>
-                      {uniqueDiagrams} unikátnych plánov
-                    </Typography>
-                    {totalDiagrams !== uniqueDiagrams && (
-                      <Typography variant="caption" color="text.secondary">
-                        z celkovo {totalDiagrams} dosiek
-                      </Typography>
-                    )}
-                  </Box>
                 </Box>
                 <Typography
                   variant="body2"
@@ -446,20 +465,6 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
               sx={{ fontWeight: 600 }}
             >
               {overallStats.totalBoards}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-            >
-              Priemerná efektivita
-            </Typography>
-            <Typography
-              variant="h6"
-              sx={{ fontWeight: 600, color: 'success.main' }}
-            >
-              {overallStats.averageEfficiency.toFixed(1)}%
             </Typography>
           </Box>
           <Box>
@@ -615,7 +620,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
           severity="info"
           sx={{ flex: 1, mr: 3 }}
         >
-          Skontrolujte všetky údaje pred odoslaním zákazky do systému Shopify.
+          Skontrolujte všetky údaje pred odoslaním zákazky.
         </Alert>
 
         <Button

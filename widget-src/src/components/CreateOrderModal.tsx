@@ -30,6 +30,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
     orderName: '',
     deliveryDate: null,
     notes: '',
+    customerName: '',
     ...createOrderWithCustomerDefaults(customer)
   }))
 
@@ -63,15 +64,12 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
       setErrors({})
 
       // Handle form submission
-      console.log('Validated form data:', validatedData)
       onOrderCreated?.(validatedData)
       onClose()
     } catch (error) {
       if (error instanceof z.ZodError) {
         // Handle Zod validation errors
-        console.log('Validation errors:', error.issues)
         const fieldErrors = getFieldErrors(error)
-        console.log('Field errors:', fieldErrors)
         setErrors(fieldErrors)
       }
     }
@@ -173,9 +171,20 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
 
           <Grid container spacing={3}>
             {/* Customer Information */}
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormTextField
-                label="Zákazník"
+                label="Meno zákazníka"
+                value={formData.customerName}
+                onChange={handleFieldChange('customerName')}
+                error={errors.customerName}
+                placeholder="Zadajte meno zákazníka"
+                required
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <FormTextField
+                label="Firma"
                 value={formData.company}
                 onChange={handleFieldChange('company')}
                 error={errors.company}
@@ -183,7 +192,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
               />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormSelect
                 label="Prevádzková jednotka"
                 value={formData.transferLocation}
@@ -281,7 +290,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
                 value={formData.discountPercentage.toString()}
                 onChange={handleFieldChange('discountPercentage')}
                 error={!!errors.discountPercentage}
-                helperText={errors.discountPercentage || (customer ? `Zľava zákazníka: ${customer.discountPercentage}%` : "Žiadna zľava")}
+                helperText={errors.discountPercentage || (customer ? `Automaticky nastavené podľa zákazníka: ${customer.discountPercentage}%` : "Žiadna zľava")}
                 size="small"
                 fullWidth
                 InputProps={{
@@ -302,6 +311,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
                 label="Poznámka"
                 value={formData.notes}
                 onChange={handleFieldChange('notes')}
+                error={errors.notes}
                 multiline
                 rows={3}
                 placeholder="Zadajte poznámku..."
