@@ -12,6 +12,8 @@ export interface PlacedPiece {
   originalPiece: CuttingPiece
   isGrouped?: boolean
   groupId?: string
+  blockNumber?: number // Block number for grain continuity
+  isBlock?: boolean // True if this piece is part of a block group
 }
 
 export interface CutLine {
@@ -74,6 +76,16 @@ interface PieceGroup {
   gridHeight: number // pieces per column
   totalWidth: number // total width of the group
   totalHeight: number // total height of the group
+}
+
+// Block group for grain continuity
+interface BlockGroup {
+  blockNumber: number
+  pieces: CuttingPiece[]
+  totalWidth: number
+  totalHeight: number
+  rotated: boolean // Whether the entire block is rotated 90°
+  allowsRotation: boolean // Whether any piece in block allows rotation
 }
 
 // Enhanced guillotine cutting optimizer with professional features
@@ -206,8 +218,28 @@ export class OptimizedGuillotineCuttingOptimizer {
       { x: 0, y: 0, width: this.boardWidth, height: this.boardHeight },
     ]
 
-    // Phase 1: Create piece groups for identical pieces
-    const pieceGroups = this.createPieceGroups(expandedPieces)
+    // Separate block pieces from regular pieces
+    const blockPieces: CuttingPiece[] = []
+    const regularPieces: CuttingPiece[] = []
+
+    expandedPieces.forEach(piece => {
+      if (piece.algorithmValue > 0) {
+        blockPieces.push(piece)
+      } else {
+        regularPieces.push(piece)
+      }
+    })
+
+    // Phase 0: Place block groups first (highest priority for grain continuity)
+    const blockGroups = this.createBlockGroups(blockPieces)
+    const sortedBlocks = this.sortBlocksForOptimalCutting(blockGroups)
+
+    for (const block of sortedBlocks) {
+      this.placeBlockGroup(block)
+    }
+
+    // Phase 1: Create piece groups for identical regular pieces
+    const pieceGroups = this.createPieceGroups(regularPieces)
 
     // Phase 2: Sort groups by priority (large groups first, then by area)
     const sortedGroups = this.sortGroupsForOptimalCutting(pieceGroups)
@@ -247,6 +279,146 @@ export class OptimizedGuillotineCuttingOptimizer {
       totalUsedArea,
       totalWasteArea,
     }
+  }
+
+  // Create block groups for grain continuity
+  private createBlockGroups(pieces: CuttingPiece[]): BlockGroup[] {
+    const blockMap = new Map<number, CuttingPiece[]>()
+
+    // Group pieces by block number
+    pieces.forEach(piece => {
+      const blockNum = piece.algorithmValue
+      if (!blockMap.has(blockNum)) {
+        blockMap.set(blockNum, [])
+      }
+      blockMap.get(blockNum)!.push(piece)
+    })
+
+    // Convert to BlockGroup array
+    const blockGroups: BlockGroup[] = []
+    blockMap.forEach((blockPieces, blockNumber) => {
+      // Check if any piece in the block allows rotation
+      const allowsRotation = blockPieces.some(p => p.allowRotation)
+
+      // ALWAYS arrange horizontally (side by side)
+      // Normal orientation: pieces side by side with length as width
+      const totalWidthNormal = blockPieces.reduce((sum, p) => sum + p.length, 0)
+      const maxHeightNormal = Math.max(...blockPieces.map(p => p.width))
+
+      // Rotated orientation: rotate entire block 90° (pieces still side by side)
+      // When rotated: width becomes length, length becomes width
+      const totalWidthRotated = blockPieces.reduce((sum, p) => sum + p.width, 0)
+      const maxHeightRotated = Math.max(...blockPieces.map(p => p.length))
+
+      // Choose orientation based on which fits better
+      const fitsNormal = totalWidthNormal <= this.boardWidth && maxHeightNormal <= this.boardHeight
+      const fitsRotated = allowsRotation && totalWidthRotated <= this.boardWidth && maxHeightRotated <= this.boardHeight
+
+      let rotated = false
+      let totalWidth = totalWidthNormal
+      let totalHeight = maxHeightNormal
+
+      if (!fitsNormal && fitsRotated) {
+        // Only fits when rotated
+        rotated = true
+        totalWidth = totalWidthRotated
+        totalHeight = maxHeightRotated
+      } else if (fitsNormal && fitsRotated) {
+        // Both fit, choose the one with less waste
+        const wasteNormal = (this.boardWidth * this.boardHeight) - (totalWidthNormal * maxHeightNormal)
+        const wasteRotated = (this.boardWidth * this.boardHeight) - (totalWidthRotated * maxHeightRotated)
+
+        if (wasteRotated < wasteNormal) {
+          rotated = true
+          totalWidth = totalWidthRotated
+          totalHeight = maxHeightRotated
+        }
+      }
+
+      blockGroups.push({
+        blockNumber,
+        pieces: blockPieces,
+        totalWidth,
+        totalHeight,
+        rotated,
+        allowsRotation
+      })
+    })
+
+    return blockGroups
+  }
+
+  // Sort blocks by priority
+  private sortBlocksForOptimalCutting(blocks: BlockGroup[]): BlockGroup[] {
+    return blocks.sort((a, b) => {
+      // Sort by total area (largest first)
+      const aArea = a.totalWidth * a.totalHeight
+      const bArea = b.totalWidth * b.totalHeight
+      return bArea - aArea
+    })
+  }
+
+  // Place a block group with grain continuity
+  private placeBlockGroup(block: BlockGroup): void {
+    // Find the best fitting rectangle for the entire block
+    let bestRect: Rectangle | null = null
+    let bestIndex = -1
+
+    for (let i = 0; i < this.freeRectangles.length; i++) {
+      const rect = this.freeRectangles[i]
+      if (rect.width >= block.totalWidth && rect.height >= block.totalHeight) {
+        if (!bestRect || this.isBetterFit(rect, bestRect, block.totalWidth, block.totalHeight)) {
+          bestRect = rect
+          bestIndex = i
+        }
+      }
+    }
+
+    if (!bestRect || bestIndex === -1) {
+      // Can't place block as a group, try placing pieces individually
+      console.warn(`Block ${block.blockNumber} could not be placed as a continuous group`)
+      return
+    }
+
+    // Place pieces horizontally (side by side)
+    const blockId = `block_${block.blockNumber}`
+    let currentX = bestRect.x
+    let currentY = bestRect.y
+
+    block.pieces.forEach((piece, index) => {
+      // If block is rotated, swap dimensions for each piece
+      // But pieces are still placed side by side (horizontally)
+      const pieceWidth = block.rotated ? piece.width : piece.length
+      const pieceHeight = block.rotated ? piece.length : piece.width
+
+      const placedPiece: PlacedPiece = {
+        id: `${piece.id}_block`,
+        name: piece.partName || `Block ${block.blockNumber} - ${index + 1}`,
+        x: currentX,
+        y: currentY,
+        width: pieceWidth,
+        height: pieceHeight,
+        rotated: block.rotated, // All pieces in block have same rotation
+        originalPiece: piece,
+        isBlock: true,
+        blockNumber: block.blockNumber,
+        groupId: blockId
+      }
+
+      this.placedPieces.push(placedPiece)
+
+      // Move to next position horizontally (side by side)
+      currentX += pieceWidth
+    })
+
+    // Remove the used rectangle and split the remaining area
+    this.freeRectangles.splice(bestIndex, 1)
+    this.splitRectangle(bestRect, {
+      x: bestRect.x,
+      y: bestRect.y,
+      width: block.totalWidth,
+      height: block.totalHeight,
+    })
   }
 
   // Create groups for identical pieces

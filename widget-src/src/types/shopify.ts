@@ -145,6 +145,7 @@ export interface CuttingPiece {
   withoutEdge: boolean // Bez orezu
   duplicate: boolean // Dupel
   edgeAllAround: number | null // Hrana dookola - thickness in mm (0.8, 1, 2)
+  algorithmValue: number // Hodnota pre algoritmus rozmiestňovania
   edgeTop: number | null // Hrana vrch - thickness in mm
   edgeBottom: number | null // Hrana spodok - thickness in mm
   edgeLeft: number | null // Hrana ľavá - thickness in mm

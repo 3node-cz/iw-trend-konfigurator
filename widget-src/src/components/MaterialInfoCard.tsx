@@ -16,17 +16,6 @@ interface MaterialInfoCardProps {
 }
 
 const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
-  console.log('🔍 MaterialInfoCard received material:', material);
-  console.log('🔍 Material fields breakdown:', {
-    title: material.title,
-    vendor: material.vendor,
-    handle: material.handle,
-    image: material.image,
-    variant: material.variant,
-    'variant.sku': material.variant?.sku,
-    'variant.price': material.variant?.price
-  });
-
   return (
     <Card>
       <CardContent sx={{ p: 3 }}>

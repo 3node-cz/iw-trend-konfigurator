@@ -99,6 +99,7 @@ export const useMaterialSpecs = (
       withoutEdge: false,
       duplicate: false,
       edgeAllAround: null,
+      algorithmValue: 0,
       edgeTop: null,
       edgeBottom: null,
       edgeLeft: null,
@@ -121,9 +122,26 @@ export const useMaterialSpecs = (
       pieceId: string,
       updatedPiece: Partial<CuttingPiece>,
     ) => {
-      // Mark piece as touched when user modifies width or length
-      if ('length' in updatedPiece || 'width' in updatedPiece) {
+      // Mark piece as touched when user modifies width, length, quantity, or block number
+      if ('length' in updatedPiece || 'width' in updatedPiece || 'quantity' in updatedPiece || 'algorithmValue' in updatedPiece) {
         setTouchedPieces(prev => new Set(prev).add(pieceId))
+
+        // If block number changed, mark all pieces in the new block as touched for validation
+        if ('algorithmValue' in updatedPiece && updatedPiece.algorithmValue && updatedPiece.algorithmValue > 0) {
+          setMaterialSpecs((currentSpecs) => {
+            const piecesInBlock = currentSpecs[materialId]?.cuttingPieces.filter(
+              p => p.algorithmValue === updatedPiece.algorithmValue
+            ) || []
+
+            setTouchedPieces(prev => {
+              const newTouched = new Set(prev)
+              piecesInBlock.forEach(p => newTouched.add(p.id))
+              return newTouched
+            })
+
+            return currentSpecs
+          })
+        }
       }
 
       setMaterialSpecs((prev) => ({
@@ -230,9 +248,81 @@ export const useMaterialSpecs = (
     const pieces = materialSpecs[materialId]?.cuttingPieces || []
     const material = materials.find(m => m.id === materialId)
 
+    // Use default dimensions if not provided (standard DTD board size)
+    const dimensions = material?.dimensions || {
+      width: 2800,   // Standard DTD board width
+      height: 2070,  // Standard DTD board height
+      thickness: 18  // Standard thickness
+    }
+
+    const maxLength = Math.max(dimensions.width, dimensions.height)
+    const maxWidth = Math.max(dimensions.width, dimensions.height)
+
+    // Group pieces by block number for validation
+    const blockGroups = new Map<number, CuttingPiece[]>()
+    pieces.forEach(piece => {
+      if (piece.algorithmValue > 0 && piece.length > 0 && piece.width > 0) {
+        if (!blockGroups.has(piece.algorithmValue)) {
+          blockGroups.set(piece.algorithmValue, [])
+        }
+        blockGroups.get(piece.algorithmValue)!.push(piece)
+      }
+    })
+
+    // Validate blocks first and track which blocks have errors
+    const blockErrors = new Map<number, string[]>()
+    blockGroups.forEach((blockPieces, blockNumber) => {
+      // Skip single-piece "blocks" - they're just regular pieces
+      if (blockPieces.length === 1) {
+        return
+      }
+
+      const blockValidationErrors: string[] = []
+
+      // Blocks are ALWAYS placed horizontally (side by side)
+      // Calculate total width when pieces are placed side by side
+      const totalWidthNormal = blockPieces.reduce((sum, p) => sum + (p.length * p.quantity), 0)
+      const maxHeightNormal = Math.max(...blockPieces.map(p => p.width))
+
+      // Check if rotation is allowed for ANY piece in the block
+      const allowsRotation = blockPieces.some(p => p.allowRotation)
+
+      // If rotation allowed, check rotated dimensions (rotate entire block as unit)
+      // When rotated, pieces are still side by side but the whole block is rotated 90°
+      const totalWidthRotated = blockPieces.reduce((sum, p) => sum + (p.width * p.quantity), 0)
+      const maxHeightRotated = Math.max(...blockPieces.map(p => p.length))
+
+      // Check if block fits on board (normal or rotated)
+      const fitsNormal = totalWidthNormal <= dimensions.width && maxHeightNormal <= dimensions.height
+      const fitsRotated = allowsRotation && totalWidthRotated <= dimensions.width && maxHeightRotated <= dimensions.height
+
+      // Also check total area (< 80% of board to allow for waste)
+      const totalArea = blockPieces.reduce((sum, p) => sum + (p.length * p.width * p.quantity), 0)
+      const boardArea = dimensions.width * dimensions.height
+      const blockFitsArea = totalArea <= boardArea * 0.8
+
+      if (!fitsNormal && !fitsRotated) {
+        if (allowsRotation) {
+          blockValidationErrors.push(
+            `Blok ${blockNumber}: ${totalWidthNormal}×${maxHeightNormal} mm (alebo ${totalWidthRotated}×${maxHeightRotated} mm otočené) nezmestí sa na dosku ${dimensions.width}×${dimensions.height} mm`
+          )
+        } else {
+          blockValidationErrors.push(
+            `Blok ${blockNumber}: ${totalWidthNormal}×${maxHeightNormal} mm nezmestí sa na dosku ${dimensions.width}×${dimensions.height} mm`
+          )
+        }
+      } else if (!blockFitsArea) {
+        blockValidationErrors.push(
+          `Blok ${blockNumber} zaberá ${Math.round(totalArea / boardArea * 100)}% plochy dosky (max 80%)`
+        )
+      }
+
+      if (blockValidationErrors.length > 0) {
+        blockErrors.set(blockNumber, blockValidationErrors)
+      }
+    })
 
     pieces.forEach(piece => {
-
       // Only show errors for pieces that have been touched by the user
       if (!touchedPieces.has(piece.id)) {
         return
@@ -255,23 +345,22 @@ export const useMaterialSpecs = (
 
       // Check material dimension constraints
       if (piece.length > 0 && piece.width > 0) {
-        // Use default dimensions if not provided (standard DTD board size)
-        const dimensions = material?.dimensions || {
-          width: 2800,   // Standard DTD board width
-          height: 2070,  // Standard DTD board height
-          thickness: 18  // Standard thickness
-        }
-
-        const maxLength = Math.max(dimensions.width, dimensions.height)
-        const maxWidth = Math.max(dimensions.width, dimensions.height)
-
         // Check if piece fits in material either way (with rotation)
         const fitsNormally = piece.length <= maxLength && piece.width <= maxWidth
         const fitsRotated = piece.length <= maxWidth && piece.width <= maxLength
 
-
         if (!fitsNormally && !fitsRotated) {
           pieceErrors.push(`Rozmery presahujú materiál (max ${maxLength}×${maxWidth} mm)`)
+        }
+
+        // Add block errors only to the FIRST piece in the block
+        if (piece.algorithmValue > 0 && blockErrors.has(piece.algorithmValue)) {
+          const blockPieces = blockGroups.get(piece.algorithmValue) || []
+          // Only add to first piece in the block (by ID sort for consistency)
+          const sortedBlockPieces = [...blockPieces].sort((a, b) => a.id.localeCompare(b.id))
+          if (sortedBlockPieces.length > 1 && sortedBlockPieces[0].id === piece.id) {
+            pieceErrors.push(...(blockErrors.get(piece.algorithmValue) || []))
+          }
         }
       }
 

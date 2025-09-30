@@ -20,6 +20,7 @@ import {
 } from '@mui/material'
 import {
   Delete as DeleteIcon,
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material'
 import type { CuttingPiece, EdgeMaterial } from '../types/shopify'
 import {
@@ -317,20 +318,40 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         },
       }),
 
-      // Edge All Around
-      columnHelper.accessor('edgeAllAround', {
-        header: 'Hrana dookola',
-        size: 90,
-        cell: ({ row, getValue }) => (
-          <EdgeThicknessSelect
-            value={getValue()}
-            onChange={(value) =>
-              handlePieceChange(row.original.id, { edgeAllAround: value })
-            }
-            edgeMaterial={edgeMaterial}
-            minWidth={80}
-          />
+      // Edge All Around + Block Input
+      columnHelper.display({
+        id: 'edgeAllAroundAndBlock',
+        header: () => (
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>Hrana dookola</Typography>
+            <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>Blok</Typography>
+          </Box>
         ),
+        size: 90,
+        cell: ({ row }) => {
+          const piece = row.original
+          return (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+              <EdgeThicknessSelect
+                value={piece.edgeAllAround}
+                onChange={(value) =>
+                  handlePieceChange(row.original.id, { edgeAllAround: value })
+                }
+                edgeMaterial={edgeMaterial}
+                minWidth={80}
+              />
+              <DebouncedNumberInput
+                initialValue={piece.algorithmValue || 0}
+                onChange={(value) =>
+                  handlePieceChange(row.original.id, { algorithmValue: Math.max(0, Math.floor(value)) })
+                }
+                sx={{ minWidth: 80 }}
+                min={0}
+                step={1}
+              />
+            </Box>
+          )
+        },
       }),
 
       // Individual Edges (2x2 grid)
@@ -434,17 +455,31 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       columnHelper.display({
         id: 'actions',
         header: 'Akcie',
-        cell: ({ row }) => (
-          <IconButton
-            size="small"
-            color="error"
-            onClick={() => handleRemovePiece(row.original.id)}
-            title="Odstrániť dielec"
-          >
-            <DeleteIcon />
-          </IconButton>
-        ),
-        size: 60,
+        cell: ({ row }) => {
+          const piece = row.original
+          return (
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              <IconButton
+                size="small"
+                color="primary"
+                onClick={() => handlePreviewPiece(piece)}
+                title="Zobraziť náhľad"
+                disabled={!onPreviewPiece || !piece.length || !piece.width}
+              >
+                <VisibilityIcon />
+              </IconButton>
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => handleRemovePiece(row.original.id)}
+                title="Odstrániť dielec"
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Box>
+          )
+        },
+        size: 80,
       }),
     ],
     [

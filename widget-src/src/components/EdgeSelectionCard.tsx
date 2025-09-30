@@ -48,12 +48,10 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
     const loadQuickEdges = async () => {
       setIsLoadingQuickEdges(true)
       try {
-        console.log('🔍 Loading popular edge materials...')
         const results = await searchEdgeMaterials({
           query: 'abs h1180',
           limit: 3,
         })
-        console.log('✅ Loaded', results.length, 'popular edges')
         setQuickEdges(results)
       } catch (error) {
         console.error('❌ Error loading popular edges:', error)
@@ -95,12 +93,10 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
 
     setIsSearching(true)
     try {
-      console.log('🔍 Searching for edge materials:', query)
       const results = await searchEdgeMaterials({
         query: query,
         limit: 10,
       })
-      console.log('✅ Found', results.length, 'edge materials')
       setEdgeSearchResults(results)
     } catch (error) {
       console.error('❌ Edge search error:', error)
