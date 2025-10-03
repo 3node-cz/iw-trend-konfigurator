@@ -2,7 +2,7 @@
 
 client_id = "34dbe43a78626352390045be3bb58946"
 name = "iw-trend-configurator-remix"
-application_url = "https://sunglasses-compiled-caused-sending.trycloudflare.com"
+application_url = "https://ac0c404c4oowc0880scows8w.3node-apps.cz"
 embedded = true
 handle = "iw-trend-configurator-remix-1"
 
@@ -26,13 +26,13 @@ scopes = "read_customers,read_orders,read_products,write_app_proxy,write_custome
 
 [auth]
 redirect_urls = [
-  "https://sunglasses-compiled-caused-sending.trycloudflare.com/auth/callback",
-  "https://sunglasses-compiled-caused-sending.trycloudflare.com/auth/shopify/callback",
-  "https://sunglasses-compiled-caused-sending.trycloudflare.com/api/auth/callback"
+  "https://ac0c404c4oowc0880scows8w.3node-apps.cz/auth/callback",
+  "https://ac0c404c4oowc0880scows8w.3node-apps.cz/auth/shopify/callback",
+  "https://ac0c404c4oowc0880scows8w.3node-apps.cz/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://sunglasses-compiled-caused-sending.trycloudflare.com"
+url = "https://ac0c404c4oowc0880scows8w.3node-apps.cz"
 subpath = "configurator"
 prefix = "apps"
 

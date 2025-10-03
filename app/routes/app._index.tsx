@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, useFetcher } from "@remix-run/react";
+import { useLoaderData, useFetcher, useRouteError, isRouteErrorResponse } from "@remix-run/react";
 import {
   Page,
   Layout,
@@ -17,113 +17,181 @@ import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { admin, session } = await authenticate.admin(request);
-
-  // Try to get existing color preference from shop metafields
   try {
-    const response = await admin.graphql(`
-      query {
-        shop {
-          metafields(first: 10, namespace: "configurator") {
-            edges {
-              node {
-                id
-                key
-                value
+    const { admin, session } = await authenticate.admin(request);
+
+    // Try to get existing color preference from shop metafields
+    try {
+      const response = await admin.graphql(`
+        query {
+          shop {
+            metafields(first: 10, namespace: "configurator") {
+              edges {
+                node {
+                  id
+                  key
+                  value
+                }
               }
             }
           }
         }
-      }
-    `);
+      `);
 
-    const data = await response.json();
-    const metafields = data.data?.shop?.metafields?.edges || [];
-    const colorMetafield = metafields.find((edge: any) => edge.node.key === "primary_color");
+      const data = await response.json();
+      const metafields = data.data?.shop?.metafields?.edges || [];
+      const colorMetafield = metafields.find((edge: any) => edge.node.key === "primary_color");
 
-    return json({
-      currentColor: colorMetafield?.node?.value || "#22C55E",
-      shop: session.shop
-    });
+      return json({
+        currentColor: colorMetafield?.node?.value || "#22C55E",
+        shop: session.shop
+      });
+    } catch (error) {
+      return json({
+        currentColor: "#22C55E",
+        shop: session.shop
+      });
+    }
   } catch (error) {
-    return json({
-      currentColor: "#22C55E",
-      shop: session.shop
-    });
+    console.error("Authentication error:", error);
+    throw new Response(
+      JSON.stringify({
+        message: error instanceof Error ? error.message : "Authentication failed. Please check your environment variables.",
+        details: "Make sure SHOPIFY_API_KEY, SHOPIFY_API_SECRET, and SHOPIFY_APP_SESSION_SECRET are set correctly."
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   }
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { admin, session } = await authenticate.admin(request);
-  const formData = await request.formData();
-  const primaryColor = formData.get("primaryColor") as string;
-
-  if (!primaryColor || !primaryColor.match(/^#[0-9a-fA-F]{6}$/)) {
-    return json({ success: false, error: "Invalid color format" }, { status: 400 });
-  }
-
   try {
-    // First get the shop ID
-    const shopResponse = await admin.graphql(`
-      query {
-        shop {
-          id
-        }
-      }
-    `);
+    const { admin, session } = await authenticate.admin(request);
+    const formData = await request.formData();
+    const primaryColor = formData.get("primaryColor") as string;
 
-    const shopData = await shopResponse.json();
-    const shopId = shopData.data?.shop?.id;
-
-    if (!shopId) {
-      return json({ success: false, error: "Could not get shop ID" }, { status: 500 });
+    if (!primaryColor || !primaryColor.match(/^#[0-9a-fA-F]{6}$/)) {
+      return json({ success: false, error: "Invalid color format" }, { status: 400 });
     }
 
-    // Save color to shop metafield using metafieldSet
-    const response = await admin.graphql(`
-      mutation metafieldSet($metafields: [MetafieldsSetInput!]!) {
-        metafieldsSet(metafields: $metafields) {
-          metafields {
+    try {
+      // First get the shop ID
+      const shopResponse = await admin.graphql(`
+        query {
+          shop {
             id
-            namespace
-            key
-            value
-          }
-          userErrors {
-            field
-            message
           }
         }
-      }
-    `, {
-      variables: {
-        metafields: [{
-          ownerId: shopId,
-          namespace: "configurator",
-          key: "primary_color",
-          value: primaryColor,
-          type: "single_line_text_field"
-        }]
-      }
-    });
+      `);
 
-    const data = await response.json();
+      const shopData = await shopResponse.json();
+      const shopId = shopData.data?.shop?.id;
 
-    if (data.data?.metafieldsSet?.userErrors?.length > 0) {
+      if (!shopId) {
+        return json({ success: false, error: "Could not get shop ID" }, { status: 500 });
+      }
+
+      // Save color to shop metafield using metafieldSet
+      const response = await admin.graphql(`
+        mutation metafieldSet($metafields: [MetafieldsSetInput!]!) {
+          metafieldsSet(metafields: $metafields) {
+            metafields {
+              id
+              namespace
+              key
+              value
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `, {
+        variables: {
+          metafields: [{
+            ownerId: shopId,
+            namespace: "configurator",
+            key: "primary_color",
+            value: primaryColor,
+            type: "single_line_text_field"
+          }]
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.data?.metafieldsSet?.userErrors?.length > 0) {
+        return json({
+          success: false,
+          error: data.data.metafieldsSet.userErrors[0].message
+        }, { status: 400 });
+      }
+
+      return json({ success: true, color: primaryColor });
+    } catch (error) {
       return json({
         success: false,
-        error: data.data.metafieldsSet.userErrors[0].message
-      }, { status: 400 });
+        error: error instanceof Error ? error.message : "Failed to save color preference"
+      }, { status: 500 });
     }
-
-    return json({ success: true, color: primaryColor });
   } catch (error) {
     return json({
       success: false,
-      error: "Failed to save color preference"
+      error: error instanceof Error ? error.message : "Authentication failed"
     }, { status: 500 });
   }
 };
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  let errorMessage = "An unexpected error occurred";
+  let errorDetails = "";
+
+  if (isRouteErrorResponse(error)) {
+    try {
+      const errorData = JSON.parse(error.data);
+      errorMessage = errorData.message || errorMessage;
+      errorDetails = errorData.details || "";
+    } catch {
+      errorMessage = error.data || errorMessage;
+    }
+  } else if (error instanceof Error) {
+    errorMessage = error.message;
+  }
+
+  return (
+    <Page>
+      <Layout>
+        <Layout.Section>
+          <Card>
+            <BlockStack gap="400">
+              <Text as="h2" variant="headingLg">
+                Configuration Error
+              </Text>
+              <Banner status="critical">
+                <BlockStack gap="200">
+                  <Text as="p" variant="bodyMd" fontWeight="bold">
+                    {errorMessage}
+                  </Text>
+                  {errorDetails && (
+                    <Text as="p" variant="bodySm">
+                      {errorDetails}
+                    </Text>
+                  )}
+                </BlockStack>
+              </Banner>
+              <Text as="p" variant="bodyMd">
+                Please contact your system administrator or check the server logs for more information.
+              </Text>
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+      </Layout>
+    </Page>
+  );
+}
 
 export default function Index() {
   const { currentColor, shop } = useLoaderData<typeof loader>();
