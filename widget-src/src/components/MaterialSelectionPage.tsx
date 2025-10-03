@@ -29,7 +29,7 @@ interface MaterialSelectionPageProps {
 }
 
 const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
-  orderName = "Aricoma",
+  orderName = "",
   orderData,
   initialSelectedMaterials = [],
   onBack,

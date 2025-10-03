@@ -232,7 +232,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ open, onClose, onOr
                 label="Názov zákazky"
                 value={formData.orderName}
                 onChange={handleFieldChange('orderName')}
-                placeholder="Aricoma"
+                placeholder="Názov projektu"
                 error={errors.orderName}
                 required
               />
