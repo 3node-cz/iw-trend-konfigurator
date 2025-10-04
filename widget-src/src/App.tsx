@@ -79,6 +79,12 @@ function App() {
     // Store all selected materials
     setSelectedMaterials(materials)
 
+    // Clean up cutting specifications for materials that were removed
+    const materialIds = new Set(materials.map(m => m.id))
+    setCuttingSpecifications(prevSpecs =>
+      prevSpecs.filter(spec => materialIds.has(spec.material.id))
+    )
+
     if (materials.length > 0) {
       setCurrentView('cutting-specification')
     }
