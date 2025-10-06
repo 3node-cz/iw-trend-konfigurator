@@ -62,7 +62,7 @@ const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
             {/* Price highlight */}
             <Typography
               variant="body2"
-              sx={{ fontWeight: 600, color: '#2e7d32' }}
+              sx={{ fontWeight: 600, color: 'text.primary' }}
             >
               {material.variant?.price ? `${formatPrice(material.variant.price)} per unit` : '[No Price]'}
             </Typography>

@@ -73,11 +73,43 @@ export const theme = createTheme({
     fontFamily: getShopifyThemeFont(),
   },
   components: {
+    // Typography - make headers use primary color
+    MuiTypography: {
+      styleOverrides: {
+        h1: {
+          color: getPrimaryColor(),
+        },
+        h2: {
+          color: getPrimaryColor(),
+        },
+        h3: {
+          color: getPrimaryColor(),
+        },
+        h4: {
+          color: getPrimaryColor(),
+        },
+        h5: {
+          color: getPrimaryColor(),
+        },
+        h6: {
+          color: getPrimaryColor(),
+        },
+      },
+    },
     // TextField default props
     MuiTextField: {
       defaultProps: {
         size: "small",
         variant: "outlined",
+      },
+      styleOverrides: {
+        root: {
+          // Fix disabled styling
+          "& .Mui-disabled": {
+            backgroundColor: "#f5f5f5",
+            color: "rgba(0, 0, 0, 0.38)",
+          },
+        },
       },
     },
     // Switch default props
@@ -101,6 +133,14 @@ export const theme = createTheme({
     MuiSelect: {
       defaultProps: {
         size: "small",
+      },
+      styleOverrides: {
+        select: {
+          // Prevent text overflow
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        },
       },
     },
     // FormControl default props

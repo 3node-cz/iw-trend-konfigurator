@@ -43,13 +43,10 @@ const OrdersHeader: React.FC<OrdersHeaderProps> = ({ onOrderCreated, customer })
         
         <Button
           variant="contained"
+          color="primary"
           startIcon={<AddIcon />}
           onClick={handleCreateOrder}
           sx={{
-            bgcolor: '#4caf50',
-            '&:hover': {
-              bgcolor: '#45a049'
-            },
             px: 3
           }}
         >

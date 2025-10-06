@@ -175,7 +175,8 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
 
           {onCreateNewOrder && (
             <Button
-              variant="outlined"
+              variant="contained"
+              color="primary"
               size="large"
               startIcon={<RefreshIcon />}
               onClick={onCreateNewOrder}
