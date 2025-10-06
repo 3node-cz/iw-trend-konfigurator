@@ -259,6 +259,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
       const productImage = product.featuredImage?.url;
       const productImages = product.images?.edges?.map((edge: any) => edge.node.url) || [];
 
+      // Extract dimensions from metafields
+      let dimensions = undefined;
+      const heightMeta = productMetafields['material.height'] || variantMetafields['material.height'];
+      const widthMeta = productMetafields['material.width'] || variantMetafields['material.width'];
+      const thicknessMeta = productMetafields['material.thickness'] || variantMetafields['material.thickness'];
+
+      if (heightMeta && widthMeta && thicknessMeta) {
+        try {
+          dimensions = {
+            height: parseFloat(heightMeta),
+            width: parseFloat(widthMeta),
+            thickness: parseFloat(thicknessMeta)
+          };
+        } catch (e) {
+          console.warn('Failed to parse dimensions:', e);
+        }
+      }
+
       return {
         id: variant?.id || product.id,
         title: product.title,
@@ -268,6 +286,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         tags: product.tags,
         image: variantImage || productImage,
         images: productImages,
+        dimensions,
         variant: variant ? {
           id: variant.id,
           title: variant.title,

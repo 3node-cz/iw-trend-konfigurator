@@ -433,19 +433,9 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
             }
             sx={{
               minWidth: 180,
-              height: '100%',
-              '& .MuiOutlinedInput-root': {
-                height: '100%',
-                alignItems: 'flex-start',
-                padding: '8px'
-              },
-              '& .MuiInputBase-inputMultiline': {
-                height: '100% !important',
-                minHeight: '44px !important',
-                resize: 'vertical'
-              }
             }}
             multiline
+            rows={3}
             placeholder="Poznámka ku kusu..."
           />
         ),

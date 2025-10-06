@@ -47,8 +47,9 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
           <Table size="small">
             <TableHead>
               <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                <TableCell sx={{ fontWeight: 600, width: '50px' }}>Obrázok</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Názov</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Rozmery</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Kód</TableCell>
                 <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>
                   Dostupnosť lokálneho skladu
                 </TableCell>
@@ -56,13 +57,16 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                   Dostupnosť centrálneho skladu
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, textAlign: 'right' }}>
-                  Základná cena za MJ / Zľava za MJ
+                  Základná cena za MJ
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, textAlign: 'right' }}>
-                  Cena za ks/balenie
+                  Zľava na MJ
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>
-                  Pošnúrované
+                  Rozbaliteľnosť balenia
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, textAlign: 'right' }}>
+                  Cena po zľavách
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>
                   {isSelectedMaterials ? 'Akcie' : 'Zvoliť'}
@@ -70,10 +74,31 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {results.map((material) => (
-                <TableRow key={material.id} hover>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {results.map((material) => {
+                // Extract warehouse availability from metafields
+                const localWarehouseStock = material.metafields?.['custom.local_warehouse_stock'] ||
+                                           material.variant?.metafields?.['custom.local_warehouse_stock'];
+                const centralWarehouseStock = material.metafields?.['custom.central_warehouse_stock'] ||
+                                              material.variant?.metafields?.['custom.central_warehouse_stock'];
+
+                // Extract pricing info
+                const basePrice = material.variant?.price || "0";
+                const discount = material.metafields?.['custom.discount'] ||
+                                material.variant?.metafields?.['custom.discount'] || "0";
+                const discountPercentage = parseFloat(discount);
+                const basePriceNum = parseFloat(basePrice);
+                const finalPrice = discountPercentage > 0 ? basePriceNum * (1 - discountPercentage / 100) : basePriceNum;
+
+                // Extract package info
+                const packageSize = material.metafields?.['custom.package_size'] ||
+                                   material.variant?.metafields?.['custom.package_size'] || '1';
+                const isPackageDivisible = material.metafields?.['custom.package_divisible'] === 'true' ||
+                                          material.variant?.metafields?.['custom.package_divisible'] === 'true';
+
+                return (
+                  <TableRow key={material.id} hover>
+                    {/* Image */}
+                    <TableCell>
                       <Avatar
                         src={material.image}
                         alt={material.title}
@@ -82,108 +107,124 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                       >
                         📦
                       </Avatar>
+                    </TableCell>
+
+                    {/* Name */}
+                    <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
                         {material.title}
                       </Typography>
-                    </Box>
-                  </TableCell>
-                  
-                  <TableCell>
-                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                      {material.dimensions
-                        ? `${material.dimensions.height} × ${material.dimensions.width} × ${material.dimensions.thickness} mm`
-                        : material.variant?.sku || material.handle || '-'
-                      }
-                    </Typography>
-                  </TableCell>
-                  
-                  <TableCell sx={{ textAlign: 'center' }}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                      <AvailabilityChip
-                        availability={material.variant?.availableForSale ? 'available' : 'unavailable'}
-                        size="small"
-                      />
-                      <Typography variant="caption" color="text.secondary">
-                        {material.vendor || 'Skladom'}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  
-                  <TableCell sx={{ textAlign: 'center' }}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                      <AvailabilityChip
-                        availability={material.variant?.availableForSale ? 'available' : 'unavailable'}
-                        size="small"
-                      />
-                      <Typography variant="caption" color="text.secondary">
-                        Nitra
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  
-                  <TableCell sx={{ textAlign: 'right' }}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {formatPrice(material.variant?.price || "0")}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        per unit
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  
-                  <TableCell sx={{ textAlign: 'right' }}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {formatPrice(material.variant?.price || "0")}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        / ks
-                      </Typography>
-                      {material.variant?.inventoryQuantity && (
-                        <Typography variant="caption" color="text.secondary">
-                          {material.variant?.inventoryQuantity} ks / 1
+                      {material.dimensions && (
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                          {material.dimensions.height} × {material.dimensions.width} × {material.dimensions.thickness} mm
                         </Typography>
                       )}
-                    </Box>
-                  </TableCell>
-                  
-                  <TableCell sx={{ textAlign: 'center' }}>
-                    <Typography variant="caption" color="text.secondary">
-                      s DPH
-                    </Typography>
-                  </TableCell>
-                  
-                  <TableCell sx={{ textAlign: 'center' }}>
-                    {isSelectedMaterials ? (
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => onRemoveMaterial?.(material.id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    ) : (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        startIcon={<AddIcon />}
-                        onClick={() => onAddMaterial?.(material)}
-                        disabled={selectedMaterialIds.includes(material.id)}
-                        sx={{
-                          backgroundColor: selectedMaterialIds.includes(material.id) ? '#ccc' : '#4caf50',
-                          '&:hover': {
-                            backgroundColor: selectedMaterialIds.includes(material.id) ? '#ccc' : '#45a049'
-                          },
-                          fontSize: '12px'
-                        }}
-                      >
-                        {selectedMaterialIds.includes(material.id) ? 'Vybraté' : 'Zvoliť'}
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+
+                    {/* Code */}
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {material.variant?.sku || material.handle || '-'}
+                      </Typography>
+                    </TableCell>
+
+                    {/* Local warehouse availability */}
+                    <TableCell sx={{ textAlign: 'center' }}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                        <AvailabilityChip
+                          availability={localWarehouseStock && parseInt(localWarehouseStock) > 0 ? 'available' : 'unavailable'}
+                          size="small"
+                        />
+                        {localWarehouseStock && (
+                          <Typography variant="caption" color="text.secondary">
+                            {localWarehouseStock} ks
+                          </Typography>
+                        )}
+                      </Box>
+                    </TableCell>
+
+                    {/* Central warehouse availability */}
+                    <TableCell sx={{ textAlign: 'center' }}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                        <AvailabilityChip
+                          availability={centralWarehouseStock && parseInt(centralWarehouseStock) > 0 ? 'available' : 'unavailable'}
+                          size="small"
+                        />
+                        {centralWarehouseStock && (
+                          <Typography variant="caption" color="text.secondary">
+                            {centralWarehouseStock} ks
+                          </Typography>
+                        )}
+                      </Box>
+                    </TableCell>
+
+                    {/* Base price */}
+                    <TableCell sx={{ textAlign: 'right' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {formatPrice(basePrice)}
+                      </Typography>
+                    </TableCell>
+
+                    {/* Discount */}
+                    <TableCell sx={{ textAlign: 'right' }}>
+                      {discountPercentage > 0 ? (
+                        <Typography variant="body2" sx={{ fontWeight: 500, color: 'error.main' }}>
+                          -{discountPercentage}%
+                        </Typography>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          -
+                        </Typography>
+                      )}
+                    </TableCell>
+
+                    {/* Package divisibility */}
+                    <TableCell sx={{ textAlign: 'center' }}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                        <Typography variant="body2">
+                          {isPackageDivisible ? '✓' : '✗'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {packageSize} ks/bal
+                        </Typography>
+                      </Box>
+                    </TableCell>
+
+                    {/* Final price after discount */}
+                    <TableCell sx={{ textAlign: 'right' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: discountPercentage > 0 ? 'primary.main' : 'text.primary' }}>
+                        {formatPrice(finalPrice.toString())}
+                      </Typography>
+                    </TableCell>
+
+                    {/* Action button */}
+                    <TableCell sx={{ textAlign: 'center' }}>
+                      {isSelectedMaterials ? (
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => onRemoveMaterial?.(material.id)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      ) : (
+                        <Button
+                          variant="contained"
+                          size="small"
+                          startIcon={<AddIcon />}
+                          onClick={() => onAddMaterial?.(material)}
+                          disabled={selectedMaterialIds.includes(material.id)}
+                          sx={{
+                            fontSize: '12px'
+                          }}
+                        >
+                          {selectedMaterialIds.includes(material.id) ? 'Vybraté' : 'Zvoliť'}
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>

@@ -302,7 +302,6 @@ function App() {
         currentOrder &&
         selectedMaterials.length > 0 && (
           <CuttingSpecificationPage
-            key={selectedMaterials.map(m => m.id).join(',')}
             materials={selectedMaterials.map((material) => ({
               id: material.id,
               title: material.name,
