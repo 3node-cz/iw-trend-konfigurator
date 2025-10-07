@@ -168,7 +168,11 @@ const OrderCalculationsSummary: React.FC<OrderCalculationsSummaryProps> = ({
               <strong>Vysvetlenie nákladov:</strong><br />
               • Základné rezanie: 0,50 € za kus<br />
               • Komplexnosť: +0,25 € za kus s hranami<br />
-              • Hrabanie: 1,20 € za meter hranového materiálu
+              • Hrabanie: 1,20 € za meter hranového materiálu<br />
+              <br />
+              <strong>Osamovanie tabule:</strong><br />
+              • Štandardne sa orezáva 15mm z každej strany tabule pred rezaním<br />
+              • Kusy s označením "Bez orezu" preskakujú tento krok
             </Typography>
           </Box>
         </AccordionDetails>

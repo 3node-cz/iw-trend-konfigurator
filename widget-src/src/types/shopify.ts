@@ -143,7 +143,8 @@ export interface CuttingPiece {
   quantity: number
   allowRotation: boolean // Povoliť rotáciu (pôvodne Letokruhy)
   withoutEdge: boolean // Bez orezu
-  duplicate: boolean // Dupel
+  duplicate: boolean // UNUSED - kept for data compatibility
+  isDupel: boolean // Dupel - double-glued piece (2× thickness, +20mm margins)
   edgeAllAround: number | null // Hrana dookola - thickness in mm (0.8, 1, 2)
   algorithmValue: number // Hodnota pre algoritmus rozmiestňovania
   edgeTop: number | null // Hrana vrch - thickness in mm

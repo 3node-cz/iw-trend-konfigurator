@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { OptimizedGuillotineCuttingOptimizer } from '../utils/guillotineCutting'
-import type { CuttingSpecification } from '../types/shopify'
+import type { CuttingSpecification, CuttingPiece } from '../types/shopify'
+import { getEffectiveBoardDimensions, applyDupelTransform } from '../config/cutting'
 
 export interface CuttingLayoutData {
   materialIndex: number
@@ -27,19 +28,43 @@ export const useCuttingLayouts = (specifications: CuttingSpecification[]) => {
       }
 
       // Use default dimensions if not provided (standard DTD board size)
-      const dimensions = specification.material.dimensions || {
+      const rawDimensions = specification.material.dimensions || {
         width: 2800,   // Standard DTD board width
         height: 2070,  // Standard DTD board height
         thickness: 18  // Standard thickness
       }
 
-      const optimizer = new OptimizedGuillotineCuttingOptimizer(
-        dimensions.width,
-        dimensions.height
+      // Apply board trimming (osamovanie) - 15mm from each side
+      const effectiveDimensions = getEffectiveBoardDimensions(
+        rawDimensions.width,
+        rawDimensions.height
       )
-      
+
+      // Apply Dupel transformation to pieces (if isDupel checked)
+      const transformedPieces: CuttingPiece[] = specification.pieces.map(piece => {
+        if (piece.isDupel) {
+          const dupelTransform = applyDupelTransform(
+            piece.length,
+            piece.width,
+            piece.quantity
+          )
+          return {
+            ...piece,
+            length: dupelTransform.length,
+            width: dupelTransform.width,
+            quantity: dupelTransform.quantity,
+          }
+        }
+        return piece
+      })
+
+      const optimizer = new OptimizedGuillotineCuttingOptimizer(
+        effectiveDimensions.width,
+        effectiveDimensions.height
+      )
+
       // Use multi-board optimization with rotation setting
-      const multiboardResult = optimizer.optimizeMultipleBoards(specification.pieces)
+      const multiboardResult = optimizer.optimizeMultipleBoards(transformedPieces)
       
       // Add each board as a separate layout
       multiboardResult.boards.forEach((board, boardIndex) => {

@@ -17,10 +17,12 @@ import {
   Box,
   Typography,
   Switch,
+  Tooltip,
 } from '@mui/material'
 import {
   Delete as DeleteIcon,
   Visibility as VisibilityIcon,
+  HelpOutline as HelpIcon,
 } from '@mui/icons-material'
 import type { CuttingPiece, EdgeMaterial } from '../types/shopify'
 import {
@@ -272,7 +274,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       columnHelper.display({
         id: 'options',
         header: 'Nastavenia',
-        size: 120,
+        size: 140,
         cell: ({ row }) => {
           const piece = row.original
           return (
@@ -300,18 +302,29 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                   }
                 />
                 <Typography variant="caption">Bez orezu</Typography>
+                <Tooltip
+                  title={
+                    <Typography variant="caption">
+                      Štandardne sa z každej strany tabule orezáva 15mm (2800×2070mm → 2770×2040mm).<br />
+                      Zapnutím tejto možnosti sa orez preskočí.
+                    </Typography>
+                  }
+                  arrow
+                >
+                  <HelpIcon sx={{ fontSize: 14, color: 'text.secondary', cursor: 'help' }} />
+                </Tooltip>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Switch
                   size="small"
-                  checked={piece.duplicate}
+                  checked={piece.isDupel || false}
                   onChange={(e) =>
                     handlePieceChange(row.original.id, {
-                      duplicate: e.target.checked,
+                      isDupel: e.target.checked,
                     })
                   }
                 />
-                <Typography variant="caption">Dupel</Typography>
+                <Typography variant="caption" title="Dvojitý lepený diel (2× hrúbka, +20mm margin)">Dupel</Typography>
               </Box>
             </Box>
           )
@@ -327,7 +340,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
             <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>Blok</Typography>
           </Box>
         ),
-        size: 90,
+        size: 75,
         cell: ({ row }) => {
           const piece = row.original
           return (
@@ -338,14 +351,14 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                   handlePieceChange(row.original.id, { edgeAllAround: value })
                 }
                 edgeMaterial={edgeMaterial}
-                minWidth={80}
+                minWidth={65}
               />
               <DebouncedNumberInput
                 initialValue={piece.algorithmValue || 0}
                 onChange={(value) =>
                   handlePieceChange(row.original.id, { algorithmValue: Math.max(0, Math.floor(value)) })
                 }
-                sx={{ minWidth: 80 }}
+                sx={{ minWidth: 65 }}
                 min={0}
                 step={1}
               />

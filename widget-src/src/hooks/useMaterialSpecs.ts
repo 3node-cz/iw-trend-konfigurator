@@ -98,6 +98,7 @@ export const useMaterialSpecs = (
       allowRotation: false,
       withoutEdge: false,
       duplicate: false,
+      isDupel: false,
       edgeAllAround: null,
       algorithmValue: 0,
       edgeTop: null,
