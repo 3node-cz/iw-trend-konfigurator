@@ -27,6 +27,7 @@ import { useMaterialSpecs } from "../hooks/useMaterialSpecs";
 import { useMaterialSearch } from "../hooks/useMaterialSearch";
 import { useCustomer } from "../hooks/useCustomer";
 import { useScrollOnStepChange } from "../hooks/useScrollIntoView";
+import { useCuttingLayouts } from "../hooks/useCuttingLayouts";
 import type {
   MaterialSearchResult,
   CuttingSpecification,
@@ -97,6 +98,10 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
     removeMaterial,
     isValidPiece,
   } = useMaterialSpecs(materials, existingSpecifications);
+
+  // Calculate cutting layouts to check for unplaced pieces
+  const specifications = generateSpecifications();
+  const { overallStats } = useCuttingLayouts(specifications);
 
   // Check if there are any validation errors across all materials
   const hasAnyValidationErrors = useCallback(() => {
@@ -314,6 +319,20 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
                 onPreviewPiece={(piece) => handlePreviewPiece(piece, material)}
                 validationErrors={validationErrors}
               />
+
+              {/* Warning for unplaced pieces */}
+              {overallStats.totalUnplacedPieces > 0 && (
+                <Alert severity="warning" sx={{ mt: 2 }}>
+                  ⚠️ Upozornenie: {overallStats.totalUnplacedPieces}{" "}
+                  {overallStats.totalUnplacedPieces === 1
+                    ? "kus sa nepodaril"
+                    : overallStats.totalUnplacedPieces < 5
+                      ? "kusy sa nepodarili"
+                      : "kusov sa nepodarilo"}{" "}
+                  umiestniť pri optimalizácii. Skontrolujte rozmery a počet
+                  kusov.
+                </Alert>
+              )}
             </Paper>
 
             {/* Divider between materials (except last one) */}
