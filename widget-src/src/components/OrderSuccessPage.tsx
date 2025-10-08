@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState } from "react";
 import {
   Box,
   Container,
@@ -13,28 +13,34 @@ import {
   DialogContent,
   DialogActions,
   Alert,
-  Chip
-} from '@mui/material'
+  Chip,
+} from "@mui/material";
 import {
   CheckCircle as CheckCircleIcon,
   ShoppingCart as ShoppingCartIcon,
   Refresh as RefreshIcon,
   Save as SaveIcon,
-  BookmarkAdd as BookmarkAddIcon
-} from '@mui/icons-material'
-import type { OrderFormData } from '../schemas/orderSchema'
-import type { CuttingSpecification } from '../types/shopify'
-import { formatPriceNumber } from '../utils/formatting'
-import { createConfigurationService } from '../services/configurationService'
-import { useCustomer } from '../hooks/useCustomer'
+  BookmarkAdd as BookmarkAddIcon,
+} from "@mui/icons-material";
+import type { OrderFormData } from "../schemas/orderSchema";
+import type { CuttingSpecification } from "../types/shopify";
+import { formatPriceNumber } from "../utils/formatting";
+import { createConfigurationService } from "../services/configurationService";
+import { useCustomer } from "../hooks/useCustomer";
 
 interface OrderSuccessPageProps {
-  checkoutUrl: string
-  orderName: string
-  orderInfo?: OrderFormData
-  materials?: Array<{ id: string; code: string; name: string; quantity: number; price: number }>
-  specifications?: CuttingSpecification[]
-  onCreateNewOrder?: () => void
+  checkoutUrl: string;
+  orderName: string;
+  orderInfo?: OrderFormData;
+  materials?: Array<{
+    id: string;
+    code: string;
+    name: string;
+    quantity: number;
+    price: number;
+  }>;
+  specifications?: CuttingSpecification[];
+  onCreateNewOrder?: () => void;
 }
 
 const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
@@ -43,79 +49,87 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
   orderInfo,
   materials,
   specifications,
-  onCreateNewOrder
+  onCreateNewOrder,
 }) => {
-  const { customer, isLoggedIn } = useCustomer()
-  const [saveDialogOpen, setSaveDialogOpen] = useState(false)
-  const [configurationName, setConfigurationName] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const { customer, isLoggedIn } = useCustomer();
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [configurationName, setConfigurationName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
-  const canSaveConfiguration = isLoggedIn && customer && orderInfo && materials && specifications
+  const canSaveConfiguration =
+    isLoggedIn && customer && orderInfo && materials && specifications;
 
   const handleSaveConfiguration = async () => {
-    if (!canSaveConfiguration || !configurationName.trim()) return
+    if (!canSaveConfiguration || !configurationName.trim()) return;
 
-    setSaving(true)
-    setSaveMessage(null)
+    setSaving(true);
+    setSaveMessage(null);
 
     try {
-      const configService = createConfigurationService()
+      const configService = createConfigurationService();
       const result = await configService.saveConfiguration(
         customer.id,
         configurationName.trim(),
         orderInfo,
         materials,
-        specifications
-      )
+        specifications,
+      );
 
       if (result.success) {
         setSaveMessage({
-          type: 'success',
-          text: 'Konfigurácia bola úspešne uložená!'
-        })
-        setConfigurationName('')
+          type: "success",
+          text: "Konfigurácia bola úspešne uložená!",
+        });
+        setConfigurationName("");
         setTimeout(() => {
-          setSaveDialogOpen(false)
-          setSaveMessage(null)
-        }, 2000)
+          setSaveDialogOpen(false);
+          setSaveMessage(null);
+        }, 2000);
       } else {
         setSaveMessage({
-          type: 'error',
-          text: result.error || 'Chyba pri ukladaní konfigurácie'
-        })
+          type: "error",
+          text: result.error || "Chyba pri ukladaní konfigurácie",
+        });
       }
     } catch (error) {
       setSaveMessage({
-        type: 'error',
-        text: 'Neočakávaná chyba pri ukladaní konfigurácie'
-      })
+        type: "error",
+        text: "Neočakávaná chyba pri ukladaní konfigurácie",
+      });
     }
 
-    setSaving(false)
-  }
+    setSaving(false);
+  };
 
   const calculateSummary = () => {
-    if (!materials || !specifications) return null
+    if (!materials || !specifications) return null;
 
-    const totalPieces = specifications.reduce((sum, spec) =>
-      sum + spec.pieces.reduce((pieceSum, piece) => pieceSum + piece.quantity, 0), 0
-    )
-    const totalCost = materials.reduce((sum, material) =>
-      sum + (material.price * material.quantity), 0
-    )
+    const totalPieces = specifications.reduce(
+      (sum, spec) =>
+        sum +
+        spec.pieces.reduce((pieceSum, piece) => pieceSum + piece.quantity, 0),
+      0,
+    );
+    const totalCost = materials.reduce(
+      (sum, material) => sum + material.price * material.quantity,
+      0,
+    );
 
-    return { totalPieces, totalCost }
-  }
+    return { totalPieces, totalCost };
+  };
 
-  const summary = calculateSummary()
+  const summary = calculateSummary();
 
   return (
-    <Container maxWidth="md" sx={{ py: 8, textAlign: 'center' }}>
+    <Container maxWidth="md" sx={{ py: 8, textAlign: "center" }}>
       <Paper sx={{ p: 6, borderRadius: 2 }}>
-        <CheckCircleIcon sx={{ fontSize: 100, color: 'success.main', mb: 3 }} />
+        <CheckCircleIcon sx={{ fontSize: 100, color: "primary.main", mb: 3 }} />
 
-        <Typography variant="h4" sx={{ color: 'success.main', mb: 2, fontWeight: 600 }}>
+        <Typography variant="h4" sx={{ mb: 2, fontWeight: 600 }}>
           Zákazka bola úspešne pridaná do košíka!
         </Typography>
 
@@ -125,19 +139,28 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
 
         {/* Save Configuration Section */}
         {canSaveConfiguration && (
-          <Card sx={{ mb: 4, maxWidth: 500, mx: 'auto' }}>
+          <Card sx={{ mb: 4, maxWidth: 500, mx: "auto" }}>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-                <BookmarkAddIcon sx={{ mr: 1, color: 'primary.main' }} />
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  mb: 2,
+                }}
+              >
+                <BookmarkAddIcon sx={{ mr: 1, color: "primary.main" }} />
                 <Typography variant="h6" sx={{ fontWeight: 500 }}>
                   Uložiť konfiguráciu
                 </Typography>
               </Box>
 
-              <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+              <Typography
+                variant="body2"
+                sx={{ mb: 2, color: "text.secondary" }}
+              >
                 Uložte si túto konfiguráciu pre budúce použitie
               </Typography>
-
 
               <Button
                 variant="outlined"
@@ -152,7 +175,14 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
           </Card>
         )}
 
-        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            justifyContent: "center",
+            flexWrap: "wrap",
+          }}
+        >
           <Button
             variant="contained"
             size="large"
@@ -163,11 +193,7 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
             sx={{
               minWidth: 250,
               py: 1.5,
-              fontSize: '1.1rem',
-              bgcolor: 'success.main',
-              '&:hover': {
-                bgcolor: 'success.dark'
-              }
+              fontSize: "1.1rem",
             }}
           >
             Otvoriť košík a dokončiť objednávku
@@ -183,7 +209,7 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
               sx={{
                 minWidth: 200,
                 py: 1.5,
-                fontSize: '1.1rem'
+                fontSize: "1.1rem",
               }}
             >
               Vytvoriť novú zákazku
@@ -200,20 +226,23 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
         fullWidth
       >
         <DialogTitle>
-          {saveMessage?.type === 'success' ? 'Konfigurácia uložená' : 'Uložiť konfiguráciu'}
+          {saveMessage?.type === "success"
+            ? "Konfigurácia uložená"
+            : "Uložiť konfiguráciu"}
         </DialogTitle>
         <DialogContent>
           {saveMessage ? (
-            <Alert
-              severity={saveMessage.type}
-              sx={{ mb: 2 }}
-            >
+            <Alert severity={saveMessage.type} sx={{ mb: 2 }}>
               {saveMessage.text}
             </Alert>
           ) : (
             <>
-              <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
-                Zadajte názov pre túto konfiguráciu. Budete si ju môcť neskôr znovu načítať.
+              <Typography
+                variant="body2"
+                sx={{ mb: 3, color: "text.secondary" }}
+              >
+                Zadajte názov pre túto konfiguráciu. Budete si ju môcť neskôr
+                znovu načítať.
               </Typography>
 
               <TextField
@@ -224,14 +253,20 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
                 onChange={(e) => setConfigurationName(e.target.value)}
                 placeholder="napr. Kuchynské skrinky - projekt 2024"
                 disabled={saving}
-                error={!configurationName.trim() && configurationName.length > 0}
-                helperText={!configurationName.trim() && configurationName.length > 0 ? 'Názov je povinný' : ''}
+                error={
+                  !configurationName.trim() && configurationName.length > 0
+                }
+                helperText={
+                  !configurationName.trim() && configurationName.length > 0
+                    ? "Názov je povinný"
+                    : ""
+                }
               />
             </>
           )}
         </DialogContent>
         <DialogActions>
-          {saveMessage?.type === 'success' ? (
+          {saveMessage?.type === "success" ? (
             <Button
               onClick={() => setSaveDialogOpen(false)}
               variant="contained"
@@ -252,14 +287,14 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
                 disabled={!configurationName.trim() || saving}
                 startIcon={saving ? undefined : <SaveIcon />}
               >
-                {saving ? 'Ukladám...' : 'Uložiť'}
+                {saving ? "Ukladám..." : "Uložiť"}
               </Button>
             </>
           )}
         </DialogActions>
       </Dialog>
     </Container>
-  )
-}
+  );
+};
 
-export default OrderSuccessPage
+export default OrderSuccessPage;

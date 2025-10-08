@@ -100,7 +100,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
 
   // Check if there are any validation errors across all materials
   const hasAnyValidationErrors = useCallback(() => {
-    return materials.some(material => {
+    return materials.some((material) => {
       const validationErrors = getPieceValidationErrors(material.id);
       return Object.keys(validationErrors).length > 0;
     });
@@ -117,9 +117,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
 
     // Check if there are any validation errors
     if (hasAnyValidationErrors()) {
-      alert(
-        "Opravte chyby v kusoch pred pokračovaním.",
-      );
+      alert("Opravte chyby v kusoch pred pokračovaním.");
       return;
     }
 
@@ -175,13 +173,17 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Button startIcon={<ArrowBackIcon />} onClick={onBack}>
+          <Button
+            variant="outlined"
+            startIcon={<ArrowBackIcon />}
+            onClick={onBack}
+          >
             Späť
           </Button>
           <Typography
             variant="h4"
             component="h1"
-            sx={{ color: "primary.main", fontWeight: 500 }}
+            sx={{ fontWeight: 500, color: "primary.main" }}
           >
             {orderName} - Špecifikácia rezania
           </Typography>
@@ -415,7 +417,9 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
               variant="contained"
               onClick={handleContinue}
               disabled={
-                getTotalPieces() === 0 || !hasValidPiecesForAllMaterials() || hasAnyValidationErrors()
+                getTotalPieces() === 0 ||
+                !hasValidPiecesForAllMaterials() ||
+                hasAnyValidationErrors()
               }
             >
               Pokračovať ({getTotalPieces()} platných kusov)

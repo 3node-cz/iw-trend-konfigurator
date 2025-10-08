@@ -136,16 +136,6 @@ const SaveOrderButton: React.FC<SaveOrderButtonProps> = ({
         startIcon={<SaveIcon />}
         onClick={handleOpen}
         disabled={disabled || !orderData}
-        sx={{
-          '&.MuiButton-outlined': {
-            borderColor: 'primary.main',
-            color: 'primary.main',
-            '&:hover': {
-              backgroundColor: 'primary.main',
-              color: 'white'
-            }
-          }
-        }}
       >
         Uložiť
       </Button>

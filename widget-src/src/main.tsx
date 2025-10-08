@@ -7,6 +7,9 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { theme } from "./theme/theme";
 import App from "./App";
+import type { EmotionCache } from "@emotion/cache";
+import { CacheProvider } from "@emotion/react";
+import createCache from "@emotion/cache";
 
 // Shopify widget integration types
 interface ShopifyCustomer {
@@ -47,9 +50,10 @@ declare global {
 }
 
 // Create a wrapper component that bridges Shopify data with your App
-const ShopifyConfiguratorWidget: React.FC<{ config: ShopifyWidgetConfig }> = ({
-  config,
-}) => {
+const ShopifyConfiguratorWidget: React.FC<{
+  config: ShopifyWidgetConfig;
+  emotionCache: EmotionCache;
+}> = ({ config, emotionCache }) => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -61,15 +65,17 @@ const ShopifyConfiguratorWidget: React.FC<{ config: ShopifyWidgetConfig }> = ({
   });
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
-          <ScopedCssBaseline>
-            <App />
-          </ScopedCssBaseline>
-        </LocalizationProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <CacheProvider value={emotionCache}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider theme={theme}>
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <ScopedCssBaseline>
+              <App />
+            </ScopedCssBaseline>
+          </LocalizationProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </CacheProvider>
   );
 };
 
@@ -89,9 +95,40 @@ function initializeConfigurators() {
       // Show React container
       container.style.display = "block";
 
-      // Render the app
-      const root = createRoot(container);
-      root.render(React.createElement(ShopifyConfiguratorWidget, { config }));
+      // Create Shadow DOM to isolate from Shopify theme styles
+      const shadowRoot = container.attachShadow({ mode: 'open' });
+
+      // Add base styles to shadow root to reset font-size
+      // This is critical because the host page may have html { font-size: 10px }
+      const style = document.createElement('style');
+      style.textContent = `
+        :host {
+          /* Reset to browser default (16px) to ensure proper rem calculations */
+          font-size: 16px;
+          /* Ensure all is set to default */
+          all: initial;
+        }
+      `;
+      shadowRoot.appendChild(style);
+
+      // Create a div inside shadow root for React to mount to
+      const shadowContainer = document.createElement('div');
+      shadowRoot.appendChild(shadowContainer);
+
+      // Create Emotion cache that targets the shadow root
+      const emotionCache = createCache({
+        key: `configurator-${blockId}`,
+        container: shadowRoot as unknown as HTMLElement,
+      });
+
+      // Render the app inside shadow DOM
+      const root = createRoot(shadowContainer);
+      root.render(
+        React.createElement(ShopifyConfiguratorWidget, {
+          config,
+          emotionCache
+        })
+      );
     }
   });
 }

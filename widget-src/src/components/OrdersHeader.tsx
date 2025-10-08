@@ -20,6 +20,19 @@ const OrdersHeader: React.FC<OrdersHeaderProps> = ({ onOrderCreated, customer })
   const [modalOpen, setModalOpen] = useState(false)
 
   const handleCreateOrder = () => {
+    // Test: Log computed font sizes to verify rem calculations
+    const button = document.querySelector('button[aria-label*="Vytvořit"], button:has(span:contains("Vytvořit"))');
+    if (button) {
+      const styles = window.getComputedStyle(button);
+      console.log('🧪 Shadow DOM rem test:', {
+        buttonFontSize: styles.fontSize,
+        buttonPadding: styles.padding,
+        htmlBaseFontSize: window.getComputedStyle(document.documentElement).fontSize,
+        shadowRootHostFontSize: button.closest('[data-configurator-widget]')
+          ? window.getComputedStyle(button.closest('[data-configurator-widget]')!).fontSize
+          : 'N/A'
+      });
+    }
     setModalOpen(true)
   }
 
