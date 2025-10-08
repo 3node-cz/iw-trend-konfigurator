@@ -193,7 +193,7 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
             sx={{
               mb: 2,
               p: 1.5,
-              backgroundColor: 'success.light',
+              backgroundColor: '#e8f5e9',
               borderRadius: 1,
               display: 'flex',
               alignItems: 'center',

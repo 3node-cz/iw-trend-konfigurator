@@ -104,15 +104,14 @@ function initializeConfigurators() {
       // Create Shadow DOM to isolate from Shopify theme styles
       const shadowRoot = container.attachShadow({ mode: "open" });
 
-      // Add base styles to shadow root to reset font-size
-      // This is critical because the host page may have html { font-size: 10px }
+      // Add base styles to shadow root
+      // Note: rem units still reference document root (10px in Shopify)
+      // We handle this in theme.ts with htmlFontSize: 10
       const style = document.createElement("style");
       style.textContent = `
         :host {
           /* Reset all styles first, then override specific ones */
           all: initial;
-          /* Set to our theme's base font size (14px) for proper rem calculations */
-          font-size: 14px;
           /* High z-index to ensure dialogs appear above all page content */
           position: relative;
           z-index: 999999;

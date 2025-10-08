@@ -145,38 +145,42 @@ export const createConfiguratorTheme = (
       tooltip: 1000500,
     },
     typography: {
+      // Tell MUI that the document root font-size is 10px (Shopify theme sets this)
+      // This makes rem calculations work correctly: 1rem = 10px
+      htmlFontSize: 10,
+      // Set our desired base font size to 14px
       fontSize: 14,
       fontFamily: getShopifyThemeFont(),
       h1: {
-        fontSize: "1.5rem", // 24px at 16px base font
+        fontSize: "2.4rem", // 24px (2.4 * 10px)
         fontWeight: 600,
         lineHeight: 1.2,
         color: "#333",
-        marginBottom: "1rem",
+        marginBottom: "1.6rem", // 16px (1.6 * 10px)
       },
       h2: {
-        fontSize: "1.25rem", // 20px at 16px base font
+        fontSize: "2rem", // 20px (2 * 10px)
         fontWeight: 600,
         lineHeight: 1.3,
         color: "#333",
-        marginBottom: "0.75rem",
+        marginBottom: "1.2rem", // 12px (1.2 * 10px)
       },
       h3: {
-        fontSize: "1.125rem", // 18px at 16px base font
+        fontSize: "1.8rem", // 18px (1.8 * 10px)
         fontWeight: 600,
         lineHeight: 1.4,
         color: "#333",
-        marginBottom: "0.5rem",
+        marginBottom: "0.8rem", // 8px (0.8 * 10px)
       },
       h4: {
-        fontSize: "1rem", // 16px at 16px base font
+        fontSize: "1.6rem", // 16px (1.6 * 10px)
         fontWeight: 600,
         lineHeight: 1.4,
         color: "#333",
-        marginBottom: "0.5rem",
+        marginBottom: "0.8rem", // 8px (0.8 * 10px)
       },
       body1: {
-        fontSize: "0.875rem", // 14px
+        fontSize: "1.4rem", // 14px (1.4 * 10px)
         lineHeight: 1.5,
       },
     },
@@ -251,7 +255,7 @@ export const createConfiguratorTheme = (
             textTransform: "none",
             fontWeight: 500,
             padding: "8px 16px",
-            fontSize: "0.875rem", // 14px
+            fontSize: "1.4rem", // 14px (1.4 * 10px)
           },
           containedPrimary: {
             background: primaryColor,

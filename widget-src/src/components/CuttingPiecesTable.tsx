@@ -17,20 +17,18 @@ import {
   Box,
   Typography,
   Switch,
-  Tooltip,
 } from "@mui/material";
 import {
   Delete as DeleteIcon,
   Visibility as VisibilityIcon,
-  HelpOutline as HelpIcon,
 } from "@mui/icons-material";
 import type { CuttingPiece, EdgeMaterial } from "../types/shopify";
 import {
   DebouncedTextInput,
   DebouncedNumberInput,
   EdgeThicknessSelect,
-  HeaderWithHint,
-  EdgeOrientationHint,
+  HelpTooltip,
+  WoodGrainVisualization,
 } from "./common";
 import PieceShapePreview from "./common/PieceShapePreview";
 
@@ -340,25 +338,16 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                   }
                 />
                 <Typography variant="caption">Bez orezu</Typography>
-                <Tooltip
+                <HelpTooltip
                   title={
-                    <Typography variant="caption">
+                    <>
                       Štandardne sa z každej strany tabule orezáva 15mm
                       (2800×2070mm → 2770×2040mm).
                       <br />
                       Zapnutím tejto možnosti sa orez preskočí.
-                    </Typography>
+                    </>
                   }
-                  arrow
-                >
-                  <HelpIcon
-                    sx={{
-                      fontSize: 14,
-                      color: "text.secondary",
-                      cursor: "help",
-                    }}
-                  />
-                </Tooltip>
+                />
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                 <Switch
@@ -371,9 +360,9 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                   }
                 />
                 <Typography variant="caption">Dupel</Typography>
-                <Tooltip
+                <HelpTooltip
                   title={
-                    <Typography variant="caption">
+                    <>
                       Dupel je lepený diel z 2ks rovnakej veľkosti a hrúbky
                       (napr. 18mm → 36mm).
                       <br />
@@ -382,18 +371,9 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                       <br />
                       Pri optimalizácii sa počíta s dvojnásobným počtom dielcov
                       a väčšími rozmermi.
-                    </Typography>
+                    </>
                   }
-                  arrow
-                >
-                  <HelpIcon
-                    sx={{
-                      fontSize: 14,
-                      color: "text.secondary",
-                      cursor: "help",
-                    }}
-                  />
-                </Tooltip>
+                />
               </Box>
             </Box>
           );
@@ -411,12 +391,23 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
             >
               Hrana dookola
             </Typography>
-            <Typography
-              variant="caption"
-              sx={{ fontWeight: 600, display: "block" }}
-            >
-              Blok
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
+              <Typography
+                variant="caption"
+                sx={{ fontWeight: 600 }}
+              >
+                Blok
+              </Typography>
+              <HelpTooltip
+                title={
+                  <>
+                    Blok označuje skupinu dielcov, ktoré majú byť nadelené z jednej tabule.
+                    <br />
+                    Rôzne bloky budú optimalizované samostatne.
+                  </>
+                }
+              />
+            </Box>
           </Box>
         ),
         size: 140,
@@ -452,14 +443,40 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       columnHelper.display({
         id: "individualEdges",
         header: () => (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             <Typography variant="caption" sx={{ fontWeight: 600 }}>
               Hrany
             </Typography>
-            <HeaderWithHint
-              title=""
-              hintTitle="Orientácia hrán"
-              hintContent={<EdgeOrientationHint />}
+            <HelpTooltip
+              title={
+                <Box sx={{ py: 1, maxWidth: 300 }}>
+                  <Typography variant="caption" sx={{ display: "block", mb: 2, fontWeight: 600 }}>
+                    Orientácia hrán pri porezávaní materiálu:
+                  </Typography>
+
+                  <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    mb: 2,
+                    p: 2,
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 1,
+                    backgroundColor: '#fafafa'
+                  }}>
+                    <WoodGrainVisualization
+                      width={180}
+                      height={100}
+                      grainDirection="horizontal"
+                      showLabels={true}
+                      showArrows={false}
+                    />
+                  </Box>
+
+                  <Typography variant="caption" sx={{ display: "block", mt: 2 }}>
+                    Hrany sa aplikujú podľa tejto orientácie pri rezaní materiálu. Smery vlákien dreva sú znázornené horizontálnymi čiarami.
+                  </Typography>
+                </Box>
+              }
             />
           </Box>
         ),

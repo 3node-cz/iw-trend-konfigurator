@@ -57,6 +57,15 @@ const PiecePreviewDialog: React.FC<PiecePreviewDialogProps> = ({
 
       <DialogContent>
         <Box sx={{ textAlign: 'center', py: 4 }}>
+          {/* Material name */}
+          {material && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{ color: 'primary.main' }}>
+                {material.title}
+              </Typography>
+            </Box>
+          )}
+
           {/* Piece shape preview */}
           <Box sx={{ mb: 3 }}>
             <PieceShapePreview

@@ -152,6 +152,7 @@ export function getGroupedLayoutTitle(group: GroupedLayoutData): string {
   if (group.count === 1) {
     // Single instance - use original title format
     const materialName = group.instances[0].materialName || 'Neznámy materiál'
+
     return group.isMultiBoard
       ? `Plán č. ${group.materialIndex}.${group.boardNumber} - ${materialName} (${group.boardNumber}/${group.totalBoards})`
       : `Plán č. ${group.materialIndex} - ${materialName}`

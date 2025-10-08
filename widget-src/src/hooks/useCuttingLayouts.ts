@@ -71,7 +71,7 @@ export const useCuttingLayouts = (specifications: CuttingSpecification[]) => {
         allLayouts.push({
           materialIndex: specIndex + 1,
           boardNumber: boardIndex + 1,
-          materialName: specification.material.name,
+          materialName: specification.material.title,
           layout: board,
           isMultiBoard: multiboardResult.totalBoards > 1,
           totalBoards: multiboardResult.totalBoards,
