@@ -30,7 +30,7 @@ export const getAvailabilityText = (availability: string): string => {
     case 'unavailable':
       return 'Na objednávku'
     case 'limited':
-      return 'Obmedzene'
+      return 'Obmedzené'
     default:
       return availability
   }

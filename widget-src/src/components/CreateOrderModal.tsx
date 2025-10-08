@@ -187,8 +187,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
 
       <DialogContent dividers sx={{ p: 3 }}>
         <Alert severity="info" sx={{ mb: 3 }}>
-          Prevádzková jednotka a nárezové centrum nie je možné v priebežnej
-          zadávaní a editácii zákazky zmeniť
+          Prevádzkovú jednotku a nárezové centrum nie je možné počas zadávania a úpravy zákazky zmeniť
         </Alert>
 
         <Grid container spacing={3}>
