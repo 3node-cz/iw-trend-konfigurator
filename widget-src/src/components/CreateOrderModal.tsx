@@ -20,7 +20,7 @@ import {
   getFieldErrors,
   createOrderWithCustomerDefaults,
 } from "../schemas/orderSchema";
-import { FormTextField, FormSelect } from "./common";
+import { FormTextField, FormSelect } from "./common"
 import type { CustomerOrderData } from "../services/customerApi";
 
 interface CreateOrderModalProps {
@@ -36,6 +36,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   onOrderCreated,
   customer,
 }) => {
+
   const [formData, setFormData] = useState<OrderFormData>(() => ({
     orderName: "",
     deliveryDate: null,
@@ -146,16 +147,19 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
       }));
     };
 
+  // Dialog renders in shadow DOM (no explicit container)
+  // The Liquid template's .universal-configurator has z-index: 999999
+  // so dialogs should appear above page content
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: { minHeight: "600px" },
-      }}
-    >
+      <Dialog
+        open={open}
+        onClose={onClose}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: { minHeight: "600px" },
+        }}
+      >
       <DialogTitle
         sx={{
           m: 0,
@@ -348,7 +352,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
           Vytvoriť
         </Button>
       </DialogActions>
-    </Dialog>
+      </Dialog>
   );
 };
 

@@ -165,6 +165,11 @@
   align-items: stretch !important;
 }
 
+/* Override Shopify theme z-index for section containing configurator */
+.custom-section-content:has(.universal-configurator) {
+  z-index: unset !important;
+}
+
 .universal-configurator {
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -172,6 +177,9 @@
   margin: 20px 0;
   background: #fff;
   width: 100%;
+  /* High z-index so dialogs appear above page content */
+  position: relative;
+  z-index: 999999;
 }
 
 .configurator-widget {

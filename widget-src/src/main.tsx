@@ -5,7 +5,7 @@ import { ScopedCssBaseline } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { theme } from "./theme/theme";
+import { createConfiguratorTheme } from "./theme/theme";
 import App from "./App";
 import type { EmotionCache } from "@emotion/cache";
 import { CacheProvider } from "@emotion/react";
@@ -53,7 +53,8 @@ declare global {
 const ShopifyConfiguratorWidget: React.FC<{
   config: ShopifyWidgetConfig;
   emotionCache: EmotionCache;
-}> = ({ config, emotionCache }) => {
+  shadowContainer: HTMLElement;
+}> = ({ config, emotionCache, shadowContainer }) => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -63,6 +64,11 @@ const ShopifyConfiguratorWidget: React.FC<{
       },
     },
   });
+
+  // Create theme with shadow container
+  // The Liquid template has high z-index on .universal-configurator
+  // so dialogs inside shadow DOM should still appear above page content
+  const theme = createConfiguratorTheme(shadowContainer);
 
   return (
     <CacheProvider value={emotionCache}>
@@ -96,26 +102,31 @@ function initializeConfigurators() {
       container.style.display = "block";
 
       // Create Shadow DOM to isolate from Shopify theme styles
-      const shadowRoot = container.attachShadow({ mode: 'open' });
+      const shadowRoot = container.attachShadow({ mode: "open" });
 
       // Add base styles to shadow root to reset font-size
       // This is critical because the host page may have html { font-size: 10px }
-      const style = document.createElement('style');
+      const style = document.createElement("style");
       style.textContent = `
         :host {
-          /* Reset to browser default (16px) to ensure proper rem calculations */
-          font-size: 16px;
-          /* Ensure all is set to default */
+          /* Reset all styles first, then override specific ones */
           all: initial;
+          /* Set to our theme's base font size (14px) for proper rem calculations */
+          font-size: 14px;
+          /* High z-index to ensure dialogs appear above all page content */
+          position: relative;
+          z-index: 999999;
+          /* Ensure the host element displays properly */
+          display: block;
         }
       `;
       shadowRoot.appendChild(style);
 
       // Create a div inside shadow root for React to mount to
-      const shadowContainer = document.createElement('div');
+      const shadowContainer = document.createElement("div");
       shadowRoot.appendChild(shadowContainer);
 
-      // Create Emotion cache that targets the shadow root
+      // Create Emotion cache for shadow DOM
       const emotionCache = createCache({
         key: `configurator-${blockId}`,
         container: shadowRoot as unknown as HTMLElement,
@@ -126,8 +137,9 @@ function initializeConfigurators() {
       root.render(
         React.createElement(ShopifyConfiguratorWidget, {
           config,
-          emotionCache
-        })
+          emotionCache,
+          shadowContainer: shadowContainer,
+        }),
       );
     }
   });

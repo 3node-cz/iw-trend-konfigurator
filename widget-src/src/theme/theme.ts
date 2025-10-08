@@ -126,186 +126,202 @@ const darkenColor = (color: string, percent: number): string => {
   return "#" + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
 };
 
-const primaryColor = getPrimaryColor();
+// Create theme with shadow DOM support
+export const createConfiguratorTheme = (
+  shadowContainer?: HTMLElement,
+) => {
+  const primaryColor = getPrimaryColor();
 
-export const theme = createTheme({
-  palette: {
-    mode: "light",
-    primary: {
-      main: primaryColor,
-      light: lightenColor(primaryColor, COLOR_PERCENTAGES.LIGHTEN),
-      dark: darkenColor(primaryColor, COLOR_PERCENTAGES.DARKEN),
+  return createTheme({
+    zIndex: {
+      // Set very high z-index values to ensure dialogs appear above all Shopify theme content
+      mobileStepper: 1000000,
+      fab: 1000050,
+      speedDial: 1000050,
+      appBar: 1000100,
+      drawer: 1000200,
+      modal: 1000300,
+      snackbar: 1000400,
+      tooltip: 1000500,
     },
-    secondary: {
-      main: "#dc004e",
-    },
-  },
-  typography: {
-    fontFamily: getShopifyThemeFont(),
-    fontSize: 14,
-    htmlFontSize: 16, // Browser default, set via :host in shadow root to isolate from host page font-size
-    h1: {
-      fontWeight: 700,
-      fontSize: "2.5rem", // 40px
-    },
-    h2: {
-      fontWeight: 700,
-      fontSize: "2rem", // 32px
-    },
-    h3: {
-      fontWeight: 600,
-      fontSize: "1.75rem", // 28px
-    },
-    h4: {
-      fontWeight: 600,
-      fontSize: "1.5rem", // 24px
-    },
-    h5: {
-      fontWeight: 600,
-      fontSize: "1.25rem", // 20px
-    },
-    h6: {
-      fontWeight: 600,
-      fontSize: "1.125rem", // 18px
-    },
-  },
-  components: {
-    // Typography - use primary color for main headings only
-    MuiTypography: {
-      styleOverrides: {
-        h1: {
-          color: primaryColor,
-        },
-        h2: {
-          color: primaryColor,
-        },
-        h3: {
-          color: "inherit",
-        },
-        h4: {
-          color: "inherit",
-        },
-        h5: {
-          color: "inherit", // Let individual components override if needed
-        },
-        h6: {
-          color: "inherit",
-        },
+    typography: {
+      fontSize: 14,
+      fontFamily: getShopifyThemeFont(),
+      h1: {
+        fontSize: "1.5rem", // 24px at 16px base font
+        fontWeight: 600,
+        lineHeight: 1.2,
+        color: "#333",
+        marginBottom: "1rem",
+      },
+      h2: {
+        fontSize: "1.25rem", // 20px at 16px base font
+        fontWeight: 600,
+        lineHeight: 1.3,
+        color: "#333",
+        marginBottom: "0.75rem",
+      },
+      h3: {
+        fontSize: "1.125rem", // 18px at 16px base font
+        fontWeight: 600,
+        lineHeight: 1.4,
+        color: "#333",
+        marginBottom: "0.5rem",
+      },
+      h4: {
+        fontSize: "1rem", // 16px at 16px base font
+        fontWeight: 600,
+        lineHeight: 1.4,
+        color: "#333",
+        marginBottom: "0.5rem",
+      },
+      body1: {
+        fontSize: "0.875rem", // 14px
+        lineHeight: 1.5,
       },
     },
-    // TextField default props
-    MuiTextField: {
-      defaultProps: {
-        size: "small",
-        variant: "outlined",
+    palette: {
+      mode: "light",
+      primary: {
+        main: primaryColor,
+        light: lightenColor(primaryColor, COLOR_PERCENTAGES.LIGHTEN),
+        dark: darkenColor(primaryColor, COLOR_PERCENTAGES.DARKEN),
+        contrastText: "#ffffff",
       },
-      styleOverrides: {
-        root: {
-          // Fix disabled styling
-          "& .Mui-disabled": {
-            backgroundColor: "#f5f5f5",
-            color: "rgba(0, 0, 0, 0.38)",
+      secondary: {
+        main: "#dc004e",
+      },
+      text: {
+        primary: "#333",
+        secondary: "#666",
+      },
+    },
+    components: {
+      // Paper default props
+      MuiPaper: {
+        defaultProps: {
+          elevation: 1,
+        },
+        styleOverrides: {
+          root: {
+            borderRadius: 8,
+            // Ensure paper components work inside shadow DOM
+            isolation: "isolate",
           },
         },
       },
-    },
-    // Switch default props
-    MuiSwitch: {
-      defaultProps: {
-        size: "small",
-      },
-    },
-    // Button default props and styling
-    MuiButton: {
-      defaultProps: {
-        variant: "contained",
-        disableElevation: false,
-      },
-      styleOverrides: {
-        root: {
-          textTransform: "none", // Remove ALL CAPS
-          fontWeight: 600,
-          borderRadius: 8,
-          padding: "8px 20px",
-          transition: "all 0.2s ease-in-out",
+      // Portal components for shadow DOM
+      MuiModal: shadowContainer
+        ? {
+            defaultProps: {
+              container: shadowContainer,
+            },
+          }
+        : undefined,
+      MuiDialog: shadowContainer
+        ? {
+            defaultProps: {
+              container: shadowContainer,
+            },
+          }
+        : undefined,
+      MuiPopover: shadowContainer
+        ? {
+            defaultProps: {
+              container: shadowContainer,
+            },
+          }
+        : undefined,
+      MuiPopper: shadowContainer
+        ? {
+            defaultProps: {
+              container: shadowContainer,
+            },
+          }
+        : undefined,
+      // Button styling
+      MuiButton: {
+        defaultProps: {
+          size: "medium",
+          disableElevation: true,
         },
-        contained: {
-          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-          "&:hover": {
-            boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
-            transform: "translateY(-1px)",
+        styleOverrides: {
+          root: {
+            borderRadius: 6,
+            textTransform: "none",
+            fontWeight: 500,
+            padding: "8px 16px",
+            fontSize: "0.875rem", // 14px
           },
-          "&:active": {
-            transform: "translateY(0)",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+          containedPrimary: {
+            background: primaryColor,
+            "&:hover": {
+              background: darkenColor(
+                primaryColor,
+                COLOR_PERCENTAGES.DARKEN_HOVER,
+              ),
+            },
           },
-        },
-        containedPrimary: {
-          background: primaryColor,
-          "&:hover": {
-            background: darkenColor(
-              primaryColor,
-              COLOR_PERCENTAGES.DARKEN_HOVER,
-            ),
-          },
-        },
-        outlined: {
-          borderWidth: 2,
-          borderColor: primaryColor,
-          color: primaryColor,
-          "&:hover": {
+          outlined: {
             borderWidth: 2,
-            backgroundColor: primaryColor,
-            color: "#ffffff",
+            borderColor: primaryColor,
+            color: primaryColor,
+            "&:hover": {
+              borderWidth: 2,
+              backgroundColor: primaryColor,
+              color: "#ffffff",
+            },
+          },
+          text: {
+            "&:hover": {
+              backgroundColor: lightenColor(
+                primaryColor,
+                COLOR_PERCENTAGES.LIGHTEN_HOVER,
+              ),
+            },
           },
         },
-        text: {
-          "&:hover": {
-            backgroundColor: lightenColor(
-              primaryColor,
-              COLOR_PERCENTAGES.LIGHTEN_HOVER,
-            ),
+      },
+      // Select default props
+      MuiSelect: {
+        defaultProps: {
+          size: "small",
+        },
+        styleOverrides: {
+          select: {
+            // Prevent text overflow
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           },
         },
       },
-    },
-    // Select default props
-    MuiSelect: {
-      defaultProps: {
-        size: "small",
+      // FormControl default props
+      MuiFormControl: {
+        defaultProps: {
+          size: "small",
+        },
       },
-      styleOverrides: {
-        select: {
-          // Prevent text overflow
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
+      // Table styling for better density
+      MuiTable: {
+        defaultProps: {
+          size: "small",
+        },
+        styleOverrides: {
+          root: {
+            isolation: "isolate",
+          },
+        },
+      },
+      // Chip default props
+      MuiChip: {
+        defaultProps: {
+          size: "small",
+          variant: "outlined",
         },
       },
     },
-    // FormControl default props
-    MuiFormControl: {
-      defaultProps: {
-        size: "small",
-      },
-    },
-    // Table styling for better density
-    MuiTable: {
-      defaultProps: {
-        size: "small",
-      },
-      styleOverrides: {
-        root: {
-          isolation: "isolate",
-        },
-      },
-    },
-    // Chip default props
-    MuiChip: {
-      defaultProps: {
-        size: "small",
-        variant: "outlined",
-      },
-    },
-  },
-});
+  });
+};
+
+// Note: No default theme export - theme is created dynamically with shadow container
