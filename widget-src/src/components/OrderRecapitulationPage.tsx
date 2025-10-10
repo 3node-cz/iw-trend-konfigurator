@@ -504,6 +504,39 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
         </Alert>
       )}
 
+      {/* Unplaced Pieces Warning */}
+      {overallStats.totalUnplacedPieces > 0 && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+            ⚠️ Kritická chyba: {overallStats.totalUnplacedPieces}{" "}
+            {overallStats.totalUnplacedPieces === 1
+              ? "kus sa nepodaril"
+              : overallStats.totalUnplacedPieces < 5
+                ? "kusy sa nepodarili"
+                : "kusov sa nepodarilo"}{" "}
+            umiestniť pri optimalizácii!
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            Niektoré kusy sú príliš veľké alebo ich množstvo presahuje kapacitu materiálu.
+            Prosím vráťte sa späť a:
+          </Typography>
+          <ul style={{ margin: 0, paddingLeft: "20px" }}>
+            <li>
+              <Typography variant="body2">Skontrolujte rozmery kusov (či sa zmestia na dosku)</Typography>
+            </li>
+            <li>
+              <Typography variant="body2">Znížte počet kusov v blokoch</Typography>
+            </li>
+            <li>
+              <Typography variant="body2">Upravte nastavenia blokov (rozdeľte do viacerých blokov)</Typography>
+            </li>
+          </ul>
+          <Typography variant="body2" sx={{ mt: 1, fontStyle: "italic", color: "error.dark" }}>
+            Zákazku nie je možné odoslať kým nie sú všetky kusy úspešne umiestnené.
+          </Typography>
+        </Alert>
+      )}
+
       {/* Unavailable Products Warning */}
       {unavailableProducts.length > 0 && (
         <Alert severity="warning" sx={{ mb: 2 }}>
@@ -550,7 +583,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
             )
           }
           onClick={handleSubmitOrder}
-          disabled={isSubmitting}
+          disabled={isSubmitting || overallStats.totalUnplacedPieces > 0}
           sx={{
             minWidth: 200,
           }}
