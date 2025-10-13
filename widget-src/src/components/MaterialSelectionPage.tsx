@@ -114,20 +114,22 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
           </Typography>
         </Box>
 
-        <SaveOrderButton
-          currentStep="material-selection"
-          orderData={orderData}
-          selectedMaterials={selectedMaterials}
-          cuttingSpecifications={[]}
-          customerId={customer?.id}
-          onSaveSuccess={() => {
-            // Could show a success message or refresh saved orders list
-          }}
-          onSaveError={(error) => {
-            // Could show error in a snackbar
-            console.error("Save error:", error);
-          }}
-        />
+        {customer && (
+          <SaveOrderButton
+            currentStep="material-selection"
+            orderData={orderData}
+            selectedMaterials={selectedMaterials}
+            cuttingSpecifications={[]}
+            customerId={customer.id}
+            onSaveSuccess={() => {
+              // Could show a success message or refresh saved orders list
+            }}
+            onSaveError={(error) => {
+              // Could show error in a snackbar
+              console.error("Save error:", error);
+            }}
+          />
+        )}
       </Box>
 
       {/* Search Section */}

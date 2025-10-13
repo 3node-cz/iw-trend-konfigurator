@@ -194,21 +194,23 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
           </Typography>
         </Box>
 
-        <SaveOrderButton
-          currentStep="cutting-specification"
-          orderData={orderData}
-          selectedMaterials={materials.map((m) =>
-            transformToSelectedMaterial(m),
-          )}
-          cuttingSpecifications={Object.values(materialSpecs)}
-          customerId={customer?.id}
-          onSaveSuccess={() => {
-            // Could show a success message
-          }}
-          onSaveError={(error) => {
-            console.error("Save error:", error);
-          }}
-        />
+        {customer && (
+          <SaveOrderButton
+            currentStep="cutting-specification"
+            orderData={orderData}
+            selectedMaterials={materials.map((m) =>
+              transformToSelectedMaterial(m),
+            )}
+            cuttingSpecifications={Object.values(materialSpecs)}
+            customerId={customer.id}
+            onSaveSuccess={() => {
+              // Could show a success message
+            }}
+            onSaveError={(error) => {
+              console.error("Save error:", error);
+            }}
+          />
+        )}
       </Box>
 
       {/* Multiple Materials - Scrollable Cards */}

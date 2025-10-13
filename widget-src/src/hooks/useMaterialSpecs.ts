@@ -272,9 +272,13 @@ export const useMaterialSpecs = (
 
     // Validate blocks first and track which blocks have errors
     const blockErrors = new Map<number, string[]>()
+
     blockGroups.forEach((blockPieces, blockNumber) => {
-      // Skip single-piece "blocks" - they're just regular pieces
-      if (blockPieces.length === 1) {
+      // Calculate total number of pieces including quantities
+      const totalPieceCount = blockPieces.reduce((sum, p) => sum + p.quantity, 0)
+
+      // Skip single-piece blocks (only if it's literally 1 piece, not 1 type with multiple quantity)
+      if (blockPieces.length === 1 && blockPieces[0].quantity === 1) {
         return
       }
 
@@ -324,43 +328,50 @@ export const useMaterialSpecs = (
     })
 
     pieces.forEach(piece => {
-      // Only show errors for pieces that have been touched by the user
-      if (!touchedPieces.has(piece.id)) {
-        return
-      }
-
       const pieceErrors: string[] = []
 
-      if (piece.length <= 0 && piece.width <= 0) {
-        // Both empty - this is ok, will be filtered out
-        return
+      // ALWAYS show block errors (they affect optimization and should be immediately visible)
+      // Add block errors to the FIRST piece in the block, regardless of touched state
+      if (piece.algorithmValue > 0 && blockErrors.has(piece.algorithmValue)) {
+        const blockPieces = blockGroups.get(piece.algorithmValue) || []
+        const totalPieceCount = blockPieces.reduce((sum, p) => sum + p.quantity, 0)
+
+        // Only add to first piece in the block (by ID sort for consistency)
+        const sortedBlockPieces = [...blockPieces].sort((a, b) => a.id.localeCompare(b.id))
+
+        // Show error if it's a real block (more than 1 total piece, or multiple piece types)
+        if ((blockPieces.length > 1 || totalPieceCount > 1) && sortedBlockPieces[0].id === piece.id) {
+          const blockErrorMessages = blockErrors.get(piece.algorithmValue) || []
+          pieceErrors.push(...blockErrorMessages)
+        }
       }
 
-      if (piece.length <= 0 && piece.width > 0) {
-        pieceErrors.push('Dĺžka je povinná')
-      }
-
-      if (piece.width <= 0 && piece.length > 0) {
-        pieceErrors.push('Šírka je povinná')
-      }
-
-      // Check material dimension constraints
-      if (piece.length > 0 && piece.width > 0) {
-        // Check if piece fits in material either way (with rotation)
-        const fitsNormally = piece.length <= maxLength && piece.width <= maxWidth
-        const fitsRotated = piece.length <= maxWidth && piece.width <= maxLength
-
-        if (!fitsNormally && !fitsRotated) {
-          pieceErrors.push(`Rozmery presahujú materiál (max ${maxLength}×${maxWidth} mm)`)
+      // Only show individual piece errors for pieces that have been touched by the user
+      if (touchedPieces.has(piece.id)) {
+        if (piece.length <= 0 && piece.width <= 0) {
+          // Both empty - this is ok, will be filtered out
+          if (pieceErrors.length > 0) {
+            errors[piece.id] = pieceErrors
+          }
+          return
         }
 
-        // Add block errors only to the FIRST piece in the block
-        if (piece.algorithmValue > 0 && blockErrors.has(piece.algorithmValue)) {
-          const blockPieces = blockGroups.get(piece.algorithmValue) || []
-          // Only add to first piece in the block (by ID sort for consistency)
-          const sortedBlockPieces = [...blockPieces].sort((a, b) => a.id.localeCompare(b.id))
-          if (sortedBlockPieces.length > 1 && sortedBlockPieces[0].id === piece.id) {
-            pieceErrors.push(...(blockErrors.get(piece.algorithmValue) || []))
+        if (piece.length <= 0 && piece.width > 0) {
+          pieceErrors.push('Dĺžka je povinná')
+        }
+
+        if (piece.width <= 0 && piece.length > 0) {
+          pieceErrors.push('Šírka je povinná')
+        }
+
+        // Check material dimension constraints
+        if (piece.length > 0 && piece.width > 0) {
+          // Check if piece fits in material either way (with rotation)
+          const fitsNormally = piece.length <= maxLength && piece.width <= maxWidth
+          const fitsRotated = piece.length <= maxWidth && piece.width <= maxLength
+
+          if (!fitsNormally && !fitsRotated) {
+            pieceErrors.push(`Rozmery presahujú materiál (max ${maxLength}×${maxWidth} mm)`)
           }
         }
       }

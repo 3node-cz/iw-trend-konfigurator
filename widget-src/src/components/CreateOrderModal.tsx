@@ -303,33 +303,33 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             />
           </Grid>
 
-          {/* Customer Discount - Read-only, comes from customer data */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              label="Zľava zákazníka (%)"
-              type="number"
-              value={formData.discountPercentage.toString()}
-              onChange={handleFieldChange("discountPercentage")}
-              error={!!errors.discountPercentage}
-              helperText={
-                errors.discountPercentage ||
-                (customer
-                  ? `Automaticky nastavené podľa zákazníka: ${customer.discountPercentage}%`
-                  : "Žiadna zľava")
-              }
-              size="small"
-              fullWidth
-              InputProps={{
-                readOnly: true,
-              }}
-              sx={{
-                "& .MuiInputBase-input": {
-                  backgroundColor: "#f5f5f5",
-                  color: "text.secondary",
-                },
-              }}
-            />
-          </Grid>
+          {/* Customer Discount - Read-only, comes from customer data - Only show if customer is logged in and has discount */}
+          {customer && customer.discountPercentage > 0 && (
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                label="Zľava zákazníka (%)"
+                type="number"
+                value={formData.discountPercentage.toString()}
+                onChange={handleFieldChange("discountPercentage")}
+                error={!!errors.discountPercentage}
+                helperText={
+                  errors.discountPercentage ||
+                  `Automaticky nastavené podľa zákazníka: ${customer.discountPercentage}%`
+                }
+                size="small"
+                fullWidth
+                InputProps={{
+                  readOnly: true,
+                }}
+                sx={{
+                  "& .MuiInputBase-input": {
+                    backgroundColor: "#f5f5f5",
+                    color: "text.secondary",
+                  },
+                }}
+              />
+            </Grid>
+          )}
 
           {/* Notes */}
           <Grid size={{ xs: 12 }}>

@@ -188,31 +188,33 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
           </Typography>
         </Box>
 
-        <SaveOrderButton
-          currentStep="recapitulation"
-          orderData={order}
-          selectedMaterials={specifications.map((spec) => ({
-            id: spec.material.id,
-            code: spec.material.variant?.sku || spec.material.handle,
-            name: spec.material.title,
-            quantity: calculateTotalPieces([spec]),
-            price: parseFloat(spec.material.variant?.price || "0"),
-            totalPrice:
-              parseFloat(spec.material.variant?.price || "0") *
-              calculateTotalPieces([spec]),
-            variantId: spec.material.variant?.id || spec.material.id,
-            image: spec.material.image || spec.material.images?.[0],
-          }))}
-          cuttingSpecifications={specifications}
-          customerId={customer?.id}
-          disabled={isSubmitting}
-          onSaveSuccess={() => {
-            // Could show a success message
-          }}
-          onSaveError={(error) => {
-            console.error("Save error:", error);
-          }}
-        />
+        {customer && (
+          <SaveOrderButton
+            currentStep="recapitulation"
+            orderData={order}
+            selectedMaterials={specifications.map((spec) => ({
+              id: spec.material.id,
+              code: spec.material.variant?.sku || spec.material.handle,
+              name: spec.material.title,
+              quantity: calculateTotalPieces([spec]),
+              price: parseFloat(spec.material.variant?.price || "0"),
+              totalPrice:
+                parseFloat(spec.material.variant?.price || "0") *
+                calculateTotalPieces([spec]),
+              variantId: spec.material.variant?.id || spec.material.id,
+              image: spec.material.image || spec.material.images?.[0],
+            }))}
+            cuttingSpecifications={specifications}
+            customerId={customer.id}
+            disabled={isSubmitting}
+            onSaveSuccess={() => {
+              // Could show a success message
+            }}
+            onSaveError={(error) => {
+              console.error("Save error:", error);
+            }}
+          />
+        )}
       </Box>
 
       <Grid container spacing={3}>
