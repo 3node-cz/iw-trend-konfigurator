@@ -385,12 +385,14 @@ export const useMaterialSpecs = (
   }, [materialSpecs, touchedPieces, materials])
 
   const generateSpecifications = useCallback((): CuttingSpecification[] => {
-    return materials.map((material) => ({
-      material,
-      edgeMaterial: materialSpecs[material.id].selectedEdgeMaterial,
-      glueType: materialSpecs[material.id].glueType,
-      pieces: getValidPieces(material.id), // Only include valid pieces
-    }))
+    return materials
+      .filter(material => materialSpecs[material.id]) // Only include materials with initialized specs
+      .map((material) => ({
+        material,
+        edgeMaterial: materialSpecs[material.id].selectedEdgeMaterial,
+        glueType: materialSpecs[material.id].glueType,
+        pieces: getValidPieces(material.id), // Only include valid pieces
+      }))
   }, [materials, materialSpecs, getValidPieces])
 
   const getTotalPieces = useCallback(() => {
