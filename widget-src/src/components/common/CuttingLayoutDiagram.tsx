@@ -281,7 +281,7 @@ const CuttingLayoutDiagram: React.FC<CuttingLayoutDiagramProps> = ({
               color="warning.main"
               sx={{ fontWeight: 600 }}
             >
-              {((layout.totalWasteArea / 1000000) * 100).toFixed(2)} m²
+              {(layout.totalWasteArea / 1000000).toFixed(2)} m²
             </Typography>
             <Typography
               variant="caption"

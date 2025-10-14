@@ -214,10 +214,10 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
       </Box>
 
       {/* Multiple Materials - Scrollable Cards */}
-      {materials.map((material, index) => {
+      {materials.filter(material => materialSpecs[material.id]).map((material, index) => {
         const materialSpec = materialSpecs[material.id];
 
-        // Skip this material if it has been removed from materialSpecs
+        // Double-check materialSpec exists (defense against race conditions)
         if (!materialSpec) {
           return null;
         }
@@ -275,8 +275,8 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
               {/* Edge Selection Card */}
               <Grid size={{ xs: 12, md: 6 }}>
                 <EdgeSelectionCard
-                  selectedEdge={materialSpec.selectedEdgeMaterial}
-                  glueType={materialSpec.glueType}
+                  selectedEdge={materialSpec?.selectedEdgeMaterial || null}
+                  glueType={materialSpec?.glueType || 'PUR transparentná/bílá'}
                   onEdgeChange={(edge) =>
                     handleEdgeMaterialChange(material.id, edge)
                   }
@@ -298,7 +298,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
                 }}
               >
                 <Typography variant="h6">
-                  Kusy na rezanie ({materialSpec.cuttingPieces.length})
+                  Kusy na rezanie ({materialSpec?.cuttingPieces?.length || 0})
                 </Typography>
                 <Button
                   variant="contained"
@@ -310,8 +310,8 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
               </Box>
 
               <CuttingPiecesTable
-                pieces={materialSpec.cuttingPieces}
-                edgeMaterial={materialSpec.selectedEdgeMaterial}
+                pieces={materialSpec?.cuttingPieces || []}
+                edgeMaterial={materialSpec?.selectedEdgeMaterial || null}
                 onPieceChange={(pieceId, updatedPiece) =>
                   handlePieceChange(material.id, pieceId, updatedPiece)
                 }
