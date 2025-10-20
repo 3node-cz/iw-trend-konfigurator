@@ -55,6 +55,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   const piecesRef = useRef(pieces);
   const validationErrorsRef = useRef(validationErrors);
 
+
   // Update refs when values change
   useEffect(() => {
     piecesRef.current = pieces;

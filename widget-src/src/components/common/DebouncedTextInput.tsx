@@ -20,7 +20,7 @@ const DebouncedTextInput: React.FC<DebouncedTextInputProps> = ({
   placeholder,
   sx,
   multiline,
-  rows
+  rows,
 }) => {
   const [value, setValue] = useState(initialValue)
   const isFocusedRef = useRef(false)

@@ -25,7 +25,7 @@ const DebouncedNumberInput: React.FC<DebouncedNumberInputProps> = ({
   error = false,
   helperText,
   placeholder,
-  step
+  step,
 }) => {
   const [value, setValue] = useState(initialValue.toString())
   const isFocusedRef = useRef(false)
