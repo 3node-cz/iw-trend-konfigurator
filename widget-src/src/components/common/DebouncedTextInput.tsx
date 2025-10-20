@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { TextField } from '@mui/material'
 
 interface DebouncedTextInputProps {
@@ -8,12 +8,11 @@ interface DebouncedTextInputProps {
   sx?: any
   multiline?: boolean
   rows?: number
-  debounceMs?: number
 }
 
 /**
- * A debounced text input that delays onChange calls to prevent excessive re-renders
- * Updates on blur for immediate feedback and on timeout for delayed updates
+ * A controlled text input that only updates parent on blur
+ * Prevents re-renders while typing and maintains focus
  */
 const DebouncedTextInput: React.FC<DebouncedTextInputProps> = ({
   initialValue,
@@ -21,41 +20,38 @@ const DebouncedTextInput: React.FC<DebouncedTextInputProps> = ({
   placeholder,
   sx,
   multiline,
-  rows,
-  debounceMs = 600
+  rows
 }) => {
   const [value, setValue] = useState(initialValue)
+  const isFocusedRef = useRef(false)
 
-  // Update local state when initialValue changes
+  // Update local state when initialValue changes, but ONLY if input is not focused
   useEffect(() => {
-    setValue(initialValue)
+    if (!isFocusedRef.current) {
+      setValue(initialValue)
+    }
   }, [initialValue])
 
-  // Debounced onChange
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      if (value !== initialValue) {
-        onChange(value)
-      }
-    }, debounceMs)
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    isFocusedRef.current = true
+    // Prevent browser from auto-scrolling to input
+    e.target.scrollIntoView({ block: "nearest", behavior: "instant" })
+  }
 
-    return () => clearTimeout(handler)
-  }, [value, onChange, initialValue, debounceMs])
+  const handleBlur = () => {
+    isFocusedRef.current = false
+    // Only update if value actually changed to prevent unnecessary re-renders
+    if (value !== initialValue) {
+      onChange(value)
+    }
+  }
 
   return (
     <TextField
       value={value}
       onChange={(e) => setValue(e.target.value)}
-      onBlur={() => {
-        // Only update if value actually changed to prevent unnecessary re-renders
-        if (value !== initialValue) {
-          onChange(value)
-        }
-      }}
-      onFocus={(e) => {
-        // Prevent browser from auto-scrolling to input
-        e.target.scrollIntoView({ block: "nearest", behavior: "instant" })
-      }}
+      onBlur={handleBlur}
+      onFocus={handleFocus}
       placeholder={placeholder}
       sx={sx}
       multiline={multiline}

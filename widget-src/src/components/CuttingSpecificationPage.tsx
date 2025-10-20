@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo, memo } from "react";
 import {
   Box,
   Container,
@@ -47,6 +47,76 @@ interface CuttingSpecificationPageProps {
   onAddMaterial?: (material: SelectedMaterial) => void;
   onRemoveMaterial?: (materialId: string) => void;
 }
+
+// Memoized wrapper to prevent unnecessary re-renders of CuttingPiecesTable
+interface MaterialTableWrapperProps {
+  materialId: string;
+  material: MaterialSearchResult;
+  pieces: CuttingPiece[];
+  edgeMaterial: any;
+  validationErrors: { [pieceId: string]: string[] };
+  onPieceChange: (materialId: string, pieceId: string, updatedPiece: Partial<CuttingPiece>) => void;
+  onRemovePiece: (materialId: string, pieceId: string) => void;
+  onPreviewPiece: (piece: CuttingPiece, material: MaterialSearchResult) => void;
+}
+
+const MaterialTableWrapper = memo<MaterialTableWrapperProps>(({
+  materialId,
+  material,
+  pieces,
+  edgeMaterial,
+  validationErrors,
+  onPieceChange,
+  onRemovePiece,
+  onPreviewPiece,
+}) => {
+  // Use refs to store latest values without causing re-renders
+  const materialRef = React.useRef(material);
+  const onPieceChangeRef = React.useRef(onPieceChange);
+  const onRemovePieceRef = React.useRef(onRemovePiece);
+  const onPreviewPieceRef = React.useRef(onPreviewPiece);
+
+  // Update refs when props change
+  React.useEffect(() => {
+    materialRef.current = material;
+    onPieceChangeRef.current = onPieceChange;
+    onRemovePieceRef.current = onRemovePiece;
+    onPreviewPieceRef.current = onPreviewPiece;
+  });
+
+  // Create stable callbacks that NEVER change
+  const handlePieceChange = useCallback(
+    (pieceId: string, updatedPiece: Partial<CuttingPiece>) => {
+      onPieceChangeRef.current(materialId, pieceId, updatedPiece);
+    },
+    [materialId]
+  );
+
+  const handleRemovePiece = useCallback(
+    (pieceId: string) => {
+      onRemovePieceRef.current(materialId, pieceId);
+    },
+    [materialId]
+  );
+
+  const handlePreviewPiece = useCallback(
+    (piece: CuttingPiece) => {
+      onPreviewPieceRef.current(piece, materialRef.current);
+    },
+    []
+  );
+
+  return (
+    <CuttingPiecesTable
+      pieces={pieces}
+      edgeMaterial={edgeMaterial}
+      onPieceChange={handlePieceChange}
+      onRemovePiece={handleRemovePiece}
+      onPreviewPiece={handlePreviewPiece}
+      validationErrors={validationErrors}
+    />
+  );
+});
 
 const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
   materials,
@@ -141,20 +211,20 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
     }
   };
 
-  const handlePreviewPiece = (
+  const handlePreviewPiece = useCallback((
     piece: CuttingPiece,
     material: MaterialSearchResult,
   ) => {
     setPreviewPiece(piece);
     setPreviewMaterial(material);
     setIsPreviewOpen(true);
-  };
+  }, []);
 
-  const handleClosePreview = () => {
+  const handleClosePreview = useCallback(() => {
     setIsPreviewOpen(false);
     setPreviewPiece(null);
     setPreviewMaterial(null);
-  };
+  }, []);
 
   const handleAddMaterialToOrder = (material: MaterialSearchResult) => {
     if (onAddMaterial) {
@@ -309,16 +379,14 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
                 </Button>
               </Box>
 
-              <CuttingPiecesTable
+              <MaterialTableWrapper
+                materialId={material.id}
+                material={material}
                 pieces={materialSpec?.cuttingPieces || []}
                 edgeMaterial={materialSpec?.selectedEdgeMaterial || null}
-                onPieceChange={(pieceId, updatedPiece) =>
-                  handlePieceChange(material.id, pieceId, updatedPiece)
-                }
-                onRemovePiece={(pieceId) =>
-                  handleRemovePiece(material.id, pieceId)
-                }
-                onPreviewPiece={(piece) => handlePreviewPiece(piece, material)}
+                onPieceChange={handlePieceChange}
+                onRemovePiece={handleRemovePiece}
+                onPreviewPiece={handlePreviewPiece}
                 validationErrors={validationErrors}
               />
 

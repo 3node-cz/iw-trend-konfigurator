@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { TextField } from '@mui/material'
 
 interface DebouncedNumberInputProps {
@@ -6,14 +6,15 @@ interface DebouncedNumberInputProps {
   onChange: (value: number) => void
   min?: number
   sx?: any
-  debounceMs?: number
   error?: boolean
   helperText?: string
+  placeholder?: string
+  step?: number
 }
 
 /**
- * A debounced number input that delays onChange calls to prevent excessive re-renders
- * Updates on blur for immediate feedback and on timeout for delayed updates
+ * A controlled number input that only updates parent on blur
+ * Prevents re-renders while typing and maintains focus
  * Handles number validation and resets invalid values
  */
 const DebouncedNumberInput: React.FC<DebouncedNumberInputProps> = ({
@@ -21,38 +22,67 @@ const DebouncedNumberInput: React.FC<DebouncedNumberInputProps> = ({
   onChange,
   min,
   sx,
-  debounceMs = 600,
   error = false,
-  helperText
+  helperText,
+  placeholder,
+  step
 }) => {
   const [value, setValue] = useState(initialValue.toString())
+  const isFocusedRef = useRef(false)
 
-  // Update local state when initialValue changes
+  // Update local state when initialValue changes, but ONLY if input is not focused
   useEffect(() => {
-    setValue(initialValue.toString())
+    if (!isFocusedRef.current) {
+      setValue(initialValue.toString())
+    }
   }, [initialValue])
 
-  // Debounced onChange
-  useEffect(() => {
-    const numValue = Number(value)
-    const handler = setTimeout(() => {
-      if (numValue !== initialValue && !isNaN(numValue)) {
-        onChange(numValue)
-      }
-    }, debounceMs)
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let newValue = e.target.value
 
-    return () => clearTimeout(handler)
-  }, [value, onChange, initialValue, debounceMs])
+    // Trim leading zeros while typing (but keep "0" for zero, and allow "0." for decimals)
+    if (newValue !== '' && newValue !== '-' && newValue !== '0' && !newValue.startsWith('0.') && !newValue.startsWith('-0.')) {
+      // Remove leading zeros: "0123" -> "123", "007" -> "7"
+      newValue = newValue.replace(/^0+/, '') || '0'
+    }
 
-  const handleBlur = () => {
-    const numValue = Number(value)
-    if (!isNaN(numValue)) {
-      // Only update if value actually changed to prevent unnecessary re-renders
-      if (numValue !== initialValue) {
-        onChange(numValue)
+    setValue(newValue)
+  }
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    isFocusedRef.current = true
+    // Prevent browser from auto-scrolling to input
+    e.target.scrollIntoView({ block: "nearest", behavior: "instant" })
+  }
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    isFocusedRef.current = false
+
+    let numValue = Number(value)
+
+    // Handle empty string or invalid input
+    if (value === '' || isNaN(numValue)) {
+      // If min is set and it's >= 0, default to min, otherwise default to 0
+      const defaultValue = min !== undefined && min >= 0 ? min : 0
+      setValue(defaultValue.toString())
+      if (defaultValue !== initialValue) {
+        onChange(defaultValue)
       }
-    } else {
-      setValue(initialValue.toString()) // Reset to initial value if invalid
+      return
+    }
+
+    // Apply min constraint if specified
+    if (min !== undefined && numValue < min) {
+      numValue = min
+    }
+
+    // Format the number properly on blur
+    const formattedValue = numValue.toString()
+    setValue(formattedValue)
+
+    // Only update if value actually changed to prevent unnecessary re-renders
+    if (numValue !== initialValue) {
+      onChange(numValue)
     }
   }
 
@@ -60,16 +90,14 @@ const DebouncedNumberInput: React.FC<DebouncedNumberInputProps> = ({
     <TextField
       type="number"
       value={value}
-      onChange={(e) => setValue(e.target.value)}
+      onChange={handleChange}
       onBlur={handleBlur}
-      onFocus={(e) => {
-        // Prevent browser from auto-scrolling to input
-        e.target.scrollIntoView({ block: "nearest", behavior: "instant" })
-      }}
+      onFocus={handleFocus}
       error={error}
       helperText={helperText}
+      placeholder={placeholder}
       sx={sx}
-      slotProps={{ htmlInput: { min } }}
+      slotProps={{ htmlInput: { min, step } }}
     />
   )
 }

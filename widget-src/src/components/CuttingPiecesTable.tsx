@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useRef, useEffect } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -51,6 +51,19 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   onPreviewPiece,
   validationErrors = {},
 }) => {
+  // Use refs to store current values to avoid recreating callbacks
+  const piecesRef = useRef(pieces);
+  const validationErrorsRef = useRef(validationErrors);
+
+  // Update refs when values change
+  useEffect(() => {
+    piecesRef.current = pieces;
+  }, [pieces]);
+
+  useEffect(() => {
+    validationErrorsRef.current = validationErrors;
+  }, [validationErrors]);
+
   // Helper function to check if all edges have the same value
   const getEdgeAllAroundValue = useCallback(
     (piece: CuttingPiece): number | null => {
@@ -70,9 +83,10 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   );
 
   // Enhanced change handler with reactive edge logic
+  // Use ref to access pieces without adding it to dependencies
   const handlePieceChange = useCallback(
     (pieceId: string, updates: Partial<CuttingPiece>) => {
-      const piece = pieces.find((p) => p.id === pieceId);
+      const piece = piecesRef.current.find((p) => p.id === pieceId);
       if (!piece) return;
 
       let finalUpdates = { ...updates };
@@ -101,7 +115,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
 
       onPieceChange(pieceId, finalUpdates);
     },
-    [onPieceChange, pieces, getEdgeAllAroundValue],
+    [onPieceChange, getEdgeAllAroundValue],
   );
 
   const handleRemovePiece = useCallback(
@@ -253,7 +267,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         size: 120,
         cell: ({ row }) => {
           const piece = row.original;
-          const errors = validationErrors[piece.id] || [];
+          const errors = validationErrorsRef.current[piece.id] || [];
           const hasLengthError = errors.some(
             (error) =>
               error.includes("Dĺžka") || error.includes("Rozmery presahujú"),
@@ -637,7 +651,6 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       handleRemovePiece,
       handlePreviewPiece,
       onPreviewPiece,
-      validationErrors,
     ],
   );
 
@@ -697,7 +710,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         <TableBody>
           {table.getRowModel().rows.map((row) => {
             const piece = row.original;
-            const errors = validationErrors[piece.id] || [];
+            const errors = validationErrorsRef.current[piece.id] || [];
             const hasErrors = errors.length > 0;
 
             return (
