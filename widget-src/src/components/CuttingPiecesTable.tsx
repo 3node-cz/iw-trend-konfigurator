@@ -685,7 +685,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   }
 
   return (
-    <TableContainer sx={{ maxHeight: "70vh", overflowX: "auto" }}>
+    <TableContainer sx={{ overflowX: "auto" }}>
       <Table stickyHeader size="small">
         <TableHead>
           {table.getHeaderGroups().map((headerGroup) => (
