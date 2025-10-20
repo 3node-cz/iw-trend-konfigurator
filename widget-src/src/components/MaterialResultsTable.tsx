@@ -64,9 +64,6 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
               <TableCell sx={{ fontWeight: 600, textAlign: "right" }}>
                 Zľava na MJ
               </TableCell>
-              <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>
-                Rozbaliteľnosť balenia
-              </TableCell>
               <TableCell sx={{ fontWeight: 600, textAlign: "right" }}>
                 Cena po zľavách
               </TableCell>
@@ -151,56 +148,28 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
 
                   {/* Local warehouse availability */}
                   <TableCell sx={{ textAlign: "center" }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        gap: 0.5,
-                      }}
-                    >
-                      <AvailabilityChip
-                        availability={
-                          localWarehouseStock &&
-                          parseInt(localWarehouseStock) > 0
-                            ? "available"
-                            : "unavailable"
-                        }
-                        size="small"
-                      />
-                      {localWarehouseStock && (
-                        <Typography variant="caption" color="text.secondary">
-                          {localWarehouseStock} ks
-                        </Typography>
-                      )}
-                    </Box>
+                    <AvailabilityChip
+                      availability={
+                        localWarehouseStock &&
+                        parseInt(localWarehouseStock) > 0
+                          ? "available"
+                          : "unavailable"
+                      }
+                      size="small"
+                    />
                   </TableCell>
 
                   {/* Central warehouse availability */}
                   <TableCell sx={{ textAlign: "center" }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        gap: 0.5,
-                      }}
-                    >
-                      <AvailabilityChip
-                        availability={
-                          centralWarehouseStock &&
-                          parseInt(centralWarehouseStock) > 0
-                            ? "available"
-                            : "unavailable"
-                        }
-                        size="small"
-                      />
-                      {centralWarehouseStock && (
-                        <Typography variant="caption" color="text.secondary">
-                          {centralWarehouseStock} ks
-                        </Typography>
-                      )}
-                    </Box>
+                    <AvailabilityChip
+                      availability={
+                        centralWarehouseStock &&
+                        parseInt(centralWarehouseStock) > 0
+                          ? "available"
+                          : "unavailable"
+                      }
+                      size="small"
+                    />
                   </TableCell>
 
                   {/* Base price */}
@@ -224,25 +193,6 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                         -
                       </Typography>
                     )}
-                  </TableCell>
-
-                  {/* Package divisibility */}
-                  <TableCell sx={{ textAlign: "center" }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        gap: 0.5,
-                      }}
-                    >
-                      <Typography variant="body2">
-                        {isPackageDivisible ? "✓" : "✗"}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {packageSize} ks/bal
-                      </Typography>
-                    </Box>
                   </TableCell>
 
                   {/* Final price after discount */}

@@ -383,8 +383,8 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
 
         {/* Thickness Variants */}
 
-        {/* Glue Type */}
-        <FormControl
+        {/* Glue Type - Hidden for now */}
+        {/* <FormControl
           fullWidth
           size="small"
         >
@@ -403,7 +403,7 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
               </MenuItem>
             ))}
           </Select>
-        </FormControl>
+        </FormControl> */}
       </CardContent>
     </Card>
   )

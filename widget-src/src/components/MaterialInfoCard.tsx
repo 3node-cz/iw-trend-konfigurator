@@ -72,7 +72,7 @@ const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
         <Divider sx={{ my: 2 }} />
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {/* Inventory */}
+          {/* Inventory - Show availability status only */}
           {material.variant?.inventoryQuantity !== undefined && (
             <Box>
               <Typography
@@ -80,11 +80,16 @@ const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
                 color="text.secondary"
                 sx={{ display: 'block', mb: 0.5 }}
               >
-                Skladom
+                Dostupnosť
               </Typography>
-              <Typography variant="body2">
-                {material.variant.inventoryQuantity} ks
-              </Typography>
+              <AvailabilityChip
+                availability={
+                  material.variant.inventoryQuantity > 0
+                    ? "available"
+                    : "unavailable"
+                }
+                size="small"
+              />
             </Box>
           )}
         </Box>

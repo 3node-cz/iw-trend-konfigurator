@@ -261,7 +261,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
 
           <Grid size={{ xs: 12, md: 6 }}>
             <DatePicker
-              label="Požadovaný dátum dodania"
+              label="Předpokládaný datum výroby"
               value={formData.deliveryDate}
               onChange={(date) => {
                 // Clear error when date is selected
