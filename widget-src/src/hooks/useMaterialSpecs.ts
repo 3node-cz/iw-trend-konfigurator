@@ -36,6 +36,9 @@ export const useMaterialSpecs = (
   // Track which pieces have been touched (user has interacted with them)
   const [touchedPieces, setTouchedPieces] = useState<Set<string>>(new Set())
 
+  // Track which specific fields have been touched (format: "pieceId:fieldName")
+  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set())
+
   // Update materialSpecs when materials array changes, preserving existing data
   useEffect(() => {
     setMaterialSpecs((prevSpecs) => {
@@ -123,6 +126,14 @@ export const useMaterialSpecs = (
       pieceId: string,
       updatedPiece: Partial<CuttingPiece>,
     ) => {
+      // Mark specific fields as touched when user modifies them
+      if ('length' in updatedPiece) {
+        setTouchedFields(prev => new Set(prev).add(`${pieceId}:length`))
+      }
+      if ('width' in updatedPiece) {
+        setTouchedFields(prev => new Set(prev).add(`${pieceId}:width`))
+      }
+
       // Mark piece as touched when user modifies width, length, quantity, or block number
       if ('length' in updatedPiece || 'width' in updatedPiece || 'quantity' in updatedPiece || 'algorithmValue' in updatedPiece) {
         setTouchedPieces(prev => new Set(prev).add(pieceId))
@@ -174,6 +185,14 @@ export const useMaterialSpecs = (
         return newTouched
       })
 
+      // Remove from touched fields
+      setTouchedFields(prev => {
+        const newTouched = new Set(prev)
+        newTouched.delete(`${pieceId}:length`)
+        newTouched.delete(`${pieceId}:width`)
+        return newTouched
+      })
+
       setMaterialSpecs((prev) => ({
         ...prev,
         [materialId]: {
@@ -190,6 +209,8 @@ export const useMaterialSpecs = (
   const clearAllPieces = useCallback(() => {
     // Clear all touched pieces
     setTouchedPieces(new Set())
+    // Clear all touched fields
+    setTouchedFields(new Set())
 
     setMaterialSpecs((prev) => {
       const newSpecs = { ...prev }
@@ -346,8 +367,11 @@ export const useMaterialSpecs = (
         }
       }
 
-      // Only show individual piece errors for pieces that have been touched by the user
-      if (touchedPieces.has(piece.id)) {
+      // Only show individual piece errors for fields that have been touched by the user
+      const lengthTouched = touchedFields.has(`${piece.id}:length`)
+      const widthTouched = touchedFields.has(`${piece.id}:width`)
+
+      if (lengthTouched || widthTouched) {
         if (piece.length <= 0 && piece.width <= 0) {
           // Both empty - this is ok, will be filtered out
           if (pieceErrors.length > 0) {
@@ -356,11 +380,13 @@ export const useMaterialSpecs = (
           return
         }
 
-        if (piece.length <= 0 && piece.width > 0) {
+        // Only show length error if length field was touched
+        if (lengthTouched && piece.length <= 0 && piece.width > 0) {
           pieceErrors.push('Dĺžka je povinná')
         }
 
-        if (piece.width <= 0 && piece.length > 0) {
+        // Only show width error if width field was touched
+        if (widthTouched && piece.width <= 0 && piece.length > 0) {
           pieceErrors.push('Šírka je povinná')
         }
 
@@ -382,7 +408,7 @@ export const useMaterialSpecs = (
     })
 
     return errors
-  }, [materialSpecs, touchedPieces, materials])
+  }, [materialSpecs, touchedPieces, touchedFields, materials])
 
   const generateSpecifications = useCallback((): CuttingSpecification[] => {
     return materials
@@ -417,6 +443,16 @@ export const useMaterialSpecs = (
       setTouchedPieces(prevTouched => {
         const newTouched = new Set(prevTouched)
         piecesToRemove.forEach(pieceId => newTouched.delete(pieceId))
+        return newTouched
+      })
+
+      // Remove from touched fields
+      setTouchedFields(prevTouched => {
+        const newTouched = new Set(prevTouched)
+        piecesToRemove.forEach(pieceId => {
+          newTouched.delete(`${pieceId}:length`)
+          newTouched.delete(`${pieceId}:width`)
+        })
         return newTouched
       })
 
