@@ -58,6 +58,7 @@ interface MaterialTableWrapperProps {
   onPieceChange: (materialId: string, pieceId: string, updatedPiece: Partial<CuttingPiece>) => void;
   onRemovePiece: (materialId: string, pieceId: string) => void;
   onPreviewPiece: (piece: CuttingPiece, material: MaterialSearchResult) => void;
+  onFieldBlur: (materialId: string, pieceId: string, fieldName: 'length' | 'width') => void;
 }
 
 const MaterialTableWrapper = memo<MaterialTableWrapperProps>(({
@@ -69,12 +70,14 @@ const MaterialTableWrapper = memo<MaterialTableWrapperProps>(({
   onPieceChange,
   onRemovePiece,
   onPreviewPiece,
+  onFieldBlur,
 }) => {
   // Use refs to store latest values without causing re-renders
   const materialRef = React.useRef(material);
   const onPieceChangeRef = React.useRef(onPieceChange);
   const onRemovePieceRef = React.useRef(onRemovePiece);
   const onPreviewPieceRef = React.useRef(onPreviewPiece);
+  const onFieldBlurRef = React.useRef(onFieldBlur);
 
   // Update refs when props change
   React.useEffect(() => {
@@ -82,6 +85,7 @@ const MaterialTableWrapper = memo<MaterialTableWrapperProps>(({
     onPieceChangeRef.current = onPieceChange;
     onRemovePieceRef.current = onRemovePiece;
     onPreviewPieceRef.current = onPreviewPiece;
+    onFieldBlurRef.current = onFieldBlur;
   });
 
   // Create stable callbacks that NEVER change
@@ -106,6 +110,13 @@ const MaterialTableWrapper = memo<MaterialTableWrapperProps>(({
     []
   );
 
+  const handleFieldBlur = useCallback(
+    (pieceId: string, fieldName: 'length' | 'width') => {
+      onFieldBlurRef.current(materialId, pieceId, fieldName);
+    },
+    [materialId]
+  );
+
   return (
     <CuttingPiecesTable
       pieces={pieces}
@@ -113,6 +124,7 @@ const MaterialTableWrapper = memo<MaterialTableWrapperProps>(({
       onPieceChange={handlePieceChange}
       onRemovePiece={handleRemovePiece}
       onPreviewPiece={handlePreviewPiece}
+      onFieldBlur={handleFieldBlur}
       validationErrors={validationErrors}
     />
   );
@@ -167,6 +179,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
     getPieceValidationErrors,
     removeMaterial,
     isValidPiece,
+    markFieldAsTouched,
   } = useMaterialSpecs(materials, existingSpecifications);
 
   // Calculate cutting layouts to check for unplaced pieces
@@ -387,6 +400,9 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
                 onPieceChange={handlePieceChange}
                 onRemovePiece={handleRemovePiece}
                 onPreviewPiece={handlePreviewPiece}
+                onFieldBlur={(materialId, pieceId, fieldName) =>
+                  markFieldAsTouched(pieceId, fieldName)
+                }
                 validationErrors={validationErrors}
               />
 

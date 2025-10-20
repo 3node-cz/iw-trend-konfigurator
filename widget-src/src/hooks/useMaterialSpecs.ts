@@ -461,6 +461,11 @@ export const useMaterialSpecs = (
     })
   }, [])
 
+  // Mark a specific field as touched (e.g., when user blurs the field)
+  const markFieldAsTouched = useCallback((pieceId: string, fieldName: 'length' | 'width') => {
+    setTouchedFields(prev => new Set(prev).add(`${pieceId}:${fieldName}`))
+  }, [])
+
   return {
     materialSpecs,
     handleEdgeMaterialChange,
@@ -477,5 +482,6 @@ export const useMaterialSpecs = (
     getPieceValidationErrors,
     removeMaterial,
     isValidPiece,
+    markFieldAsTouched,
   }
 }

@@ -38,6 +38,7 @@ interface CuttingPiecesTableProps {
   onPieceChange: (pieceId: string, updatedPiece: Partial<CuttingPiece>) => void;
   onRemovePiece: (pieceId: string) => void;
   onPreviewPiece?: (piece: CuttingPiece) => void;
+  onFieldBlur?: (pieceId: string, fieldName: 'length' | 'width') => void;
   validationErrors?: { [pieceId: string]: string[] };
 }
 
@@ -49,6 +50,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   onPieceChange,
   onRemovePiece,
   onPreviewPiece,
+  onFieldBlur,
   validationErrors = {},
 }) => {
   // Use refs to store current values to avoid recreating callbacks
@@ -285,6 +287,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                 onChange={(value) =>
                   handlePieceChange(row.original.id, { length: value })
                 }
+                onBlur={() => onFieldBlur?.(row.original.id, 'length')}
                 sx={{
                   width: 100,
                   "& .MuiOutlinedInput-root": hasLengthError
@@ -303,6 +306,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                 onChange={(value) =>
                   handlePieceChange(row.original.id, { width: value })
                 }
+                onBlur={() => onFieldBlur?.(row.original.id, 'width')}
                 sx={{
                   width: 100,
                   "& .MuiOutlinedInput-root": hasWidthError

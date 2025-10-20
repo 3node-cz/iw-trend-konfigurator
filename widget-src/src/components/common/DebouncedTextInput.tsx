@@ -4,6 +4,7 @@ import { TextField } from '@mui/material'
 interface DebouncedTextInputProps {
   initialValue: string
   onChange: (value: string) => void
+  onBlur?: () => void
   placeholder?: string
   sx?: any
   multiline?: boolean
@@ -17,6 +18,7 @@ interface DebouncedTextInputProps {
 const DebouncedTextInput: React.FC<DebouncedTextInputProps> = ({
   initialValue,
   onChange,
+  onBlur: onBlurProp,
   placeholder,
   sx,
   multiline,
@@ -40,6 +42,12 @@ const DebouncedTextInput: React.FC<DebouncedTextInputProps> = ({
 
   const handleBlur = () => {
     isFocusedRef.current = false
+
+    // Always notify parent that field was touched/blurred
+    if (onBlurProp) {
+      onBlurProp()
+    }
+
     // Only update if value actually changed to prevent unnecessary re-renders
     if (value !== initialValue) {
       onChange(value)

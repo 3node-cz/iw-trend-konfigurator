@@ -4,6 +4,7 @@ import { TextField } from '@mui/material'
 interface DebouncedNumberInputProps {
   initialValue: number
   onChange: (value: number) => void
+  onBlur?: () => void
   min?: number
   sx?: any
   error?: boolean
@@ -20,6 +21,7 @@ interface DebouncedNumberInputProps {
 const DebouncedNumberInput: React.FC<DebouncedNumberInputProps> = ({
   initialValue,
   onChange,
+  onBlur: onBlurProp,
   min,
   sx,
   error = false,
@@ -57,6 +59,11 @@ const DebouncedNumberInput: React.FC<DebouncedNumberInputProps> = ({
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     isFocusedRef.current = false
+
+    // Always notify parent that field was touched/blurred
+    if (onBlurProp) {
+      onBlurProp()
+    }
 
     let numValue = Number(value)
 
