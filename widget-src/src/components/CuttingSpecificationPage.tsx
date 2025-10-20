@@ -176,6 +176,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
     getTotalPiecesForMaterial,
     getValidPieces,
     hasValidPiecesForAllMaterials,
+    allPiecesAreValid,
     getPieceValidationErrors,
     removeMaterial,
     isValidPiece,
@@ -195,10 +196,10 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
   }, [materials, getPieceValidationErrors]);
 
   const handleContinue = () => {
-    // Check if all materials have at least one valid piece
-    if (!hasValidPiecesForAllMaterials()) {
+    // Check if all pieces are valid (have both width and height filled)
+    if (!allPiecesAreValid()) {
       alert(
-        "Každý materiál musí mať aspoň jeden platný kus s dĺžkou a šírkou.",
+        "Všetky kusy musia mať vyplnenú dĺžku a šírku.",
       );
       return;
     }
@@ -523,7 +524,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
               onClick={handleContinue}
               disabled={
                 getTotalPieces() === 0 ||
-                !hasValidPiecesForAllMaterials() ||
+                !allPiecesAreValid() ||
                 hasAnyValidationErrors()
               }
             >

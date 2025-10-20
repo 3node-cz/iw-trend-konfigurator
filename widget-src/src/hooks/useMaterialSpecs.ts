@@ -264,6 +264,17 @@ export const useMaterialSpecs = (
     return materials.every(material => getValidPieces(material.id).length > 0)
   }, [materials, getValidPieces])
 
+  // Check if ALL pieces are valid (no invalid pieces exist)
+  const allPiecesAreValid = useCallback((): boolean => {
+    return materials.every(material => {
+      const pieces = materialSpecs[material.id]?.cuttingPieces || []
+      // If there are no pieces, return false
+      if (pieces.length === 0) return false
+      // Check that all pieces are valid
+      return pieces.every(piece => isValidPiece(piece, material.id))
+    })
+  }, [materials, materialSpecs, isValidPiece])
+
   // Get validation errors for pieces (only for touched pieces)
   const getPieceValidationErrors = useCallback((materialId: string): { [pieceId: string]: string[] } => {
     const errors: { [pieceId: string]: string[] } = {}
@@ -479,6 +490,7 @@ export const useMaterialSpecs = (
     getTotalPiecesForMaterial,
     getValidPieces,
     hasValidPiecesForAllMaterials,
+    allPiecesAreValid,
     getPieceValidationErrors,
     removeMaterial,
     isValidPiece,
