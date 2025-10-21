@@ -29,16 +29,16 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
   const svgWidth = layout.boardWidth * scale
   const svgHeight = layout.boardHeight * scale
   const rowColors = [
-    '#E3F2FD',
-    '#F3E5F5',
-    '#E8F5E8',
-    '#FFF3E0',
-    '#FCE4EC',
-    '#E0F2F1',
-    '#F1F8E9',
-    '#FFF8E1',
-    '#E8EAF6',
-    '#FFEBEE',
+    { fill: '#E3F2FD', stroke: '#2196F3' }, // Light blue / Blue
+    { fill: '#F3E5F5', stroke: '#9C27B0' }, // Light purple / Purple
+    { fill: '#E8F5E8', stroke: '#4CAF50' }, // Light green / Green
+    { fill: '#FFF3E0', stroke: '#FF9800' }, // Light orange / Orange
+    { fill: '#FCE4EC', stroke: '#E91E63' }, // Light pink / Pink
+    { fill: '#E0F2F1', stroke: '#009688' }, // Light teal / Teal
+    { fill: '#F1F8E9', stroke: '#8BC34A' }, // Light lime / Lime
+    { fill: '#FFF8E1', stroke: '#FFC107' }, // Light yellow / Yellow
+    { fill: '#E8EAF6', stroke: '#3F51B5' }, // Light indigo / Indigo
+    { fill: '#FFEBEE', stroke: '#F44336' }, // Light red / Red
   ]
 
   const uniquePieceTypes = globalPieceTypes || [
@@ -54,7 +54,8 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
   }) => {
     const pieceType = piece.originalPiece.partName || piece.originalPiece.id
     const typeIndex = uniquePieceTypes.indexOf(pieceType)
-    return rowColors[typeIndex % rowColors.length]
+    const colorIndex = typeIndex >= 0 ? typeIndex : 0
+    return rowColors[colorIndex % rowColors.length]
   }
 
   return (
@@ -214,18 +215,21 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
             />
           ))}
 
-          {layout.placedPieces.map((piece, index) => (
-            <rect
-              key={`${piece.id}_${index}`}
-              x={piece.x}
-              y={piece.y}
-              width={piece.width}
-              height={piece.height}
-              fill={getPieceColor(piece)}
-              stroke="#333"
-              strokeWidth="2"
-            />
-          ))}
+          {layout.placedPieces.map((piece, index) => {
+            const colors = getPieceColor(piece)
+            return (
+              <rect
+                key={`${piece.id}_${index}`}
+                x={piece.x}
+                y={piece.y}
+                width={piece.width}
+                height={piece.height}
+                fill={colors.fill}
+                stroke={colors.stroke}
+                strokeWidth="2"
+              />
+            )
+          })}
         </svg>
       </Box>
 

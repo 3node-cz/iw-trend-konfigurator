@@ -235,13 +235,43 @@ export class OptimizedGuillotineCuttingOptimizer {
     // Phase 1: Create piece groups for identical regular pieces
     const pieceGroups = this.createPieceGroups(regularPieces)
 
-    // Phase 2: Sort groups by priority (large groups first, then by area)
+    // Phase 2: Sort groups by priority (larger individual pieces first)
     const sortedGroups = this.sortGroupsForOptimalCutting(pieceGroups)
 
-    // Phase 3: Place groups
-    for (const group of sortedGroups) {
-      this.placePieceGroup(group)
+    // Phase 3: Place pieces one-at-a-time from all groups (interleaved placement)
+    // This prevents one large group from monopolizing the board
+
+    // Track consecutive failures for each group to avoid repeated attempts
+    const consecutiveFailures = new Map<PieceGroup, number>()
+    const MAX_CONSECUTIVE_FAILURES = 2 // Skip after 2 consecutive failures
+
+    let anyPlaced = true
+    let totalPlaced = 0
+    while (anyPlaced && sortedGroups.some(g => g.totalQuantity > 0)) {
+      anyPlaced = false
+
+      // Try to place one piece from each group in priority order
+      for (const group of sortedGroups) {
+        if (group.totalQuantity <= 0) continue
+
+        // Skip groups that have failed too many times consecutively
+        const failures = consecutiveFailures.get(group) || 0
+        if (failures >= MAX_CONSECUTIVE_FAILURES) continue
+
+        // Try to place a single piece
+        const piece = this.placeSinglePieceFromGroup(group)
+        if (piece) {
+          this.placedPieces.push(piece)
+          group.totalQuantity -= 1
+          anyPlaced = true
+          totalPlaced++
+          consecutiveFailures.set(group, 0) // Reset failure count on success
+        } else {
+          consecutiveFailures.set(group, failures + 1)
+        }
+      }
     }
+
 
     // Phase 4: Post-processing - try to fill small gaps with remaining pieces
     this.optimizeSmallGaps()
@@ -369,8 +399,7 @@ export class OptimizedGuillotineCuttingOptimizer {
     }
 
     if (!bestRect || bestIndex === -1) {
-      // Can't place block as a group, try placing pieces individually
-      console.warn(`Block ${block.blockNumber} could not be placed as a continuous group`)
+      // Can't place block as a group
       return
     }
 
@@ -520,17 +549,51 @@ export class OptimizedGuillotineCuttingOptimizer {
       return { gridWidth: 1, gridHeight: 1, rotated: false }
     }
 
-    if (!rotated || (normal && normal.efficiency >= rotated.efficiency)) {
+    // FIX: Choose based on which fits MORE pieces (totalFit), not efficiency
+    // Efficiency can be the same when both fit the full quantity, but one might fit more
+    if (!rotated) {
+      return {
+        gridWidth: normal!.gridWidth,
+        gridHeight: normal!.gridHeight,
+        rotated: false,
+      }
+    }
+
+    if (!normal) {
+      return {
+        gridWidth: rotated.gridWidth,
+        gridHeight: rotated.gridHeight,
+        rotated: true,
+      }
+    }
+
+    // Both fit - choose the one that fits more pieces, or has less waste if equal
+    if (rotated.totalFit > normal.totalFit) {
+      return {
+        gridWidth: rotated.gridWidth,
+        gridHeight: rotated.gridHeight,
+        rotated: true,
+      }
+    } else if (normal.totalFit > rotated.totalFit) {
       return {
         gridWidth: normal!.gridWidth,
         gridHeight: normal!.gridHeight,
         rotated: false,
       }
     } else {
-      return {
-        gridWidth: rotated.gridWidth,
-        gridHeight: rotated.gridHeight,
-        rotated: true,
+      // Same number of pieces - choose less waste
+      if (rotated.wastedSpace < normal.wastedSpace) {
+        return {
+          gridWidth: rotated.gridWidth,
+          gridHeight: rotated.gridHeight,
+          rotated: true,
+        }
+      } else {
+        return {
+          gridWidth: normal.gridWidth,
+          gridHeight: normal.gridHeight,
+          rotated: false,
+        }
       }
     }
   }
@@ -615,7 +678,9 @@ export class OptimizedGuillotineCuttingOptimizer {
       }
     }
 
-    if (!bestRect || bestIndex === -1) return false
+    if (!bestRect || bestIndex === -1) {
+      return false
+    }
 
     // Place individual pieces in the grid
     const groupId = `group_${this.groupCounter++}`
@@ -651,6 +716,72 @@ export class OptimizedGuillotineCuttingOptimizer {
     })
 
     return true
+  }
+
+  // Helper: place a single piece from a group (respects group rotation preference)
+  private placeSinglePieceFromGroup(group: PieceGroup): PlacedPiece | null {
+    const width = group.rotated ? group.piece.width : group.piece.length
+    const height = group.rotated ? group.piece.length : group.piece.width
+
+    let bestRect: Rectangle | null = null
+    let bestIndex = -1
+    let rotated = group.rotated
+
+    // Try the group's preferred orientation first
+    for (let i = 0; i < this.freeRectangles.length; i++) {
+      const rect = this.freeRectangles[i]
+      if (rect.width >= width && rect.height >= height) {
+        if (!bestRect || this.isBetterFit(rect, bestRect, width, height)) {
+          bestRect = rect
+          bestIndex = i
+          rotated = group.rotated
+        }
+      }
+    }
+
+    // Try opposite orientation if rotation is allowed
+    if (group.piece.allowRotation && group.piece.length !== group.piece.width) {
+      const altWidth = group.rotated ? group.piece.length : group.piece.width
+      const altHeight = group.rotated ? group.piece.width : group.piece.length
+
+      for (let i = 0; i < this.freeRectangles.length; i++) {
+        const rect = this.freeRectangles[i]
+        if (rect.width >= altWidth && rect.height >= altHeight) {
+          if (!bestRect || this.isBetterFit(rect, bestRect, altWidth, altHeight)) {
+            bestRect = rect
+            bestIndex = i
+            rotated = !group.rotated
+          }
+        }
+      }
+    }
+
+    if (!bestRect || bestIndex === -1) return null
+
+    const finalWidth = rotated ? group.piece.width : group.piece.length
+    const finalHeight = rotated ? group.piece.length : group.piece.width
+
+    const placedPiece: PlacedPiece = {
+      id: `${group.piece.id}_${this.groupCounter++}`,
+      name: group.piece.partName || group.piece.id,
+      x: bestRect.x,
+      y: bestRect.y,
+      width: finalWidth,
+      height: finalHeight,
+      rotated,
+      originalPiece: group.piece,
+    }
+
+    // Remove the used rectangle and split the remaining area
+    this.freeRectangles.splice(bestIndex, 1)
+    this.splitRectangle(bestRect, {
+      x: bestRect.x,
+      y: bestRect.y,
+      width: finalWidth,
+      height: finalHeight,
+    })
+
+    return placedPiece
   }
 
   // Fallback: place a single piece (same as original algorithm)

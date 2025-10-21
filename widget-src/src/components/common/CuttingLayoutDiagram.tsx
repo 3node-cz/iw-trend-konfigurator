@@ -25,18 +25,18 @@ const CuttingLayoutDiagram: React.FC<CuttingLayoutDiagramProps> = ({
   const svgWidth = layout.boardWidth * scale
   const svgHeight = layout.boardHeight * scale
 
-  // Color palette for different piece types (use brighter, more distinct colors)
+  // Color palette for different piece types (use colorful, vibrant colors)
   const rowColors = [
-    '#E3F2FD', // Light blue
-    '#F3E5F5', // Light purple
-    '#E8F5E8', // Light green
-    '#FFF3E0', // Light orange
-    '#FCE4EC', // Light pink
-    '#E0F2F1', // Light teal
-    '#F1F8E9', // Light lime
-    '#FFF8E1', // Light yellow
-    '#E8EAF6', // Light indigo
-    '#FFEBEE', // Light red
+    { fill: '#E3F2FD', stroke: '#2196F3' }, // Light blue / Blue
+    { fill: '#F3E5F5', stroke: '#9C27B0' }, // Light purple / Purple
+    { fill: '#E8F5E8', stroke: '#4CAF50' }, // Light green / Green
+    { fill: '#FFF3E0', stroke: '#FF9800' }, // Light orange / Orange
+    { fill: '#FCE4EC', stroke: '#E91E63' }, // Light pink / Pink
+    { fill: '#E0F2F1', stroke: '#009688' }, // Light teal / Teal
+    { fill: '#F1F8E9', stroke: '#8BC34A' }, // Light lime / Lime
+    { fill: '#FFF8E1', stroke: '#FFC107' }, // Light yellow / Yellow
+    { fill: '#E8EAF6', stroke: '#3F51B5' }, // Light indigo / Indigo
+    { fill: '#FFEBEE', stroke: '#F44336' }, // Light red / Red
   ]
 
   // Use global piece types if provided, otherwise calculate from current layout
@@ -53,8 +53,9 @@ const CuttingLayoutDiagram: React.FC<CuttingLayoutDiagramProps> = ({
   }) => {
     const pieceType = piece.originalPiece.partName || piece.originalPiece.id
     const typeIndex = uniquePieceTypes.indexOf(pieceType)
-    const color = rowColors[typeIndex % rowColors.length]
-    return color
+    const colorIndex = typeIndex >= 0 ? typeIndex : 0
+    const colors = rowColors[colorIndex % rowColors.length]
+    return colors
   }
 
   return (
@@ -155,6 +156,7 @@ const CuttingLayoutDiagram: React.FC<CuttingLayoutDiagramProps> = ({
             const centerX = piece.x + piece.width / 2
             const centerY = piece.y + piece.height / 2
             const fontSize = Math.min(piece.width / 8, piece.height / 4, 60)
+            const colors = getPieceColor(piece)
 
             return (
               <g key={`${piece.id}_${index}`}>
@@ -164,30 +166,19 @@ const CuttingLayoutDiagram: React.FC<CuttingLayoutDiagramProps> = ({
                   y={piece.y}
                   width={piece.width}
                   height={piece.height}
-                  fill={getPieceColor(piece)}
-                  stroke="#333"
-                  strokeWidth="1.5"
+                  fill={colors.fill}
+                  stroke={colors.stroke}
+                  strokeWidth="2"
                 />
-
-                {/* Piece label */}
-                <text
-                  x={centerX}
-                  y={centerY - fontSize / 2}
-                  textAnchor="middle"
-                  fontSize={fontSize}
-                  fill="#333"
-                  fontWeight="600"
-                >
-                  {piece.name}
-                </text>
 
                 {/* Piece dimensions - show original piece dimensions (length×width) */}
                 <text
                   x={centerX}
-                  y={centerY + fontSize / 2 + 2}
+                  y={centerY + fontSize / 4}
                   textAnchor="middle"
-                  fontSize={fontSize * 0.8}
-                  fill="#666"
+                  fontSize={fontSize}
+                  fill={colors.stroke}
+                  fontWeight="600"
                 >
                   {piece.originalPiece.length}×{piece.originalPiece.width}
                 </text>
