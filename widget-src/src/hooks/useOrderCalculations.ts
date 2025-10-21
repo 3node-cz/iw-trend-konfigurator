@@ -36,29 +36,29 @@ export const useOrderCalculations = (
     specifications.forEach(spec => {
       // Calculate edge consumption if edge material is selected
       let materialEdgeConsumption: MaterialEdgeConsumption | null = null
-      
+
       if (spec.edgeMaterial && spec.pieces.length > 0) {
         // Only calculate for pieces that actually use edges
-        const piecesWithEdges = spec.pieces.filter(piece => 
-          piece.edgeAllAround || piece.edgeTop || piece.edgeBottom || 
+        const piecesWithEdges = spec.pieces.filter(piece =>
+          piece.edgeAllAround || piece.edgeTop || piece.edgeBottom ||
           piece.edgeLeft || piece.edgeRight
         )
-        
+
         if (piecesWithEdges.length > 0) {
           materialEdgeConsumption = calculateMaterialEdgeConsumption(
             piecesWithEdges,
-            spec.material.name,
+            spec.material?.title || spec.material?.name || 'Unknown Material',
             spec.edgeMaterial.name
           )
           edgeConsumption.push(materialEdgeConsumption)
         }
       }
-      
+
       // Calculate cutting costs for this material
       if (spec.pieces.length > 0) {
         const materialCuttingCost = calculateCuttingCosts(
           spec.pieces,
-          spec.material.name,
+          spec.material?.title || spec.material?.name || 'Unknown Material',
           materialEdgeConsumption,
           cuttingCostConfig
         )
