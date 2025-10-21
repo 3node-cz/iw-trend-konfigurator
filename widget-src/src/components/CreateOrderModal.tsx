@@ -54,9 +54,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     "CEN - IW TREND, s.r.o., Pri majerí 6, Bratislava",
   ];
 
-  const deliveryMethods = ["Náš odvoz", "Osobný odber"];
+  const deliveryMethods = ["Osobný odber", "Doprava IW Trend"];
 
-  const processingTypes = ["Formátovať", "Uskladniť", "Zlikvidovať"];
+  const processingTypes = ["Formátovať", "Zlikvidovať", "Priebaliť k dielcom", "Odber s objednávkou"];
 
   const handleSubmit = () => {
     try {
@@ -213,18 +213,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             />
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
-            <FormSelect
-              label="Prevádzková jednotka"
-              value={formData.transferLocation}
-              onChange={handleFieldChange("transferLocation")}
-              options={locations}
-              error={errors.transferLocation}
-              required
-            />
-          </Grid>
-
-          {/* Branch and Cost Center */}
+          {/* Branch */}
           <Grid size={{ xs: 12, md: 6 }}>
             <FormSelect
               label="Pobočka"
@@ -232,17 +221,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
               onChange={handleFieldChange("costCenter")}
               options={["Bratislava", "Žilina", "Partizánske"]}
               error={errors.costCenter}
-              required
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormSelect
-              label="Nárezové centrum"
-              value={formData.cuttingCenter}
-              onChange={handleFieldChange("cuttingCenter")}
-              options={["Bratislava", "Žilina", "Partizánske"]}
-              error={errors.cuttingCenter}
               required
             />
           </Grid>
