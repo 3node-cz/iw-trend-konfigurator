@@ -45,6 +45,7 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
     showingAvailableOnly,
     handleSearch,
     handleShowAll,
+    clearResults,
   } = useMaterialSearch();
 
   const handleAddMaterial = (material: MaterialSearchResult) => {
@@ -75,6 +76,9 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
     const selectedMaterial = transformToSelectedMaterial(material, quantity);
 
     setSelectedMaterials((prev) => [...prev, selectedMaterial]);
+
+    // Clear search results and query after adding material
+    clearResults();
   };
 
   const handleRemoveMaterial = (materialId: string) => {
