@@ -456,17 +456,6 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
               </Typography>
             </Box>
           )}
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              Náklady na rezanie
-            </Typography>
-            <Typography
-              variant="h6"
-              sx={{ fontWeight: 600, color: "secondary.main" }}
-            >
-              {formatPriceNumber(discountedCuttingCost)} €
-            </Typography>
-          </Box>
         </Box>
       </Paper>
 

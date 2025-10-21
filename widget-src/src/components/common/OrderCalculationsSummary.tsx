@@ -106,78 +106,6 @@ const OrderCalculationsSummary: React.FC<OrderCalculationsSummaryProps> = ({
         </Accordion>
       )}
 
-      {/* Cutting Costs */}
-      <Accordion sx={{ mb: 2 }}>
-        <AccordionSummary 
-          expandIcon={<ExpandMoreIcon />}
-          sx={{ backgroundColor: '#f8f9fa' }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-            <CutIcon color="primary" />
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              Náklady na rezanie
-            </Typography>
-            <Chip 
-              label={`${formatPriceNumber(totals.totalCuttingCost)} €`}
-              color="secondary"
-              size="small"
-            />
-          </Box>
-        </AccordionSummary>
-        <AccordionDetails>
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                  <TableCell sx={{ fontWeight: 600 }}>Materiál</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Počet kusov</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Základné rezanie</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Komplexnosť</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Hrabanie</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Celkom</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {cuttingCosts.map((cost, index) => (
-                  <TableRow key={index} hover>
-                    <TableCell sx={{ fontWeight: 500 }}>
-                      {cost.materialName}
-                    </TableCell>
-                    <TableCell>{cost.piecesCount}</TableCell>
-                    <TableCell>
-                      {formatPriceNumber(cost.baseCuttingCost)} €
-                    </TableCell>
-                    <TableCell>
-                      {formatPriceNumber(cost.complexityCost)} €
-                    </TableCell>
-                    <TableCell>
-                      {formatPriceNumber(cost.edgingCost)} € ({formatPriceNumber(cost.edgingLength)} m)
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>
-                      {formatPriceNumber(cost.totalCost)} €
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          
-          {/* Cost breakdown explanation */}
-          <Box sx={{ mt: 2, p: 2, backgroundColor: '#f0f7ff', borderRadius: 1 }}>
-            <Typography variant="caption" color="text.secondary">
-              <strong>Vysvetlenie nákladov:</strong><br />
-              • Základné rezanie: 0,50 € za kus<br />
-              • Komplexnosť: +0,25 € za kus s hranami<br />
-              • Hrabanie: 1,20 € za meter hranového materiálu<br />
-              <br />
-              <strong>Osamovanie tabule:</strong><br />
-              • Štandardne sa orezáva 15mm z každej strany tabule pred rezaním<br />
-              • Kusy s označením "Bez orezu" preskakujú tento krok
-            </Typography>
-          </Box>
-        </AccordionDetails>
-      </Accordion>
-
       {/* Summary Totals */}
       <Box sx={{ 
         display: 'flex', 
@@ -207,12 +135,6 @@ const OrderCalculationsSummary: React.FC<OrderCalculationsSummaryProps> = ({
             </Typography>
           </Box>
         )}
-        <Box>
-          <Typography variant="caption" color="text.secondary">Náklady na rezanie</Typography>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: 'secondary.main' }}>
-            {formatPriceNumber(totals.totalCuttingCost)} €
-          </Typography>
-        </Box>
       </Box>
     </Paper>
   )

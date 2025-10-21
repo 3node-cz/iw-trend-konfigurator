@@ -517,12 +517,12 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                   variant="caption"
                   sx={{ fontSize: "0.65rem", mb: 0.5 }}
                 >
-                  Vrchná
+                  Spodná
                 </Typography>
                 <EdgeThicknessSelect
-                  value={piece.edgeTop}
+                  value={piece.edgeBottom}
                   onChange={(value) =>
-                    handlePieceChange(row.original.id, { edgeTop: value })
+                    handlePieceChange(row.original.id, { edgeBottom: value })
                   }
                   edgeMaterial={edgeMaterial}
                   minWidth={60}
@@ -539,12 +539,12 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                   variant="caption"
                   sx={{ fontSize: "0.65rem", mb: 0.5 }}
                 >
-                  Spodná
+                  Vrchná
                 </Typography>
                 <EdgeThicknessSelect
-                  value={piece.edgeBottom}
+                  value={piece.edgeTop}
                   onChange={(value) =>
-                    handlePieceChange(row.original.id, { edgeBottom: value })
+                    handlePieceChange(row.original.id, { edgeTop: value })
                   }
                   edgeMaterial={edgeMaterial}
                   minWidth={60}
