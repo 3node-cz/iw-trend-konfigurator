@@ -9,26 +9,26 @@ const EdgeOrientationHint: React.FC = () => {
         Orientácia hrán pri porezávaní materiálu:
       </Typography>
       
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'center',
         mb: 2,
         p: 4,
         border: '1px solid #e0e0e0',
         borderRadius: 1,
         backgroundColor: '#fafafa'
       }}>
-        <WoodGrainVisualization 
+        <WoodGrainVisualization
           width={200}
           height={120}
-          grainDirection="horizontal"
+          grainDirection="vertical"
           showLabels={true}
           showArrows={false}
         />
       </Box>
       
       <Typography variant="body2" color="text.secondary" sx={{ mt: 3 }}>
-        Hrany sa aplikujú podľa tejto orientácie pri rezaní materiálu. Smery vlákien dreva sú znázornené horizontálnymi čiarami.
+        Hrany sa aplikujú podľa tejto orientácie pri rezaní materiálu. Smery vlákien dreva sú znázornené vertikálnymi čiarami.
       </Typography>
     </Box>
   )

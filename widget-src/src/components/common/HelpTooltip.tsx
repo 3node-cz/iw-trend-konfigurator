@@ -5,9 +5,10 @@ import { HelpOutline as HelpIcon } from '@mui/icons-material';
 interface HelpTooltipProps {
   title: string | React.ReactNode;
   children?: React.ReactNode;
+  open?: boolean;
 }
 
-const HelpTooltip: React.FC<HelpTooltipProps> = ({ title, children }) => {
+const HelpTooltip: React.FC<HelpTooltipProps> = ({ title, children, open }) => {
   const tooltipContent = typeof title === 'string' ? (
     <Typography variant="caption">{title}</Typography>
   ) : (
@@ -15,7 +16,7 @@ const HelpTooltip: React.FC<HelpTooltipProps> = ({ title, children }) => {
   );
 
   return (
-    <Tooltip title={tooltipContent} arrow>
+    <Tooltip title={tooltipContent} arrow open={open}>
       {children || (
         <HelpIcon
           sx={{

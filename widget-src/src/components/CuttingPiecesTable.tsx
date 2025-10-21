@@ -485,14 +485,14 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                     <WoodGrainVisualization
                       width={180}
                       height={100}
-                      grainDirection="horizontal"
+                      grainDirection="vertical"
                       showLabels={true}
                       showArrows={false}
                     />
                   </Box>
 
                   <Typography variant="caption" sx={{ display: "block", mt: 2 }}>
-                    Hrany sa aplikujú podľa tejto orientácie pri rezaní materiálu. Smery vlákien dreva sú znázornené horizontálnymi čiarami.
+                    Hrany sa aplikujú podľa tejto orientácie pri rezaní materiálu. Smery vlákien dreva sú znázornené vertikálnymi čiarami.
                   </Typography>
                 </Box>
               }
