@@ -201,6 +201,14 @@ export const createConfiguratorTheme = (
       },
     },
     components: {
+      // Typography text wrapping
+      MuiTypography: {
+        styleOverrides: {
+          root: {
+            textWrap: "pretty",
+          },
+        },
+      },
       // Paper default props
       MuiPaper: {
         defaultProps: {

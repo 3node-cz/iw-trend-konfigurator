@@ -408,16 +408,30 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
               />
 
               {/* Warning for unplaced pieces */}
-              {overallStats.totalUnplacedPieces > 0 && (
-                <Alert severity="warning" sx={{ mt: 2 }}>
-                  ⚠️ Upozornenie: {overallStats.totalUnplacedPieces}{" "}
-                  {overallStats.totalUnplacedPieces === 1
-                    ? "kus sa nepodaril"
-                    : overallStats.totalUnplacedPieces < 5
-                      ? "kusy sa nepodarili"
-                      : "kusov sa nepodarilo"}{" "}
-                  umiestniť pri optimalizácii. Skontrolujte rozmery a počet
-                  kusov.
+              {overallStats.totalUnplacedPieces > 0 && overallStats.unplacedPiecesInfo && (
+                <Alert severity="error" sx={{ mt: 2 }}>
+                  {(() => {
+                    const tooBig = overallStats.unplacedPiecesInfo.filter(info => info.reason === 'too_big')
+                    const optimizationFailed = overallStats.unplacedPiecesInfo.filter(info => info.reason === 'optimization_failed')
+
+                    if (tooBig.length > 0) {
+                      return (
+                        <Typography variant="body2">
+                          🔴 Kusy príliš veľké pre tabuľu ({tooBig[0].boardWidth} × {tooBig[0].boardHeight} mm)
+                        </Typography>
+                      )
+                    }
+
+                    if (optimizationFailed.length > 0) {
+                      return (
+                        <Typography variant="body2">
+                          🟡 Kusy sa nezmestili pri optimalizácii
+                        </Typography>
+                      )
+                    }
+
+                    return null
+                  })()}
                 </Alert>
               )}
             </Paper>
@@ -494,7 +508,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
         >
           {/* Help Message */}
           <Alert
-            severity="info"
+            severity={overallStats.totalUnplacedPieces > 0 ? "warning" : "info"}
             sx={{
               flex: 1,
               minWidth: { xs: "auto", md: "300px" },
@@ -502,7 +516,9 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
             }}
           >
             <Typography variant="body2">
-              💡 Pre pokračovanie musia mať všetky kusy vyplnenú dĺžku aj šírku
+              {overallStats.totalUnplacedPieces > 0
+                ? "⚠️ Nemôžete pokračovať, pretože niektoré kusy sa nepodarilo umiestniť pri optimalizácii"
+                : "💡 Pre pokračovanie musia mať všetky kusy vyplnenú dĺžku aj šírku"}
             </Typography>
           </Alert>
 
@@ -525,7 +541,8 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
               disabled={
                 getTotalPieces() === 0 ||
                 !allPiecesAreValid() ||
-                hasAnyValidationErrors()
+                hasAnyValidationErrors() ||
+                overallStats.totalUnplacedPieces > 0
               }
             >
               Pokračovať ({getTotalPieces()} platných kusov)

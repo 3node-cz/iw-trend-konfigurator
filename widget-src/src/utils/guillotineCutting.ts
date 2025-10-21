@@ -157,12 +157,6 @@ export class OptimizedGuillotineCuttingOptimizer {
       this.freeRectangles = [
         { x: 0, y: 0, width: this.boardWidth, height: this.boardHeight },
       ]
-
-      // Safety break to prevent infinite loops
-      if (boardNumber > 10) {
-        console.warn('Maximum number of boards (10) reached')
-        break
-      }
     }
 
     const totalPlacedPieces = allBoards.reduce(

@@ -3,6 +3,14 @@ import { OptimizedGuillotineCuttingOptimizer } from '../utils/guillotineCutting'
 import type { CuttingSpecification, CuttingPiece } from '../types/shopify'
 import { getEffectiveBoardDimensions, applyDupelTransform } from '../config/cutting'
 
+export interface UnplacedPieceInfo {
+  piece: CuttingPiece
+  materialName: string
+  reason: 'too_big' | 'optimization_failed'
+  boardWidth: number
+  boardHeight: number
+}
+
 export interface CuttingLayoutData {
   materialIndex: number
   boardNumber: number
@@ -16,6 +24,7 @@ export interface CuttingLayoutData {
     totalUnplacedPieces: number
     overallEfficiency: number
   }
+  unplacedPiecesInfo?: UnplacedPieceInfo[]
 }
 
 export const useCuttingLayouts = (specifications: CuttingSpecification[]) => {
@@ -65,7 +74,23 @@ export const useCuttingLayouts = (specifications: CuttingSpecification[]) => {
 
       // Use multi-board optimization with rotation setting
       const multiboardResult = optimizer.optimizeMultipleBoards(transformedPieces)
-      
+
+      // Analyze unplaced pieces to determine why they couldn't be placed
+      const unplacedPiecesInfo: UnplacedPieceInfo[] = multiboardResult.unplacedPieces.map(piece => {
+        // Check if piece is too big for the board (even with rotation)
+        const fitsNormally = piece.length <= effectiveDimensions.width && piece.width <= effectiveDimensions.height
+        const fitsRotated = piece.width <= effectiveDimensions.width && piece.length <= effectiveDimensions.height
+        const isTooLarge = !fitsNormally && !fitsRotated
+
+        return {
+          piece,
+          materialName: specification.material.title,
+          reason: isTooLarge ? 'too_big' : 'optimization_failed',
+          boardWidth: effectiveDimensions.width,
+          boardHeight: effectiveDimensions.height
+        }
+      })
+
       // Add each board as a separate layout
       multiboardResult.boards.forEach((board, boardIndex) => {
         allLayouts.push({
@@ -80,10 +105,11 @@ export const useCuttingLayouts = (specifications: CuttingSpecification[]) => {
             totalPlacedPieces: multiboardResult.totalPlacedPieces,
             totalUnplacedPieces: multiboardResult.totalUnplacedPieces,
             overallEfficiency: multiboardResult.overallEfficiency
-          }
+          },
+          unplacedPiecesInfo: boardIndex === 0 ? unplacedPiecesInfo : undefined
         })
       })
-      
+
       // Log unplaced pieces warning if any
       if (multiboardResult.unplacedPieces.length > 0) {
         console.warn(`Material ${specIndex + 1}: ${multiboardResult.totalUnplacedPieces} pieces could not be placed`, multiboardResult.unplacedPieces)
@@ -94,7 +120,7 @@ export const useCuttingLayouts = (specifications: CuttingSpecification[]) => {
   }, [specifications])
 
   const overallStats = useMemo(() => {
-    return cuttingLayouts.reduce(
+    const stats = cuttingLayouts.reduce(
       (acc, layoutData) => {
         if (layoutData) {
           acc.totalBoards += 1
@@ -107,6 +133,11 @@ export const useCuttingLayouts = (specifications: CuttingSpecification[]) => {
             acc.totalMultiboardPieces += layoutData.multiboardStats.totalPieces
             acc.totalUnplacedPieces += layoutData.multiboardStats.totalUnplacedPieces
           }
+
+          // Collect unplaced pieces info
+          if (layoutData.unplacedPiecesInfo && layoutData.unplacedPiecesInfo.length > 0) {
+            acc.unplacedPiecesInfo.push(...layoutData.unplacedPiecesInfo)
+          }
         }
         return acc
       },
@@ -116,9 +147,12 @@ export const useCuttingLayouts = (specifications: CuttingSpecification[]) => {
         totalWasteArea: 0,
         totalCuts: 0,
         totalMultiboardPieces: 0,
-        totalUnplacedPieces: 0
+        totalUnplacedPieces: 0,
+        unplacedPiecesInfo: [] as UnplacedPieceInfo[]
       }
     )
+
+    return stats
   }, [cuttingLayouts])
 
   if (overallStats.totalBoards > 0) {
