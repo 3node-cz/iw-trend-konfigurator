@@ -92,13 +92,12 @@ const AdvancedPiecePreview: React.FC<AdvancedPiecePreviewProps> = ({
               >
                 <image
                   href={backgroundImage}
-                  width={displayHeight}
-                  height={displayWidth}
-                  x={(displayWidth - displayHeight) / 2}
-                  y={(displayHeight - displayWidth) / 2}
+                  width={displayWidth}
+                  height={displayHeight}
+                  x="0"
+                  y="0"
                   opacity={backgroundOpacity}
                   preserveAspectRatio="xMidYMid slice"
-                  transform={`rotate(90 ${displayWidth/2} ${displayHeight/2})`}
                 />
               </pattern>
               

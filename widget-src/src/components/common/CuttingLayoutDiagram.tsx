@@ -181,7 +181,7 @@ const CuttingLayoutDiagram: React.FC<CuttingLayoutDiagramProps> = ({
                   {piece.name}
                 </text>
 
-                {/* Piece dimensions */}
+                {/* Piece dimensions - show original piece dimensions (length×width) */}
                 <text
                   x={centerX}
                   y={centerY + fontSize / 2 + 2}
@@ -189,7 +189,7 @@ const CuttingLayoutDiagram: React.FC<CuttingLayoutDiagramProps> = ({
                   fontSize={fontSize * 0.8}
                   fill="#666"
                 >
-                  {piece.width}×{piece.height}
+                  {piece.originalPiece.length}×{piece.originalPiece.width}
                 </text>
 
                 {/* Rotation indicator */}

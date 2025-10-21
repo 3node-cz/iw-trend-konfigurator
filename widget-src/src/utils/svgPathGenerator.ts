@@ -156,8 +156,8 @@ export class SVGPathGenerator {
 
 export function createGeometryFromPiece(piece: any): PieceGeometry {
   return {
-    width: piece.width,
-    height: piece.length, // Note: switching length/width for proper display orientation
+    width: piece.length, // Length (dĺžka) is horizontal (left-to-right)
+    height: piece.width, // Width (šírka) is vertical (top-to-bottom)
     corners: {
       topLeft: { type: 'square' },
       topRight: { type: 'square' },
