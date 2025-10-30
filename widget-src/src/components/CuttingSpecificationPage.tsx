@@ -533,9 +533,6 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
               minWidth: { xs: "auto", md: "200px" },
             }}
           >
-            <Button variant="outlined" onClick={clearAllPieces}>
-              Vymazať všetko
-            </Button>
             <Button
               variant="contained"
               onClick={handleContinue}

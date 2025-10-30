@@ -110,9 +110,7 @@ function initializeConfigurators() {
         :host {
           /* Reset all styles first, then override specific ones */
           all: initial;
-          /* High z-index to ensure dialogs appear above all page content */
           position: relative;
-          z-index: 999999;
           /* Ensure the host element displays properly */
           display: block;
         }

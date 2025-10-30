@@ -110,26 +110,45 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
     setEdgeSearchQuery(query)
   }
 
+  // Helper function to calculate availability from warehouse stock metafields
+  const calculateAvailability = (result: MaterialSearchResult): 'available' | 'unavailable' => {
+    const localWarehouseStock =
+      result.metafields?.["custom.local_warehouse_stock"] ||
+      result.variant?.metafields?.["custom.local_warehouse_stock"];
+    const centralWarehouseStock =
+      result.metafields?.["custom.central_warehouse_stock"] ||
+      result.variant?.metafields?.["custom.central_warehouse_stock"];
+
+    // Combined availability - available if either warehouse has stock
+    const isAvailable =
+      (localWarehouseStock && parseInt(localWarehouseStock) > 0) ||
+      (centralWarehouseStock && parseInt(centralWarehouseStock) > 0);
+
+    return isAvailable ? 'available' : 'unavailable';
+  }
+
   // Convert MaterialSearchResult to EdgeMaterial with image
   const convertToEdgeMaterial = (
     result: MaterialSearchResult,
-  ): EdgeMaterial & { image?: string } => ({
-    id: result.id,
-    variantId: result.variant?.id,
-    code: result.variant?.sku || result.handle,
-    name: result.title,
-    productCode: result.variant?.sku || result.handle,
-    availability: result.variant?.availableForSale ? 'available' : 'unavailable',
-    thickness: 0.8, // Default thickness, could be extracted from dimensions
-    availableThicknesses: [0.4, 0.8, 2], // Common edge thickness variants
-    warehouse: result.warehouse,
-    price: result.variant?.price ? {
-      amount: parseFloat(result.variant.price),
-      currency: 'EUR',
-      perUnit: 'm'
-    } : undefined,
-    image: result.image, // Add image from search result
-  })
+  ): EdgeMaterial & { image?: string } => {
+    return {
+      id: result.id,
+      variantId: result.variant?.id,
+      code: result.variant?.sku || result.handle,
+      name: result.title,
+      productCode: result.variant?.sku || result.handle,
+      availability: calculateAvailability(result),
+      thickness: 0.8, // Default thickness, could be extracted from dimensions
+      availableThicknesses: [0.4, 0.8, 2], // Common edge thickness variants
+      warehouse: result.warehouse,
+      price: result.variant?.price ? {
+        amount: parseFloat(result.variant.price),
+        currency: 'EUR',
+        perUnit: 'm'
+      } : undefined,
+      image: result.image, // Add image from search result
+    };
+  }
 
   const handleSelectEdge = (edge: EdgeMaterial) => {
     onEdgeChange(edge)
@@ -248,7 +267,7 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
                   </Box>
 
                   <AvailabilityChip
-                    availability={result.availability}
+                    availability={calculateAvailability(result)}
                     size="small"
                     sx={{ flexShrink: 0 }}
                   />
@@ -363,9 +382,50 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
                       justifyContent: 'flex-start',
                       width: '100%',
                       textAlign: 'left',
+                      px: 2,
+                      py: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
                     }}
                   >
-                    {result.title}
+                    {/* Small edge preview image */}
+                    <Avatar
+                      src={result.image}
+                      alt={result.title}
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 1,
+                        bgcolor: '#f5f5f5',
+                        border: '1px solid #e0e0e0',
+                        flexShrink: 0,
+                      }}
+                      variant="rounded"
+                    >
+                      {!result.image && '📏'}
+                    </Avatar>
+
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 500, mb: 0.5 }}
+                      >
+                        {result.title}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                      >
+                        {result.variant?.sku || result.handle}
+                      </Typography>
+                    </Box>
+
+                    <AvailabilityChip
+                      availability={calculateAvailability(result)}
+                      size="small"
+                      sx={{ flexShrink: 0 }}
+                    />
                   </Button>
                 </Box>
               ))

@@ -81,7 +81,7 @@ export const createOrderWithCustomerDefaults = (customer: CustomerOrderData | nu
     costCenter: customer.defaultCostCenter,
     cuttingCenter: customer.defaultCuttingCenter,
     deliveryMethod: customer.defaultDeliveryMethod,
-    processingType: customer.defaultProcessingType,
+    processingType: customer.defaultProcessingType || "Zlikvidovať",
     discountPercentage: customer.discountPercentage || 0
   }
 }

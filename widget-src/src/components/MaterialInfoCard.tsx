@@ -64,7 +64,7 @@ const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
               variant="body2"
               sx={{ fontWeight: 600, color: 'text.primary' }}
             >
-              {material.variant?.price ? `${formatPrice(material.variant.price)} per unit` : '[No Price]'}
+              {material.variant?.price ? formatPrice(material.variant.price) : '[No Price]'}
             </Typography>
           </Box>
         </Box>

@@ -68,7 +68,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
 
   const deliveryMethods = ["Osobný odber", "Doprava IW Trend"];
 
-  const processingTypes = ["Formátovať", "Zlikvidovať", "Priebaliť k dielcom", "Odber s objednávkou"];
+  const processingTypes = ["Formátovať", "Zlikvidovať", "Uskladniť", "Priebaliť k dielcom", "Odber s objednávkou"];
 
   const handleSubmit = () => {
     try {

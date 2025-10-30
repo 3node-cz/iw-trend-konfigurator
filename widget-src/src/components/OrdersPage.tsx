@@ -92,7 +92,8 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
         sx={{ maxWidth: "1920px", mx: "auto", py: 3 }}
       >
         <OrdersHeader onOrderCreated={handleOrderCreated} customer={customer} />
-        <OrdersFilters onFiltersChange={handleFiltersChange} />
+        {/* Temporarily hidden - filters section */}
+        {/* <OrdersFilters onFiltersChange={handleFiltersChange} /> */}
         <OrdersTable
           onLoadConfiguration={onLoadConfiguration}
           onDeleteOrder={handleDeleteOrder}

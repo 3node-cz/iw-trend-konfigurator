@@ -94,10 +94,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         )}
 
         {/* Price */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 'auto' }}>
-          <Typography variant="caption" color="text.secondary">
-            per unit
-          </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 'auto' }}>
           <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 600 }}>
             €{formatPriceNumber(material.variant?.price || "0")}
           </Typography>

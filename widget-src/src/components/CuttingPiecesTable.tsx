@@ -678,7 +678,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       >
         <Typography variant="body1">Žiadne kusy na rezanie</Typography>
         <Typography variant="body2">
-          Kliknite na "Pridať kus" pre začiatok
+          Kliknite na "Pridať kus"
         </Typography>
       </Box>
     );
