@@ -92,12 +92,13 @@ export const createMinimalSavedConfig = (
     savedFromStep,
     orderInfo,
     // Store only IDs - everything else will be fetched fresh
-    materials: materials.map(m => ({ id: m.id })),
-    specifications: specifications.map(spec => ({
+    // Filter out any undefined/null materials before mapping
+    materials: materials.filter(m => m != null && m.id).map(m => ({ id: m.id })),
+    specifications: specifications.filter(spec => spec != null && spec.material).map(spec => ({
       materialId: spec.material.id,
       glueType: spec.glueType as any, // TODO: Update to use enum
       edgeMaterialId: spec.edgeMaterial?.id || null,
-      pieces: spec.pieces.map(piece => ({
+      pieces: spec.pieces.filter(piece => piece != null).map(piece => ({
         id: piece.id,
         partName: piece.partName,
         length: piece.length,

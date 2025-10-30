@@ -29,6 +29,7 @@ interface MaterialResultsTableProps {
   showViewAllButton?: boolean;
   isSelectedMaterials?: boolean;
   selectedMaterialIds?: string[];
+  customerDiscount?: number; // Customer discount percentage, only show discount columns if > 0
 }
 
 const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
@@ -38,8 +39,12 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
   showViewAllButton = false,
   isSelectedMaterials = false,
   selectedMaterialIds = [],
+  customerDiscount = 0,
 }) => {
   const [showAllModal, setShowAllModal] = useState(false);
+
+  // Only show discount columns if customer has a discount
+  const showDiscountColumns = customerDiscount > 0;
 
   return (
     <>
@@ -59,14 +64,18 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                 Dostupnosť centrálneho skladu
               </TableCell>
               <TableCell sx={{ fontWeight: 600, textAlign: "right" }}>
-                Základná cena za MJ
+                {showDiscountColumns ? "Základná cena za MJ" : "Cena za MJ"}
               </TableCell>
-              <TableCell sx={{ fontWeight: 600, textAlign: "right" }}>
-                Zľava na MJ
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600, textAlign: "right" }}>
-                Cena po zľavách
-              </TableCell>
+              {showDiscountColumns && (
+                <TableCell sx={{ fontWeight: 600, textAlign: "right" }}>
+                  Zľava na MJ
+                </TableCell>
+              )}
+              {showDiscountColumns && (
+                <TableCell sx={{ fontWeight: 600, textAlign: "right" }}>
+                  Cena po zľavách
+                </TableCell>
+              )}
               <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>
                 {isSelectedMaterials ? "Akcie" : "Zvoliť"}
               </TableCell>
@@ -179,37 +188,41 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                     </Typography>
                   </TableCell>
 
-                  {/* Discount */}
-                  <TableCell sx={{ textAlign: "right" }}>
-                    {discountPercentage > 0 ? (
+                  {/* Discount - only show if customer has discount */}
+                  {showDiscountColumns && (
+                    <TableCell sx={{ textAlign: "right" }}>
+                      {discountPercentage > 0 ? (
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 500, color: "error.main" }}
+                        >
+                          -{discountPercentage}%
+                        </Typography>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          -
+                        </Typography>
+                      )}
+                    </TableCell>
+                  )}
+
+                  {/* Final price after discount - only show if customer has discount */}
+                  {showDiscountColumns && (
+                    <TableCell sx={{ textAlign: "right" }}>
                       <Typography
                         variant="body2"
-                        sx={{ fontWeight: 500, color: "error.main" }}
+                        sx={{
+                          fontWeight: 600,
+                          color:
+                            discountPercentage > 0
+                              ? "primary.main"
+                              : "text.primary",
+                        }}
                       >
-                        -{discountPercentage}%
+                        {formatPrice(finalPrice.toString())}
                       </Typography>
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        -
-                      </Typography>
-                    )}
-                  </TableCell>
-
-                  {/* Final price after discount */}
-                  <TableCell sx={{ textAlign: "right" }}>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontWeight: 600,
-                        color:
-                          discountPercentage > 0
-                            ? "primary.main"
-                            : "text.primary",
-                      }}
-                    >
-                      {formatPrice(finalPrice.toString())}
-                    </Typography>
-                  </TableCell>
+                    </TableCell>
+                  )}
 
                   {/* Action button */}
                   <TableCell sx={{ textAlign: "center" }}>
@@ -270,6 +283,7 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
         results={results}
         onAddMaterial={onAddMaterial}
         selectedMaterialIds={selectedMaterialIds}
+        customerDiscount={customerDiscount}
       />
     </>
   );

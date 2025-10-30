@@ -93,13 +93,16 @@ const SaveOrderButton: React.FC<SaveOrderButtonProps> = ({
       const configService = createConfigurationService()
 
       // Convert selected materials to the format expected by the service
-      const materials = selectedMaterials.map(material => ({
-        id: material.id,
-        code: material.code,
-        name: material.name,
-        quantity: material.quantity,
-        price: material.price
-      }))
+      // Filter out any undefined/null values before mapping
+      const materials = selectedMaterials
+        .filter(material => material != null)
+        .map(material => ({
+          id: material.id,
+          code: material.code,
+          name: material.name,
+          quantity: material.quantity,
+          price: material.price
+        }))
 
       const result = await configService.saveConfiguration(
         customerId,

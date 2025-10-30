@@ -182,6 +182,7 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
             onAddMaterial={handleAddMaterial}
             showViewAllButton={false}
             selectedMaterialIds={selectedMaterials.map((m) => m.id)}
+            customerDiscount={customer?.discountPercentage || 0}
           />
         </Paper>
       )}
@@ -214,6 +215,7 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
             }))}
             onRemoveMaterial={handleRemoveMaterial}
             isSelectedMaterials
+            customerDiscount={customer?.discountPercentage || 0}
           />
 
           <Box

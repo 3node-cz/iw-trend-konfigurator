@@ -243,7 +243,7 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
                       variant="caption"
                       color="text.secondary"
                     >
-                      {result.variant?.sku || result.handle} • {result.warehouse || 'warehouse'}
+                      {result.variant?.sku || result.handle}
                     </Typography>
                   </Box>
 
@@ -319,12 +319,6 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
                     availability={selectedEdge.availability}
                     size="small"
                   />
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                  >
-                    {selectedEdge.warehouse}
-                  </Typography>
                 </Box>
               </Box>
             </Box>

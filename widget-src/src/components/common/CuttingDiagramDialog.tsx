@@ -10,7 +10,6 @@ import {
 } from '@mui/material'
 import {
   Close as CloseIcon,
-  Download as DownloadIcon,
 } from '@mui/icons-material'
 import CuttingLayoutDiagram from './CuttingLayoutDiagram'
 import type { CuttingLayout } from '../../utils/guillotineCutting'
@@ -30,14 +29,6 @@ const CuttingDiagramDialog: React.FC<CuttingDiagramDialogProps> = ({
   onClose,
   globalPieceTypes,
 }) => {
-  const handleDownload = () => {
-    if (!layout) return
-
-    // Create a canvas to export the SVG as image
-    // This would need additional implementation for actual download
-    console.log('Download cutting diagram:', title)
-  }
-
   return (
     <Dialog
       open={open}
@@ -81,13 +72,6 @@ const CuttingDiagramDialog: React.FC<CuttingDiagramDialogProps> = ({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button
-          startIcon={<DownloadIcon />}
-          onClick={handleDownload}
-          variant="outlined"
-        >
-          Stiahnuť diagram
-        </Button>
         <Button
           onClick={onClose}
           variant="contained"

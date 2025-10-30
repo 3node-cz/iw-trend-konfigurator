@@ -66,8 +66,8 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
   order,
 }) => {
 
-  // Temporary: Force discount for debugging
-  const effectiveDiscountPercentage = order.discountPercentage || 10 // Force 10% if no discount set
+  // Only use discount if it's explicitly set and greater than 0
+  const effectiveDiscountPercentage = order.discountPercentage && order.discountPercentage > 0 ? order.discountPercentage : 0
 
   // Helper function to apply customer discount
   const applyDiscount = (price: number): number => {

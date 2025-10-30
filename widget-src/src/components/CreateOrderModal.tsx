@@ -22,6 +22,7 @@ import {
 } from "../schemas/orderSchema";
 import { FormTextField, FormSelect } from "./common"
 import type { CustomerOrderData } from "../services/customerApi";
+import { ORDER_CONFIG } from "../constants";
 
 interface CreateOrderModalProps {
   open: boolean;
@@ -37,13 +38,18 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   customer,
 }) => {
 
-  const [formData, setFormData] = useState<OrderFormData>(() => ({
-    orderName: "",
-    deliveryDate: null,
-    notes: "",
-    customerName: "",
-    ...createOrderWithCustomerDefaults(customer),
-  }));
+  const [formData, setFormData] = useState<OrderFormData>(() => {
+    const defaultDeliveryDate = new Date();
+    defaultDeliveryDate.setDate(defaultDeliveryDate.getDate() + ORDER_CONFIG.DEFAULT_DELIVERY_DAYS);
+
+    return {
+      orderName: "",
+      deliveryDate: defaultDeliveryDate,
+      notes: "",
+      customerName: "",
+      ...createOrderWithCustomerDefaults(customer),
+    };
+  });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -246,13 +252,24 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                 clearFieldError("deliveryDate");
                 setFormData((prev) => ({ ...prev, deliveryDate: date }));
               }}
+              format="dd.MM.yyyy"
+              readOnly
               slotProps={{
                 textField: {
                   size: "small",
                   fullWidth: true,
                   required: true,
                   error: !!errors.deliveryDate,
-                  helperText: errors.deliveryDate,
+                  helperText: errors.deliveryDate || `Automaticky nastavené na ${ORDER_CONFIG.DEFAULT_DELIVERY_DAYS} dní od dnes`,
+                  InputProps: {
+                    readOnly: true,
+                  },
+                  sx: {
+                    "& .MuiInputBase-input": {
+                      backgroundColor: "#f5f5f5",
+                      color: "text.secondary",
+                    },
+                  },
                 },
               }}
             />

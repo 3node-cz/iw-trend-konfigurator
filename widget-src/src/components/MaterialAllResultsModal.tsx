@@ -21,6 +21,7 @@ interface MaterialAllResultsModalProps {
   results: MaterialSearchResult[]
   onAddMaterial?: (material: MaterialSearchResult) => void
   selectedMaterialIds?: string[]
+  customerDiscount?: number
 }
 
 const MaterialAllResultsModal: React.FC<MaterialAllResultsModalProps> = ({
@@ -28,7 +29,8 @@ const MaterialAllResultsModal: React.FC<MaterialAllResultsModalProps> = ({
   onClose,
   results,
   onAddMaterial,
-  selectedMaterialIds = []
+  selectedMaterialIds = [],
+  customerDiscount = 0
 }) => {
   return (
     <Dialog
@@ -64,6 +66,7 @@ const MaterialAllResultsModal: React.FC<MaterialAllResultsModalProps> = ({
             showViewAllButton={false}
             isSelectedMaterials={false}
             selectedMaterialIds={selectedMaterialIds}
+            customerDiscount={customerDiscount}
           />
         </Box>
       </DialogContent>

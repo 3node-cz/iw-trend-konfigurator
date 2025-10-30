@@ -119,3 +119,8 @@ export const VALIDATION = {
   MIN_ORDER_NAME_LENGTH: 3,
   MAX_ORDER_NAME_LENGTH: 100,
 } as const
+
+// Order Configuration
+export const ORDER_CONFIG = {
+  DEFAULT_DELIVERY_DAYS: 7, // Default delivery time in days from order creation
+} as const

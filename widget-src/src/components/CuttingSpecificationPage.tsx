@@ -467,6 +467,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
                 results={searchResults}
                 onAddMaterial={handleAddMaterialToOrder}
                 selectedMaterialIds={materials.map((m) => m.id)} // Pass current material IDs to prevent duplicates
+                customerDiscount={customer?.discountPercentage || 0}
               />
             </Box>
           )}
