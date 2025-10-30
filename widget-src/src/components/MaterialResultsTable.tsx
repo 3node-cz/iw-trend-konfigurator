@@ -58,24 +58,11 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
               <TableCell sx={{ fontWeight: 600 }}>Názov</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Kód</TableCell>
               <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>
-                Dostupnosť lokálneho skladu
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>
-                Dostupnosť centrálneho skladu
+                Dostupnosť
               </TableCell>
               <TableCell sx={{ fontWeight: 600, textAlign: "right" }}>
-                {showDiscountColumns ? "Základná cena za MJ" : "Cena za MJ"}
+                Cena za MJ
               </TableCell>
-              {showDiscountColumns && (
-                <TableCell sx={{ fontWeight: 600, textAlign: "right" }}>
-                  Zľava na MJ
-                </TableCell>
-              )}
-              {showDiscountColumns && (
-                <TableCell sx={{ fontWeight: 600, textAlign: "right" }}>
-                  Cena po zľavách
-                </TableCell>
-              )}
               <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>
                 {isSelectedMaterials ? "Akcie" : "Zvoliť"}
               </TableCell>
@@ -92,6 +79,11 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                 material.variant?.metafields?.[
                   "custom.central_warehouse_stock"
                 ];
+
+              // Combined availability - available if either warehouse has stock
+              const isAvailable =
+                (localWarehouseStock && parseInt(localWarehouseStock) > 0) ||
+                (centralWarehouseStock && parseInt(centralWarehouseStock) > 0);
 
               // Extract pricing info
               const basePrice = material.variant?.price || "0";
@@ -155,28 +147,10 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                     </Typography>
                   </TableCell>
 
-                  {/* Local warehouse availability */}
+                  {/* Availability - combined from local and central warehouse */}
                   <TableCell sx={{ textAlign: "center" }}>
                     <AvailabilityChip
-                      availability={
-                        localWarehouseStock &&
-                        parseInt(localWarehouseStock) > 0
-                          ? "available"
-                          : "unavailable"
-                      }
-                      size="small"
-                    />
-                  </TableCell>
-
-                  {/* Central warehouse availability */}
-                  <TableCell sx={{ textAlign: "center" }}>
-                    <AvailabilityChip
-                      availability={
-                        centralWarehouseStock &&
-                        parseInt(centralWarehouseStock) > 0
-                          ? "available"
-                          : "unavailable"
-                      }
+                      availability={isAvailable ? "available" : "unavailable"}
                       size="small"
                     />
                   </TableCell>
@@ -187,42 +161,6 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                       {formatPrice(basePrice)}
                     </Typography>
                   </TableCell>
-
-                  {/* Discount - only show if customer has discount */}
-                  {showDiscountColumns && (
-                    <TableCell sx={{ textAlign: "right" }}>
-                      {discountPercentage > 0 ? (
-                        <Typography
-                          variant="body2"
-                          sx={{ fontWeight: 500, color: "error.main" }}
-                        >
-                          -{discountPercentage}%
-                        </Typography>
-                      ) : (
-                        <Typography variant="body2" color="text.secondary">
-                          -
-                        </Typography>
-                      )}
-                    </TableCell>
-                  )}
-
-                  {/* Final price after discount - only show if customer has discount */}
-                  {showDiscountColumns && (
-                    <TableCell sx={{ textAlign: "right" }}>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontWeight: 600,
-                          color:
-                            discountPercentage > 0
-                              ? "primary.main"
-                              : "text.primary",
-                        }}
-                      >
-                        {formatPrice(finalPrice.toString())}
-                      </Typography>
-                    </TableCell>
-                  )}
 
                   {/* Action button */}
                   <TableCell sx={{ textAlign: "center" }}>
