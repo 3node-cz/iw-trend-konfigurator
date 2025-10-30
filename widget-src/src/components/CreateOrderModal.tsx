@@ -12,7 +12,6 @@ import {
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
 import Grid from "@mui/system/Grid";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { z } from "zod";
 import {
   orderSchema,
@@ -58,6 +57,12 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Debug: Log customer discount info
+  console.log('CreateOrderModal - Customer:', customer);
+  console.log('CreateOrderModal - Customer discount:', customer?.discountPercentage);
+  console.log('CreateOrderModal - Discount type:', typeof customer?.discountPercentage);
+  console.log('CreateOrderModal - Show discount field?', customer && customer.discountPercentage > 0);
 
   const locations = [
     "ZIL - IW TREND, s.r.o., K cintorínu, Žilina",
@@ -248,36 +253,11 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             />
           </Grid>
 
+          {/* Delivery Date Info - Hidden DatePicker, just showing message */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <DatePicker
-              label="Předpokládaný datum výroby"
-              value={formData.deliveryDate}
-              onChange={(date) => {
-                // Clear error when date is selected
-                clearFieldError("deliveryDate");
-                setFormData((prev) => ({ ...prev, deliveryDate: date }));
-              }}
-              format="dd.MM.yyyy"
-              readOnly
-              slotProps={{
-                textField: {
-                  size: "small",
-                  fullWidth: true,
-                  required: true,
-                  error: !!errors.deliveryDate,
-                  helperText: errors.deliveryDate || `Automaticky nastavené na ${ORDER_CONFIG.DEFAULT_DELIVERY_DAYS} dní od dnes`,
-                  InputProps: {
-                    readOnly: true,
-                  },
-                  sx: {
-                    "& .MuiInputBase-input": {
-                      backgroundColor: "#f5f5f5",
-                      color: "text.secondary",
-                    },
-                  },
-                },
-              }}
-            />
+            <Alert severity="info" sx={{ mt: 0.5 }}>
+              Předpokládaný datum výroby bude {ORDER_CONFIG.DEFAULT_DELIVERY_DAYS} dní od vytvoření objednávky
+            </Alert>
           </Grid>
 
           {/* Delivery and Processing */}
@@ -312,10 +292,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                 value={formData.discountPercentage.toString()}
                 onChange={handleFieldChange("discountPercentage")}
                 error={!!errors.discountPercentage}
-                helperText={
-                  errors.discountPercentage ||
-                  `Automaticky nastavené podľa zákazníka: ${customer.discountPercentage}%`
-                }
+                helperText={errors.discountPercentage}
                 size="small"
                 fullWidth
                 InputProps={{

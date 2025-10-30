@@ -5,22 +5,18 @@ import {
   Typography,
   Paper,
   Button,
-  Card,
-  CardContent,
   TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Alert,
-  Chip,
 } from "@mui/material";
 import {
   CheckCircle as CheckCircleIcon,
   ShoppingCart as ShoppingCartIcon,
   Refresh as RefreshIcon,
   Save as SaveIcon,
-  BookmarkAdd as BookmarkAddIcon,
 } from "@mui/icons-material";
 import type { OrderFormData } from "../schemas/orderSchema";
 import type { CuttingSpecification } from "../types/shopify";
@@ -137,44 +133,6 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
           "{orderName}"
         </Typography>
 
-        {/* Save Configuration Section */}
-        {canSaveConfiguration && (
-          <Card sx={{ mb: 4, maxWidth: 500, mx: "auto" }}>
-            <CardContent>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  mb: 2,
-                }}
-              >
-                <BookmarkAddIcon sx={{ mr: 1, color: "primary.main" }} />
-                <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                  Uložiť konfiguráciu
-                </Typography>
-              </Box>
-
-              <Typography
-                variant="body2"
-                sx={{ mb: 2, color: "text.secondary" }}
-              >
-                Uložte si túto konfiguráciu pre budúce použitie
-              </Typography>
-
-              <Button
-                variant="outlined"
-                startIcon={<SaveIcon />}
-                onClick={() => setSaveDialogOpen(true)}
-                fullWidth
-                sx={{ mt: 1 }}
-              >
-                Uložiť konfiguráciu
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
         <Box
           sx={{
             display: "flex",
@@ -199,9 +157,25 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
             Otvoriť košík a dokončiť objednávku
           </Button>
 
+          {canSaveConfiguration && (
+            <Button
+              variant="outlined"
+              size="large"
+              startIcon={<SaveIcon />}
+              onClick={() => setSaveDialogOpen(true)}
+              sx={{
+                minWidth: 200,
+                py: 1.5,
+                fontSize: "1.1rem",
+              }}
+            >
+              Uložiť konfiguráciu
+            </Button>
+          )}
+
           {onCreateNewOrder && (
             <Button
-              variant="contained"
+              variant="outlined"
               color="primary"
               size="large"
               startIcon={<RefreshIcon />}
