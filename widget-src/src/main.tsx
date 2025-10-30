@@ -66,8 +66,6 @@ const ShopifyConfiguratorWidget: React.FC<{
   });
 
   // Create theme with shadow container
-  // The Liquid template has high z-index on .universal-configurator
-  // so dialogs inside shadow DOM should still appear above page content
   const theme = createConfiguratorTheme(shadowContainer);
 
   return (

@@ -67,7 +67,7 @@ const CuttingLayoutDemo: React.FC = () => {
 
   return (
     <Container maxWidth={false} sx={{ maxWidth: '1920px', mx: 'auto', py: 3 }}>
-      <Typography variant="h4" component="h1" sx={{ color: 'primary.main', fontWeight: 500, mb: 3 }}>
+      <Typography variant="h2" component="h1" sx={{ color: 'primary.main', fontWeight: 500, mb: 3 }}>
         Cutting Layout Demo
       </Typography>
       

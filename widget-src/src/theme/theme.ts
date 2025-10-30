@@ -152,14 +152,14 @@ export const createConfiguratorTheme = (
       fontSize: 14,
       fontFamily: getShopifyThemeFont(),
       h1: {
-        fontSize: "2.4rem", // 24px (2.4 * 10px)
+        fontSize: "2.8rem", // 28px (2.8 * 10px) - Increased for better hierarchy
         fontWeight: 600,
         lineHeight: 1.2,
         color: "#333",
         marginBottom: "1.6rem", // 16px (1.6 * 10px)
       },
       h2: {
-        fontSize: "2rem", // 20px (2 * 10px)
+        fontSize: "2.2rem", // 22px (2.2 * 10px) - Slightly increased for better spacing
         fontWeight: 600,
         lineHeight: 1.3,
         color: "#333",

@@ -35,7 +35,7 @@ const OrdersHeader: React.FC<OrdersHeaderProps> = ({
         }}
       >
         <Typography
-          variant="h4"
+          variant="h2"
           component="h1"
           sx={{ color: "primary.main", fontWeight: 500 }}
         >

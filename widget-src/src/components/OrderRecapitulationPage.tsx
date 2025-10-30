@@ -180,7 +180,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
             Späť
           </Button>
           <Typography
-            variant="h4"
+            variant="h2"
             component="h1"
             sx={{ fontWeight: 500, color: "primary.main" }}
           >

@@ -47,6 +47,12 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
       deliveryDate: defaultDeliveryDate,
       notes: "",
       customerName: "",
+      company: "",
+      transferLocation: "",
+      costCenter: "",
+      cuttingCenter: "",
+      deliveryMethod: "",
+      processingType: "Zlikvidovať",
       ...createOrderWithCustomerDefaults(customer),
     };
   });
@@ -110,27 +116,28 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
       }
     }
 
-    if (field === "transferLocation") {
-      // Extract city from the selected location
-      let city = "";
-      if (value.includes("Žilina")) {
-        city = "Žilina";
-      } else if (value.includes("Partizánske")) {
-        city = "Partizánske";
-      } else if (value.includes("Bratislava")) {
-        city = "Bratislava";
+    if (field === "costCenter") {
+      // When costCenter (Pobočka) changes, auto-populate transferLocation and cuttingCenter
+      let transferLocation = "";
+
+      if (value === "Žilina") {
+        transferLocation = "ZIL - IW TREND, s.r.o., K cintorínu, Žilina";
+      } else if (value === "Partizánske") {
+        transferLocation = "PAR - IW TREND, s.r.o., Nitrianska cesta 50360, CEBO HOLDING, Partizánske";
+      } else if (value === "Bratislava") {
+        transferLocation = "CEN - IW TREND, s.r.o., Pri majerí 6, Bratislava";
       }
 
       // Clear errors for auto-populated fields too
-      clearFieldError("costCenter");
+      clearFieldError("transferLocation");
       clearFieldError("cuttingCenter");
 
       // Update all three fields
       setFormData((prev) => ({
         ...prev,
-        [field]: value,
-        costCenter: city,
-        cuttingCenter: city,
+        costCenter: value,
+        transferLocation: transferLocation,
+        cuttingCenter: value,
       }));
     } else {
       // Handle number fields specially
@@ -154,8 +161,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     };
 
   // Dialog renders in shadow DOM (no explicit container)
-  // The Liquid template's .universal-configurator has z-index: 999999
-  // so dialogs should appear above page content
   return (
       <Dialog
         open={open}
@@ -193,7 +198,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
 
       <DialogContent dividers sx={{ p: 3 }}>
         <Alert severity="info" sx={{ mb: 3 }}>
-          Prevádzkovú jednotku a nárezové centrum nie je možné počas zadávania a úpravy zákazky zmeniť
+          Miesto prevzatia a nárezové centrum sa automaticky nastavia podľa vybranej pobočky
         </Alert>
 
         <Grid container spacing={3}>
@@ -219,7 +224,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             />
           </Grid>
 
-          {/* Branch */}
+          {/* Branch - drives transferLocation and cuttingCenter */}
           <Grid size={{ xs: 12, md: 6 }}>
             <FormSelect
               label="Pobočka"

@@ -68,9 +68,8 @@ export const getFieldErrors = (error: z.ZodError): Record<string, string> => {
 // Helper function to create order data with customer defaults
 export const createOrderWithCustomerDefaults = (customer: CustomerOrderData | null): Partial<OrderFormData> => {
   if (!customer) {
+    // For non-logged-in users, only provide discount default
     return {
-      company: 'IW TREND, s.r.o',
-      customerName: '',
       discountPercentage: 0
     }
   }
