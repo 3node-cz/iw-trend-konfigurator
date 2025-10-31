@@ -212,7 +212,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
 
         <Grid container spacing={3}>
           {/* Customer Information */}
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormTextField
               label="Meno zákazníka"
               value={formData.customerName}
@@ -223,7 +223,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             />
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormTextField
               label="Firma"
               value={formData.company}
