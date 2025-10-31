@@ -202,8 +202,12 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
       </DialogTitle>
 
       <DialogContent dividers sx={{ p: 3 }}>
-        <Alert severity="info" sx={{ mb: 3 }}>
+        <Alert severity="info" sx={{ mb: 2 }}>
           Miesto prevzatia a nárezové centrum sa automaticky nastavia podľa vybranej pobočky
+        </Alert>
+
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Předpokládaný datum výroby bude {ORDER_CONFIG.DEFAULT_DELIVERY_DAYS} dní od vytvoření objednávky
         </Alert>
 
         <Grid container spacing={3}>
@@ -251,13 +255,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
               error={errors.orderName}
               required
             />
-          </Grid>
-
-          {/* Delivery Date Info - Hidden DatePicker, just showing message */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Alert severity="info" sx={{ mt: 0.5 }}>
-              Předpokládaný datum výroby bude {ORDER_CONFIG.DEFAULT_DELIVERY_DAYS} dní od vytvoření objednávky
-            </Alert>
           </Grid>
 
           {/* Delivery and Processing */}
