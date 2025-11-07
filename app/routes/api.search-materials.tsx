@@ -254,6 +254,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
         return acc;
       }, {}) || {};
 
+      // Debug: Log all available metafields for the first product/variant
+      if (product.handle) {
+        console.log('📦 Product metafields for', product.title, ':', Object.keys(productMetafields));
+        if (variant) {
+          console.log('📦 Variant metafields for', variant.title, ':', Object.keys(variantMetafields));
+        }
+      }
+
       // Get images - prefer variant image, fallback to product featured image
       const variantImage = variant?.image?.url;
       const productImage = product.featuredImage?.url;
