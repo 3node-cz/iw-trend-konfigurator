@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useRef, useEffect } from "react";
+import React, { useMemo, useCallback, useRef, useEffect, useState } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 import {
   Delete as DeleteIcon,
+  Edit as EditIcon,
 } from "@mui/icons-material";
 import type { CuttingPiece, EdgeMaterial } from "../types/shopify";
 import {
@@ -30,6 +31,7 @@ import {
   WoodGrainVisualization,
 } from "./common";
 import PieceShapePreview from "./common/PieceShapePreview";
+import NotesDialog from "./common/NotesDialog";
 
 interface CuttingPiecesTableProps {
   pieces: CuttingPiece[];
@@ -55,6 +57,17 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   // Use refs to store current values to avoid recreating callbacks
   const piecesRef = useRef(pieces);
   const validationErrorsRef = useRef(validationErrors);
+
+  // State for notes dialog
+  const [notesDialog, setNotesDialog] = useState<{
+    open: boolean;
+    pieceId: string;
+    value: string;
+  }>({
+    open: false,
+    pieceId: "",
+    value: "",
+  });
 
 
   // Update refs when values change
@@ -622,20 +635,35 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       // Notes
       columnHelper.accessor("notes", {
         header: "Poznámka",
-        size: 200,
+        size: 150,
         cell: ({ row, getValue }) => (
-          <DebouncedTextInput
-            initialValue={getValue() || ""}
-            onChange={(value) =>
-              handlePieceChange(row.original.id, { notes: value })
-            }
-            sx={{
-              minWidth: 180,
-            }}
-            multiline
-            rows={3}
-            placeholder="Poznámka ku kusu..."
-          />
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Typography
+              sx={{
+                flex: 1,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                fontSize: "0.875rem",
+                color: getValue() ? "text.primary" : "text.disabled",
+              }}
+            >
+              {getValue() || "-"}
+            </Typography>
+            <IconButton
+              size="small"
+              onClick={() =>
+                setNotesDialog({
+                  open: true,
+                  pieceId: row.original.id,
+                  value: getValue() || "",
+                })
+              }
+              title="Upraviť poznámku"
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Box>
         ),
       }),
 
@@ -696,106 +724,117 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   }
 
   return (
-    <TableContainer sx={{ overflowX: "auto" }}>
-      <Table stickyHeader size="small">
-        <TableHead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <TableCell
-                  key={header.id}
-                  sx={{
-                    fontWeight: 600,
-                    backgroundColor: "#f5f5f5",
-                    whiteSpace: "nowrap",
-                    minWidth: header.column.columnDef.size || "auto",
-                    py: 1,
-                    px: 1,
-                    textAlign: "center",
-                  }}
-                >
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext(),
-                  )}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableHead>
-        <TableBody>
-          {table.getRowModel().rows.map((row) => {
-            const piece = row.original;
-            const errors = validationErrorsRef.current[piece.id] || [];
-            const hasErrors = errors.length > 0;
+    <>
+      <TableContainer sx={{ overflowX: "auto" }}>
+        <Table stickyHeader size="small">
+          <TableHead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableCell
+                    key={header.id}
+                    sx={{
+                      fontWeight: 600,
+                      backgroundColor: "#f5f5f5",
+                      whiteSpace: "nowrap",
+                      minWidth: header.column.columnDef.size || "auto",
+                      py: 1,
+                      px: 1,
+                      textAlign: "center",
+                    }}
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext(),
+                    )}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableHead>
+          <TableBody>
+            {table.getRowModel().rows.map((row) => {
+              const piece = row.original;
+              const errors = validationErrorsRef.current[piece.id] || [];
+              const hasErrors = errors.length > 0;
 
-            return (
-              <React.Fragment key={row.id}>
-                {/* Main piece row */}
-                <TableRow hover>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      sx={{
-                        py: 0.5,
-                        px: 1,
-                        verticalAlign: "middle",
-                        borderBottom: hasErrors
-                          ? "none"
-                          : "1px solid rgba(224, 224, 224, 1)",
-                        height: "80px",
-                      }}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-
-                {/* Error row - shown below the piece if there are errors */}
-                {hasErrors && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={table.getAllColumns().length}
-                      sx={{
-                        py: 1,
-                        px: 2,
-                        backgroundColor: "#fff3e0",
-                        borderBottom: "1px solid rgba(224, 224, 224, 1)",
-                      }}
-                    >
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+              return (
+                <React.Fragment key={row.id}>
+                  {/* Main piece row */}
+                  <TableRow hover>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        sx={{
+                          py: 0.5,
+                          px: 1,
+                          verticalAlign: "middle",
+                          borderBottom: hasErrors
+                            ? "none"
+                            : "1px solid rgba(224, 224, 224, 1)",
+                          height: "80px",
+                        }}
                       >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: "error.main",
-                            fontWeight: 600,
-                          }}
-                        >
-                          ⚠️ Chyby pre kus {row.index + 1}:
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: "error.main",
-                          }}
-                        >
-                          {errors.join(", ")}
-                        </Typography>
-                      </Box>
-                    </TableCell>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
                   </TableRow>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </TableContainer>
+
+                  {/* Error row - shown below the piece if there are errors */}
+                  {hasErrors && (
+                    <TableRow>
+                      <TableCell
+                        colSpan={table.getAllColumns().length}
+                        sx={{
+                          py: 1,
+                          px: 2,
+                          backgroundColor: "#fff3e0",
+                          borderBottom: "1px solid rgba(224, 224, 224, 1)",
+                        }}
+                      >
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: "error.main",
+                              fontWeight: 600,
+                            }}
+                          >
+                            ⚠️ Chyby pre kus {row.index + 1}:
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: "error.main",
+                            }}
+                          >
+                            {errors.join(", ")}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <NotesDialog
+        open={notesDialog.open}
+        initialValue={notesDialog.value}
+        onClose={() =>
+          setNotesDialog({ open: false, pieceId: "", value: "" })
+        }
+        onSave={(notes) => handlePieceChange(notesDialog.pieceId, { notes })}
+      />
+    </>
   );
 };
 
