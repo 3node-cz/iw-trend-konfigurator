@@ -397,6 +397,49 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
               </IconButton>
             </Box>
 
+            {/* Material Search - For changing this material */}
+            {onAddMaterial && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
+                  Materiál
+                </Typography>
+                <MaterialSearch
+                  onSearch={handleSearch}
+                  isLoading={isLoadingSearch}
+                  placeholder="Vyhľadať a zmeniť materiál..."
+                  searchValue={searchQuery}
+                />
+
+                {searchResults.length > 0 && (
+                  <Box sx={{ mt: 2 }}>
+                    <MaterialResultsTable
+                      results={searchResults}
+                      onAddMaterial={(newMaterial) => {
+                        // First remove the old material
+                        removeMaterial(material.id);
+                        onRemoveMaterial?.(material.id);
+                        // Then add the new one
+                        handleAddMaterialToOrder(newMaterial);
+                      }}
+                      selectedMaterialIds={materials.map((m) => m.id)}
+                      customerDiscount={customer?.discountPercentage || 0}
+                    />
+                  </Box>
+                )}
+
+                {searchQuery.length >= 2 &&
+                  searchResults.length === 0 &&
+                  !isLoadingSearch && (
+                    <Typography
+                      variant="body2"
+                      sx={{ mt: 2, color: "text.secondary", textAlign: "center" }}
+                    >
+                      Nenašli sa žiadne materiály pre "{searchQuery}"
+                    </Typography>
+                  )}
+              </Box>
+            )}
+
             {/* Material and Edge Selection - Single Row Layout */}
             <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
               {/* Material Info Card */}
