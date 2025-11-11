@@ -384,18 +384,17 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
                 )}
               </Box>
 
-              {materials.length > 1 && (
-                <IconButton
-                  onClick={() =>
-                    handleRemoveMaterial(material.id, material.title)
-                  }
-                  color="error"
-                  size="small"
-                  sx={{ ml: 2 }}
-                >
-                  <DeleteIcon />
-                </IconButton>
-              )}
+              <IconButton
+                onClick={() =>
+                  handleRemoveMaterial(material.id, material.title)
+                }
+                color="error"
+                size="small"
+                sx={{ ml: 2 }}
+                title="Odstrániť materiál"
+              >
+                <DeleteIcon />
+              </IconButton>
             </Box>
 
             {/* Material and Edge Selection - Single Row Layout */}
