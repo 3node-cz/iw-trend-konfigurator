@@ -502,7 +502,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
             />
           </Box>
         ),
-        size: 200,
+        size: 280,
         cell: ({ row }) => {
           const piece = row.original;
           const hasAnyEdge = piece.edgeTop || piece.edgeBottom || piece.edgeLeft || piece.edgeRight;
@@ -510,13 +510,14 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
           return (
             <Box>
               <Box
-                sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0.5, mb: hasAnyEdge ? 0.5 : 0 }}
+                sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mb: hasAnyEdge ? 0.5 : 0 }}
               >
                 <Box
                   sx={{
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
+                    minWidth: 60,
                   }}
                 >
                   <Typography
@@ -539,6 +540,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
+                    minWidth: 60,
                   }}
                 >
                   <Typography
@@ -561,6 +563,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
+                    minWidth: 60,
                   }}
                 >
                   <Typography
@@ -583,6 +586,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
+                    minWidth: 60,
                   }}
                 >
                   <Typography
@@ -629,19 +633,22 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         size: 200,
         cell: ({ row, getValue }) => (
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Typography
+            <DebouncedTextInput
+              initialValue={getValue() || ""}
+              onChange={(value) =>
+                handlePieceChange(row.original.id, { notes: value })
+              }
               sx={{
                 flex: 1,
                 minWidth: 120,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                fontSize: "0.875rem",
-                color: getValue() ? "text.primary" : "text.disabled",
+                "& .MuiInputBase-input": {
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }
               }}
-            >
-              {getValue() || "-"}
-            </Typography>
+              placeholder="Poznámka"
+            />
             <IconButton
               size="small"
               onClick={() =>
