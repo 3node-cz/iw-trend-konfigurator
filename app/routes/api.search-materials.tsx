@@ -300,6 +300,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const response = await admin.graphql(graphqlQuery, { variables });
     const result = await response.json();
 
+    console.log('📦 Raw GraphQL response (first product):', JSON.stringify(result?.data?.products?.edges?.[0] || result?.data?.node, null, 2));
+
     if (result.errors) {
       console.error('❌ GraphQL errors:', result.errors);
       return json({ error: "GraphQL query failed", details: result.errors }, { status: 400 });

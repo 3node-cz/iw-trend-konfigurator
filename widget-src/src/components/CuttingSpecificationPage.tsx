@@ -259,7 +259,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
   };
 
   return (
-    <Container maxWidth={false} sx={{ maxWidth: "1920px", mx: "auto", py: 1.5 }}>
+    <Container maxWidth={false} sx={{ maxWidth: "1920px", mx: "auto", py: 1.5, px: 0 }}>
       {/* Header */}
       <Box
         sx={{

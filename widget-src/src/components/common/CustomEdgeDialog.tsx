@@ -120,7 +120,7 @@ const CustomEdgeDialog: React.FC<CustomEdgeDialogProps> = ({
   const convertToEdgeMaterial = (
     result: MaterialSearchResult
   ): EdgeMaterial => {
-    return {
+    const edgeMaterial = {
       id: result.id,
       variantId: result.variant?.id,
       code: result.variant?.sku || result.handle,
@@ -139,6 +139,14 @@ const CustomEdgeDialog: React.FC<CustomEdgeDialogProps> = ({
         : undefined,
       image: result.image,
     }
+
+    console.log('🔄 [CustomEdgeDialog] Converting to EdgeMaterial:', {
+      resultImage: result.image,
+      edgeMaterialImage: edgeMaterial.image,
+      name: edgeMaterial.name,
+    })
+
+    return edgeMaterial
   }
 
   const handleSelectEdge = (
@@ -358,13 +366,7 @@ const CustomEdgeDialog: React.FC<CustomEdgeDialogProps> = ({
           nastavíte v tabuľke.
         </Typography>
 
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 3,
-          }}
-        >
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           {renderEdgeSearch('top', 'Vrchná hrana', customEdgeTop)}
           {renderEdgeSearch('bottom', 'Spodná hrana', customEdgeBottom)}
           {renderEdgeSearch('left', 'Ľavá hrana', customEdgeLeft)}
