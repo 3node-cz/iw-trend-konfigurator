@@ -17,7 +17,18 @@ interface MaterialSpec {
 const fetchDefaultEdge = async (material: MaterialSearchResult): Promise<EdgeMaterial | null> => {
   try {
     const alternativeProducts = material.metafields?.['custom.alternative_products']
-    if (!alternativeProducts) return null
+
+    console.log('🔍 [Edge Auto-Selection Debug]', {
+      materialTitle: material.title,
+      materialId: material.id,
+      alternativeProducts,
+      metafieldsAvailable: Object.keys(material.metafields || {}),
+    })
+
+    if (!alternativeProducts) {
+      console.log('⚠️ No alternative_products metafield found for', material.title)
+      return null
+    }
 
     // Handle List-Product metafield: can be array or JSON string
     let productIds: string[] = []
@@ -33,7 +44,12 @@ const fetchDefaultEdge = async (material: MaterialSearchResult): Promise<EdgeMat
       }
     }
 
-    if (productIds.length === 0) return null
+    console.log('📋 Product IDs from alternative_products:', productIds)
+
+    if (productIds.length === 0) {
+      console.log('⚠️ No product IDs found in alternative_products')
+      return null
+    }
 
     // Search for first edge product
     const results = await searchMaterials({
@@ -42,10 +58,19 @@ const fetchDefaultEdge = async (material: MaterialSearchResult): Promise<EdgeMat
       limit: 1,
     })
 
-    if (results.length === 0) return null
+    console.log('🔎 Edge search results:', {
+      query: productIds[0],
+      resultsCount: results.length,
+      firstResult: results[0]?.title,
+    })
+
+    if (results.length === 0) {
+      console.log('❌ No edge found for query:', productIds[0])
+      return null
+    }
 
     const edge = results[0]
-    return {
+    const edgeMaterial = {
       id: edge.id,
       variantId: edge.variant?.id,
       code: edge.variant?.sku,
@@ -62,8 +87,11 @@ const fetchDefaultEdge = async (material: MaterialSearchResult): Promise<EdgeMat
       } : undefined,
       image: edge.image,
     }
+
+    console.log('✅ Default edge loaded:', edgeMaterial.name)
+    return edgeMaterial
   } catch (error) {
-    console.error('Error fetching default edge:', error)
+    console.error('❌ Error fetching default edge:', error)
     return null
   }
 }

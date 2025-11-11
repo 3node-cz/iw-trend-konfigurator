@@ -66,6 +66,20 @@ export const calculateAvailability = (product: MaterialSearchResult): Availabili
   const localStock = localWarehouseStock ? parseInt(localWarehouseStock, 10) : 0
   const centralStock = centralWarehouseStock ? parseInt(centralWarehouseStock, 10) : 0
 
+  // DEBUG: Log stock calculation for troubleshooting
+  console.log('🔍 [Availability Debug]', {
+    productTitle: product.title,
+    productId: product.id,
+    variantSku: product.variant?.sku,
+    metafields: product.metafields,
+    variantMetafields: product.variant?.metafields,
+    localWarehouseStock,
+    centralWarehouseStock,
+    localStock,
+    centralStock,
+    isAvailable: localStock > 0 || centralStock > 0
+  })
+
   // Product is available if either warehouse has stock > 0
   const isAvailable = localStock > 0 || centralStock > 0
 

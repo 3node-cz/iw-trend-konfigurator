@@ -112,10 +112,11 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
               {/* Pattern definition for background image */}
               <pattern
                 id={patternId}
-                patternUnits="objectBoundingBox"
-                width="1"
-                height="1"
-                preserveAspectRatio="xMidYMid slice"
+                patternUnits="userSpaceOnUse"
+                width={displayWidth}
+                height={displayHeight}
+                x={offsetX}
+                y={offsetY}
               >
                 <image
                   href={backgroundImage}

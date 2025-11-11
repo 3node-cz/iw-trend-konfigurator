@@ -203,131 +203,67 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         size: 40,
       }),
 
-      // Preview
-      columnHelper.display({
-        id: "preview",
-        header: "Náhľad",
-        cell: ({ row }) => {
-          const piece = row.original;
-          // Only show preview if piece has valid dimensions
-          if (!piece.length || !piece.width) {
-            return (
-              <Box
-                sx={{
-                  width: 80,
-                  height: 80,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Typography variant="caption" color="text.disabled">
-                  -
-                </Typography>
-              </Box>
-            );
-          }
-          return (
-            <Box
-              sx={{
-                cursor: onPreviewPiece ? "pointer" : "default",
-                "&:hover": onPreviewPiece
-                  ? {
-                      opacity: 0.8,
-                      transform: "scale(1.05)",
-                    }
-                  : {},
-                transition: "all 0.2s ease",
-              }}
-              onClick={() => onPreviewPiece && handlePreviewPiece(piece)}
-              title={onPreviewPiece ? "Kliknite pre detail náhľadu" : ""}
-            >
-              <PieceShapePreview
-                piece={piece}
-                containerSize={80}
-                showBackground={false}
-                showRotationIndicator={false}
-                showEdges={true}
-              />
-            </Box>
-          );
-        },
-        size: 90,
-      }),
-
-      // Part Name and Quantity
+      // Part Name and Quantity (side by side)
       columnHelper.display({
         id: "nameAndQuantity",
         header: () => (
-          <Box sx={{ textAlign: "center" }}>
-            <Typography
-              variant="caption"
-              sx={{ fontWeight: 600, display: "block" }}
-            >
-              Názov dielca
+          <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, flex: 1 }}>
+              Názov
             </Typography>
-            <Typography
-              variant="caption"
-              sx={{ fontWeight: 600, display: "block" }}
-            >
+            <Typography variant="caption" sx={{ fontWeight: 600, width: 60 }}>
               Počet
             </Typography>
           </Box>
         ),
-        size: 150,
+        size: 220,
         cell: ({ row }) => {
           const piece = row.original;
           return (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+            <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
               <DebouncedTextInput
                 initialValue={piece.partName || ""}
                 onChange={(value) =>
                   handlePieceChange(row.original.id, { partName: value })
                 }
-                sx={{ minWidth: 130 }}
-                placeholder="Názov dielca"
+                sx={{ flex: 1, minWidth: 100 }}
+                placeholder="Názov"
               />
               <DebouncedNumberInput
                 initialValue={piece.quantity}
                 onChange={(value) =>
                   handlePieceChange(row.original.id, { quantity: value })
                 }
-                sx={{ minWidth: 130 }}
+                sx={{ width: 60 }}
                 min={1}
-                placeholder="Počet"
+                placeholder="Ks"
               />
             </Box>
           );
         },
       }),
 
-      // Dimensions (Length x Width)
+      // Dimensions (Length x Width) - side by side
       columnHelper.display({
         id: "dimensions",
         header: () => (
-          <Box sx={{ textAlign: "center" }}>
-            <Typography
-              variant="caption"
-              sx={{ fontWeight: 600, display: "block" }}
-            >
+          <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, width: 80 }}>
               Dĺžka
             </Typography>
-            <Typography
-              variant="caption"
-              sx={{ fontWeight: 600, display: "block" }}
-            >
+            <Typography variant="caption" sx={{ fontWeight: 600, width: 80 }}>
               Šírka
             </Typography>
           </Box>
         ),
-        size: 120,
+        size: 170,
         cell: ({ row }) => {
           const piece = row.original;
           const errors = validationErrorsRef.current[piece.id] || [];
           const { hasLengthError, hasWidthError } = getFieldErrors(errors);
 
           return (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+            <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
               <DebouncedNumberInput
                 initialValue={piece.length || 0}
                 onChange={(value) =>
@@ -335,7 +271,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                 }
                 onBlur={() => onFieldBlur?.(row.original.id, 'length')}
                 sx={{
-                  width: 100,
+                  width: 80,
                   "& .MuiOutlinedInput-root": hasLengthError
                     ? {
                         borderColor: "error.main",
@@ -345,7 +281,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                 }}
                 min={0}
                 error={hasLengthError}
-                placeholder="Dĺžka"
+                placeholder="L"
               />
               <DebouncedNumberInput
                 initialValue={piece.width || 0}
@@ -354,7 +290,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                 }
                 onBlur={() => onFieldBlur?.(row.original.id, 'width')}
                 sx={{
-                  width: 100,
+                  width: 80,
                   "& .MuiOutlinedInput-root": hasWidthError
                     ? {
                         borderColor: "error.main",
@@ -364,7 +300,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                 }}
                 min={0}
                 error={hasWidthError}
-                placeholder="Šírka"
+                placeholder="W"
               />
             </Box>
           );
@@ -389,6 +325,15 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                       allowRotation: e.target.checked,
                     })
                   }
+                  sx={{
+                    "& .MuiSwitch-switchBase": {
+                      "&:focus-visible": {
+                        outline: "2px solid",
+                        outlineColor: "primary.main",
+                        outlineOffset: "2px",
+                      },
+                    },
+                  }}
                 />
                 <Typography variant="caption">Rotácia</Typography>
               </Box>
@@ -401,6 +346,15 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                       withoutEdge: e.target.checked,
                     })
                   }
+                  sx={{
+                    "& .MuiSwitch-switchBase": {
+                      "&:focus-visible": {
+                        outline: "2px solid",
+                        outlineColor: "primary.main",
+                        outlineOffset: "2px",
+                      },
+                    },
+                  }}
                 />
                 <Typography variant="caption">Bez orezu</Typography>
                 <HelpTooltip
@@ -423,6 +377,15 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                       isDupel: e.target.checked,
                     })
                   }
+                  sx={{
+                    "& .MuiSwitch-switchBase": {
+                      "&:focus-visible": {
+                        outline: "2px solid",
+                        outlineColor: "primary.main",
+                        outlineOffset: "2px",
+                      },
+                    },
+                  }}
                 />
                 <Typography variant="caption">Dupel</Typography>
                 <HelpTooltip
@@ -445,22 +408,16 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         },
       }),
 
-      // Edge All Around + Block Input
+      // Edge All Around + Block Input (side by side)
       columnHelper.display({
         id: "edgeAllAroundAndBlock",
         header: () => (
-          <Box sx={{ textAlign: "center" }}>
-            <Typography
-              variant="caption"
-              sx={{ fontWeight: 600, display: "block" }}
-            >
-              Hrana dookola
+          <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center", alignItems: "center" }}>
+            <Typography variant="caption" sx={{ fontWeight: 600 }}>
+              Hrana
             </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
-              <Typography
-                variant="caption"
-                sx={{ fontWeight: 600 }}
-              >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Typography variant="caption" sx={{ fontWeight: 600 }}>
                 Blok
               </Typography>
               <HelpTooltip
@@ -479,7 +436,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         cell: ({ row }) => {
           const piece = row.original;
           return (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+            <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
               <EdgeThicknessSelect
                 value={piece.edgeAllAround}
                 onChange={(value) =>
@@ -669,12 +626,13 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       // Notes
       columnHelper.accessor("notes", {
         header: "Poznámka",
-        size: 150,
+        size: 200,
         cell: ({ row, getValue }) => (
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             <Typography
               sx={{
                 flex: 1,
+                minWidth: 120,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -699,6 +657,58 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
             </IconButton>
           </Box>
         ),
+      }),
+
+      // Preview (moved to end before actions)
+      columnHelper.display({
+        id: "preview",
+        header: "Náhľad",
+        cell: ({ row }) => {
+          const piece = row.original;
+          // Only show preview if piece has valid dimensions
+          if (!piece.length || !piece.width) {
+            return (
+              <Box
+                sx={{
+                  width: 80,
+                  height: 80,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Typography variant="caption" color="text.disabled">
+                  -
+                </Typography>
+              </Box>
+            );
+          }
+          return (
+            <Box
+              sx={{
+                cursor: onPreviewPiece ? "pointer" : "default",
+                "&:hover": onPreviewPiece
+                  ? {
+                      opacity: 0.8,
+                      transform: "scale(1.05)",
+                    }
+                  : {},
+                transition: "all 0.2s ease",
+              }}
+              onClick={() => onPreviewPiece && handlePreviewPiece(piece)}
+              title={onPreviewPiece ? "Kliknite pre detail náhľadu" : ""}
+            >
+              <PieceShapePreview
+                piece={piece}
+                containerSize={80}
+                showBackground={false}
+                showRotationIndicator={false}
+                showEdges={true}
+              />
+            </Box>
+          );
+        },
+        size: 90,
       }),
 
       // Actions
