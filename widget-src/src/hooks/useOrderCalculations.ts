@@ -35,33 +35,93 @@ export const useOrderCalculations = (
 
     // Process each material specification
     specifications.forEach(spec => {
-      // Calculate edge consumption if edge material is selected
-      let materialEdgeConsumption: MaterialEdgeConsumption | null = null
+      // Calculate edge consumption - now handling multiple edge materials per spec
+      const materialEdgeConsumptions: MaterialEdgeConsumption[] = []
 
-      if (spec.edgeMaterial && spec.pieces.length > 0) {
-        // Only calculate for pieces that actually use edges
-        const piecesWithEdges = spec.pieces.filter(piece =>
-          piece.edgeAllAround || piece.edgeTop || piece.edgeBottom ||
-          piece.edgeLeft || piece.edgeRight
-        )
+      if (spec.pieces.length > 0) {
+        // Group pieces by their edge materials (considering custom edges)
+        const edgeMaterialGroups = new Map<string, {
+          edgeMaterial: { id: string; name: string };
+          pieces: typeof spec.pieces
+        }>()
 
-        if (piecesWithEdges.length > 0) {
-          materialEdgeConsumption = calculateMaterialEdgeConsumption(
-            piecesWithEdges,
+        spec.pieces.forEach(piece => {
+          const hasEdges = piece.edgeAllAround || piece.edgeTop || piece.edgeBottom ||
+            piece.edgeLeft || piece.edgeRight
+
+          if (!hasEdges) return
+
+          // Collect all unique edge materials used in this piece
+          const pieceEdgeMaterials = new Set<string>()
+
+          // Check each edge for custom material
+          if (piece.edgeTop && piece.customEdgeTop) {
+            pieceEdgeMaterials.add(piece.customEdgeTop.id)
+          } else if (piece.edgeTop && spec.edgeMaterial) {
+            pieceEdgeMaterials.add(spec.edgeMaterial.id)
+          }
+
+          if (piece.edgeBottom && piece.customEdgeBottom) {
+            pieceEdgeMaterials.add(piece.customEdgeBottom.id)
+          } else if (piece.edgeBottom && spec.edgeMaterial) {
+            pieceEdgeMaterials.add(spec.edgeMaterial.id)
+          }
+
+          if (piece.edgeLeft && piece.customEdgeLeft) {
+            pieceEdgeMaterials.add(piece.customEdgeLeft.id)
+          } else if (piece.edgeLeft && spec.edgeMaterial) {
+            pieceEdgeMaterials.add(spec.edgeMaterial.id)
+          }
+
+          if (piece.edgeRight && piece.customEdgeRight) {
+            pieceEdgeMaterials.add(piece.customEdgeRight.id)
+          } else if (piece.edgeRight && spec.edgeMaterial) {
+            pieceEdgeMaterials.add(spec.edgeMaterial.id)
+          }
+
+          // For simplicity, use the first edge material found
+          // (pieces with mixed edge materials are complex and rare)
+          const edgeMaterialId = Array.from(pieceEdgeMaterials)[0]
+          if (!edgeMaterialId) return
+
+          // Determine the edge material object
+          const edgeMaterial =
+            piece.customEdgeTop || piece.customEdgeBottom ||
+            piece.customEdgeLeft || piece.customEdgeRight ||
+            spec.edgeMaterial
+
+          if (!edgeMaterial) return
+
+          const key = edgeMaterialId
+          if (!edgeMaterialGroups.has(key)) {
+            edgeMaterialGroups.set(key, {
+              edgeMaterial: { id: edgeMaterial.id, name: edgeMaterial.name },
+              pieces: []
+            })
+          }
+          edgeMaterialGroups.get(key)!.pieces.push(piece)
+        })
+
+        // Calculate consumption for each edge material group
+        edgeMaterialGroups.forEach(group => {
+          const consumption = calculateMaterialEdgeConsumption(
+            group.pieces,
             spec.material?.title || spec.material?.name || 'Unknown Material',
-            spec.edgeMaterial.name,
+            group.edgeMaterial.name,
             edgeBuffer
           )
-          edgeConsumption.push(materialEdgeConsumption)
-        }
+          materialEdgeConsumptions.push(consumption)
+          edgeConsumption.push(consumption)
+        })
       }
 
       // Calculate cutting costs for this material
+      // Use first edge consumption or null if none
       if (spec.pieces.length > 0) {
         const materialCuttingCost = calculateCuttingCosts(
           spec.pieces,
           spec.material?.title || spec.material?.name || 'Unknown Material',
-          materialEdgeConsumption,
+          materialEdgeConsumptions[0] || null,
           cuttingCostConfig
         )
         cuttingCosts.push(materialCuttingCost)

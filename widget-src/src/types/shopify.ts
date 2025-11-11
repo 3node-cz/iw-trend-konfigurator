@@ -152,6 +152,11 @@ export interface CuttingPiece {
   edgeLeft: number | null // Hrana ľavá - thickness in mm
   edgeRight: number | null // Hrana pravá - thickness in mm
   notes: string // Poznámka
+  // Custom edge materials - optional, fallback to default edgeMaterial if null
+  customEdgeTop?: EdgeMaterial | null
+  customEdgeBottom?: EdgeMaterial | null
+  customEdgeLeft?: EdgeMaterial | null
+  customEdgeRight?: EdgeMaterial | null
 }
 
 export interface CuttingSpecification {

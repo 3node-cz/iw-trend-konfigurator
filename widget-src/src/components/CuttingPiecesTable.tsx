@@ -21,6 +21,7 @@ import {
 import {
   Delete as DeleteIcon,
   Edit as EditIcon,
+  Tune as TuneIcon,
 } from "@mui/icons-material";
 import type { CuttingPiece, EdgeMaterial } from "../types/shopify";
 import {
@@ -29,6 +30,7 @@ import {
   EdgeThicknessSelect,
   HelpTooltip,
   WoodGrainVisualization,
+  CustomEdgeDialog,
 } from "./common";
 import PieceShapePreview from "./common/PieceShapePreview";
 import NotesDialog from "./common/NotesDialog";
@@ -67,6 +69,17 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
     open: false,
     pieceId: "",
     value: "",
+  });
+
+  // State for custom edge dialog
+  const [customEdgeDialog, setCustomEdgeDialog] = useState<{
+    open: boolean;
+    pieceId: string;
+    piece: CuttingPiece | null;
+  }>({
+    open: false,
+    pieceId: "",
+    piece: null,
   });
 
 
@@ -532,101 +545,122 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
             />
           </Box>
         ),
-        size: 160,
+        size: 200,
         cell: ({ row }) => {
           const piece = row.original;
+          const hasAnyEdge = piece.edgeTop || piece.edgeBottom || piece.edgeLeft || piece.edgeRight;
+
           return (
-            <Box
-              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0.5 }}
-            >
+            <Box>
               <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
+                sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0.5, mb: hasAnyEdge ? 0.5 : 0 }}
               >
-                <Typography
-                  variant="caption"
-                  sx={{ fontSize: "0.65rem", mb: 0.5 }}
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
                 >
-                  Spodná
-                </Typography>
-                <EdgeThicknessSelect
-                  value={piece.edgeBottom}
-                  onChange={(value) =>
-                    handlePieceChange(row.original.id, { edgeBottom: value })
-                  }
-                  edgeMaterial={edgeMaterial}
-                  minWidth={60}
-                />
-              </Box>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{ fontSize: "0.65rem", mb: 0.5 }}
+                  <Typography
+                    variant="caption"
+                    sx={{ fontSize: "0.65rem", mb: 0.5 }}
+                  >
+                    Spodná
+                  </Typography>
+                  <EdgeThicknessSelect
+                    value={piece.edgeBottom}
+                    onChange={(value) =>
+                      handlePieceChange(row.original.id, { edgeBottom: value })
+                    }
+                    edgeMaterial={piece.customEdgeBottom || edgeMaterial}
+                    minWidth={60}
+                  />
+                </Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
                 >
-                  Vrchná
-                </Typography>
-                <EdgeThicknessSelect
-                  value={piece.edgeTop}
-                  onChange={(value) =>
-                    handlePieceChange(row.original.id, { edgeTop: value })
-                  }
-                  edgeMaterial={edgeMaterial}
-                  minWidth={60}
-                />
-              </Box>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{ fontSize: "0.65rem", mb: 0.5 }}
+                  <Typography
+                    variant="caption"
+                    sx={{ fontSize: "0.65rem", mb: 0.5 }}
+                  >
+                    Vrchná
+                  </Typography>
+                  <EdgeThicknessSelect
+                    value={piece.edgeTop}
+                    onChange={(value) =>
+                      handlePieceChange(row.original.id, { edgeTop: value })
+                    }
+                    edgeMaterial={piece.customEdgeTop || edgeMaterial}
+                    minWidth={60}
+                  />
+                </Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
                 >
-                  Ľavá
-                </Typography>
-                <EdgeThicknessSelect
-                  value={piece.edgeLeft}
-                  onChange={(value) =>
-                    handlePieceChange(row.original.id, { edgeLeft: value })
-                  }
-                  edgeMaterial={edgeMaterial}
-                  minWidth={60}
-                />
-              </Box>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{ fontSize: "0.65rem", mb: 0.5 }}
+                  <Typography
+                    variant="caption"
+                    sx={{ fontSize: "0.65rem", mb: 0.5 }}
+                  >
+                    Ľavá
+                  </Typography>
+                  <EdgeThicknessSelect
+                    value={piece.edgeLeft}
+                    onChange={(value) =>
+                      handlePieceChange(row.original.id, { edgeLeft: value })
+                    }
+                    edgeMaterial={piece.customEdgeLeft || edgeMaterial}
+                    minWidth={60}
+                  />
+                </Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
                 >
-                  Pravá
-                </Typography>
-                <EdgeThicknessSelect
-                  value={piece.edgeRight}
-                  onChange={(value) =>
-                    handlePieceChange(row.original.id, { edgeRight: value })
-                  }
-                  edgeMaterial={edgeMaterial}
-                  minWidth={60}
-                />
+                  <Typography
+                    variant="caption"
+                    sx={{ fontSize: "0.65rem", mb: 0.5 }}
+                  >
+                    Pravá
+                  </Typography>
+                  <EdgeThicknessSelect
+                    value={piece.edgeRight}
+                    onChange={(value) =>
+                      handlePieceChange(row.original.id, { edgeRight: value })
+                    }
+                    edgeMaterial={piece.customEdgeRight || edgeMaterial}
+                    minWidth={60}
+                  />
+                </Box>
               </Box>
+
+              {hasAnyEdge && (
+                <IconButton
+                  size="small"
+                  onClick={() =>
+                    setCustomEdgeDialog({
+                      open: true,
+                      pieceId: row.original.id,
+                      piece: row.original,
+                    })
+                  }
+                  title="Iná hrana"
+                  sx={{ width: '100%', mt: 0.5 }}
+                >
+                  <TuneIcon fontSize="small" />
+                </IconButton>
+              )}
             </Box>
           );
         },
@@ -833,6 +867,27 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
           setNotesDialog({ open: false, pieceId: "", value: "" })
         }
         onSave={(notes) => handlePieceChange(notesDialog.pieceId, { notes })}
+      />
+
+      <CustomEdgeDialog
+        open={customEdgeDialog.open}
+        onClose={() =>
+          setCustomEdgeDialog({ open: false, pieceId: "", piece: null })
+        }
+        onSave={(edges) => {
+          handlePieceChange(customEdgeDialog.pieceId, {
+            customEdgeTop: edges.customEdgeTop,
+            customEdgeBottom: edges.customEdgeBottom,
+            customEdgeLeft: edges.customEdgeLeft,
+            customEdgeRight: edges.customEdgeRight,
+          });
+        }}
+        initialEdges={{
+          customEdgeTop: customEdgeDialog.piece?.customEdgeTop,
+          customEdgeBottom: customEdgeDialog.piece?.customEdgeBottom,
+          customEdgeLeft: customEdgeDialog.piece?.customEdgeLeft,
+          customEdgeRight: customEdgeDialog.piece?.customEdgeRight,
+        }}
       />
     </>
   );
