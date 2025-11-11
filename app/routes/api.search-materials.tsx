@@ -110,6 +110,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
                     materialThickness: metafield(namespace: "material", key: "thickness") {
                       value
                     }
+                    alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
+                      value
+                    }
                     allMetafields: metafields(first: 10) {
                       edges {
                         node {
@@ -167,6 +170,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
                 value
               }
               materialThickness: metafield(namespace: "material", key: "thickness") {
+                value
+              }
+              alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
                 value
               }
               allMetafields: metafields(first: 10) {
@@ -234,6 +240,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
                         value
                       }
                       materialThickness: metafield(namespace: "material", key: "thickness") {
+                        value
+                      }
+                      alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
                         value
                       }
                       allMetafields: metafields(first: 10) {
@@ -327,6 +336,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
       // Add variant-specific metafields
       if (variant) {
+        if (variant.alternativeProducts?.value) {
+          variantMetafields['custom.alternative_products'] = variant.alternativeProducts.value;
+        }
         if (variant.materialHeight?.value) {
           variantMetafields['material.height'] = variant.materialHeight.value;
         }
@@ -338,23 +350,31 @@ export async function loader({ request }: LoaderFunctionArgs) {
         }
       }
 
+      // Merge metafields: variant metafields override product metafields
+      const mergedMetafields = {
+        ...productMetafields,
+        ...variantMetafields
+      };
+
       // Debug: Log all available metafields
       console.log('📦 Product metafields for', product.title, ':', Object.keys(productMetafields));
       if (variant) {
         console.log('📦 Variant metafields for', variant.title, ':', Object.keys(variantMetafields));
         console.log('📦 Variant inventory:', variant.inventoryQuantity);
       }
+      console.log('📦 Merged metafields:', Object.keys(mergedMetafields));
+      console.log('📦 Alternative products:', mergedMetafields['custom.alternative_products']);
 
       // Get images - prefer variant image, fallback to product featured image
       const variantImage = variant?.image?.url;
       const productImage = product.featuredImage?.url;
       const productImages = product.images?.edges?.map((edge: any) => edge.node.url) || [];
 
-      // Extract dimensions from metafields
+      // Extract dimensions from metafields (use merged metafields)
       let dimensions = undefined;
-      const heightMeta = productMetafields['material.height'] || variantMetafields['material.height'];
-      const widthMeta = productMetafields['material.width'] || variantMetafields['material.width'];
-      const thicknessMeta = productMetafields['material.thickness'] || variantMetafields['material.thickness'];
+      const heightMeta = mergedMetafields['material.height'];
+      const widthMeta = mergedMetafields['material.width'];
+      const thicknessMeta = mergedMetafields['material.thickness'];
 
       if (heightMeta && widthMeta && thicknessMeta) {
         try {
@@ -387,7 +407,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
           availableForSale: variant.availableForSale,
           metafields: variantMetafields
         } : undefined,
-        metafields: productMetafields
+        metafields: mergedMetafields
       };
     };
 

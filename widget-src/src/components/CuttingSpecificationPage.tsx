@@ -259,7 +259,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
   };
 
   return (
-    <Container maxWidth={false} sx={{ maxWidth: "1920px", mx: "auto", py: 3 }}>
+    <Container maxWidth={false} sx={{ maxWidth: "1920px", mx: "auto", py: 1.5 }}>
       {/* Header */}
       <Box
         sx={{
@@ -463,13 +463,13 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
             </Box>
 
             {/* Cutting Pieces Section */}
-            <Paper sx={{ p: 3, mb: 3 }}>
+            <Box sx={{ mb: 3 }}>
               <Box
                 sx={{
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  mb: 3,
+                  mb: 2,
                 }}
               >
                 <Typography variant="h6">
@@ -525,7 +525,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
                   })()}
                 </Alert>
               )}
-            </Paper>
+            </Box>
 
             {/* Divider between materials (except last one) */}
             {index < materials.length - 1 && (

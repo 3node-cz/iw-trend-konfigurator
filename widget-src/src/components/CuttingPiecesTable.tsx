@@ -408,222 +408,168 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         },
       }),
 
-      // Edge All Around + Block Input (side by side)
+      // Block column
       columnHelper.display({
-        id: "edgeAllAroundAndBlock",
+        id: "block",
         header: () => (
-          <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center", alignItems: "center" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, justifyContent: "center" }}>
             <Typography variant="caption" sx={{ fontWeight: 600 }}>
-              Hrana
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                Blok
-              </Typography>
-              <HelpTooltip
-                title={
-                  <>
-                    Blok označuje skupinu dielcov, ktoré majú byť nadelené z jednej tabule.
-                    <br />
-                    Rôzne bloky budú optimalizované samostatne.
-                  </>
-                }
-              />
-            </Box>
-          </Box>
-        ),
-        size: 140,
-        cell: ({ row }) => {
-          const piece = row.original;
-          return (
-            <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-              <EdgeThicknessSelect
-                value={piece.edgeAllAround}
-                onChange={(value) =>
-                  handlePieceChange(row.original.id, { edgeAllAround: value })
-                }
-                edgeMaterial={edgeMaterial}
-                minWidth={65}
-              />
-              <DebouncedNumberInput
-                initialValue={piece.algorithmValue || 0}
-                onChange={(value) =>
-                  handlePieceChange(row.original.id, {
-                    algorithmValue: Math.max(0, Math.floor(value)),
-                  })
-                }
-                sx={{ minWidth: 65 }}
-                min={0}
-                step={1}
-              />
-            </Box>
-          );
-        },
-      }),
-
-      // Individual Edges (2x2 grid)
-      columnHelper.display({
-        id: "individualEdges",
-        header: () => (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Typography variant="caption" sx={{ fontWeight: 600 }}>
-              Hrany
+              Blok
             </Typography>
             <HelpTooltip
               title={
-                <Box sx={{ py: 1, maxWidth: 300 }}>
-                  <Typography variant="caption" sx={{ display: "block", mb: 2, fontWeight: 600 }}>
-                    Orientácia hrán pri porezávaní materiálu:
-                  </Typography>
-
-                  <Box sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    mb: 2,
-                    p: 2,
-                    border: '1px solid #e0e0e0',
-                    borderRadius: 1,
-                    backgroundColor: '#fafafa'
-                  }}>
-                    <WoodGrainVisualization
-                      width={180}
-                      height={100}
-                      grainDirection="vertical"
-                      showLabels={true}
-                      showArrows={false}
-                    />
-                  </Box>
-
-                  <Typography variant="caption" sx={{ display: "block", mt: 2 }}>
-                    Hrany sa aplikujú podľa tejto orientácie pri rezaní materiálu. Smery vlákien dreva sú znázornené vertikálnymi čiarami.
-                  </Typography>
-                </Box>
+                <>
+                  Blok označuje skupinu dielcov, ktoré majú byť nadelené z jednej tabule.
+                  <br />
+                  Rôzne bloky budú optimalizované samostatne.
+                </>
               }
             />
           </Box>
         ),
-        size: 280,
+        size: 70,
+        cell: ({ row }) => {
+          const piece = row.original;
+          return (
+            <DebouncedNumberInput
+              initialValue={piece.algorithmValue || 0}
+              onChange={(value) =>
+                handlePieceChange(row.original.id, {
+                  algorithmValue: Math.max(0, Math.floor(value)),
+                })
+              }
+              sx={{ width: "100%" }}
+              min={0}
+              step={1}
+            />
+          );
+        },
+      }),
+
+      // Edge All Around column
+      columnHelper.display({
+        id: "edgeAllAround",
+        header: "Hrana dookola",
+        size: 80,
+        cell: ({ row }) => {
+          const piece = row.original;
+          return (
+            <EdgeThicknessSelect
+              value={piece.edgeAllAround}
+              onChange={(value) =>
+                handlePieceChange(row.original.id, { edgeAllAround: value })
+              }
+              edgeMaterial={edgeMaterial}
+              minWidth={70}
+            />
+          );
+        },
+      }),
+
+      // Bottom Edge column
+      columnHelper.display({
+        id: "edgeBottom",
+        header: "Spodná",
+        size: 70,
+        cell: ({ row }) => {
+          const piece = row.original;
+          return (
+            <EdgeThicknessSelect
+              value={piece.edgeBottom}
+              onChange={(value) =>
+                handlePieceChange(row.original.id, { edgeBottom: value })
+              }
+              edgeMaterial={piece.customEdgeBottom || edgeMaterial}
+              minWidth={60}
+            />
+          );
+        },
+      }),
+
+      // Top Edge column
+      columnHelper.display({
+        id: "edgeTop",
+        header: "Vrchná",
+        size: 70,
+        cell: ({ row }) => {
+          const piece = row.original;
+          return (
+            <EdgeThicknessSelect
+              value={piece.edgeTop}
+              onChange={(value) =>
+                handlePieceChange(row.original.id, { edgeTop: value })
+              }
+              edgeMaterial={piece.customEdgeTop || edgeMaterial}
+              minWidth={60}
+            />
+          );
+        },
+      }),
+
+      // Left Edge column
+      columnHelper.display({
+        id: "edgeLeft",
+        header: "Ľavá",
+        size: 70,
+        cell: ({ row }) => {
+          const piece = row.original;
+          return (
+            <EdgeThicknessSelect
+              value={piece.edgeLeft}
+              onChange={(value) =>
+                handlePieceChange(row.original.id, { edgeLeft: value })
+              }
+              edgeMaterial={piece.customEdgeLeft || edgeMaterial}
+              minWidth={60}
+            />
+          );
+        },
+      }),
+
+      // Right Edge column
+      columnHelper.display({
+        id: "edgeRight",
+        header: "Pravá",
+        size: 70,
+        cell: ({ row }) => {
+          const piece = row.original;
+          return (
+            <EdgeThicknessSelect
+              value={piece.edgeRight}
+              onChange={(value) =>
+                handlePieceChange(row.original.id, { edgeRight: value })
+              }
+              edgeMaterial={piece.customEdgeRight || edgeMaterial}
+              minWidth={60}
+            />
+          );
+        },
+      }),
+
+      // Custom Edge Button column
+      columnHelper.display({
+        id: "customEdgeButton",
+        header: "",
+        size: 50,
         cell: ({ row }) => {
           const piece = row.original;
           const hasAnyEdge = piece.edgeTop || piece.edgeBottom || piece.edgeLeft || piece.edgeRight;
 
-          return (
-            <Box>
-              <Box
-                sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mb: hasAnyEdge ? 0.5 : 0 }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    minWidth: 60,
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{ fontSize: "0.65rem", mb: 0.5 }}
-                  >
-                    Spodná
-                  </Typography>
-                  <EdgeThicknessSelect
-                    value={piece.edgeBottom}
-                    onChange={(value) =>
-                      handlePieceChange(row.original.id, { edgeBottom: value })
-                    }
-                    edgeMaterial={piece.customEdgeBottom || edgeMaterial}
-                    minWidth={60}
-                  />
-                </Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    minWidth: 60,
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{ fontSize: "0.65rem", mb: 0.5 }}
-                  >
-                    Vrchná
-                  </Typography>
-                  <EdgeThicknessSelect
-                    value={piece.edgeTop}
-                    onChange={(value) =>
-                      handlePieceChange(row.original.id, { edgeTop: value })
-                    }
-                    edgeMaterial={piece.customEdgeTop || edgeMaterial}
-                    minWidth={60}
-                  />
-                </Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    minWidth: 60,
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{ fontSize: "0.65rem", mb: 0.5 }}
-                  >
-                    Ľavá
-                  </Typography>
-                  <EdgeThicknessSelect
-                    value={piece.edgeLeft}
-                    onChange={(value) =>
-                      handlePieceChange(row.original.id, { edgeLeft: value })
-                    }
-                    edgeMaterial={piece.customEdgeLeft || edgeMaterial}
-                    minWidth={60}
-                  />
-                </Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    minWidth: 60,
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{ fontSize: "0.65rem", mb: 0.5 }}
-                  >
-                    Pravá
-                  </Typography>
-                  <EdgeThicknessSelect
-                    value={piece.edgeRight}
-                    onChange={(value) =>
-                      handlePieceChange(row.original.id, { edgeRight: value })
-                    }
-                    edgeMaterial={piece.customEdgeRight || edgeMaterial}
-                    minWidth={60}
-                  />
-                </Box>
-              </Box>
-
-              {hasAnyEdge && (
-                <IconButton
-                  size="small"
-                  onClick={() =>
-                    setCustomEdgeDialog({
-                      open: true,
-                      pieceId: row.original.id,
-                      piece: row.original,
-                    })
-                  }
-                  title="Iná hrana"
-                  sx={{ width: '100%', mt: 0.5 }}
-                >
-                  <TuneIcon fontSize="small" />
-                </IconButton>
-              )}
-            </Box>
-          );
+          return hasAnyEdge ? (
+            <IconButton
+              size="small"
+              onClick={() =>
+                setCustomEdgeDialog({
+                  open: true,
+                  pieceId: row.original.id,
+                  piece: row.original,
+                })
+              }
+              title="Iná hrana"
+            >
+              <TuneIcon fontSize="small" />
+            </IconButton>
+          ) : null;
         },
       }),
 
