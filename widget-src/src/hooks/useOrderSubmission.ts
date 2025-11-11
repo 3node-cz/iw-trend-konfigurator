@@ -123,57 +123,77 @@ export const useOrderSubmission = () => {
               },
             ],
           });
+        }
 
-          // Add edge material line item if present
-          if (spec.edgeMaterial && spec.pieces.length > 0) {
-            // Calculate total edge length needed (same logic as OrderInvoiceTable)
-            const totalEdgeLength = spec.pieces.reduce((sum, piece) => {
-              let pieceEdgeLength = 0;
-              if (piece.edgeAllAround) {
-                pieceEdgeLength =
-                  ((piece.length + piece.width) * 2 * piece.quantity) / 1000; // Convert to meters
-              } else {
-                const edges = [
-                  piece.edgeTop,
-                  piece.edgeBottom,
-                  piece.edgeLeft,
-                  piece.edgeRight,
-                ];
-                edges.forEach((edge) => {
-                  if (edge) {
-                    // Simplified edge length calculation
-                    pieceEdgeLength +=
-                      (((piece.length + piece.width) / 2) * piece.quantity) /
-                      1000;
-                  }
-                });
+        // Add edge materials from edge consumption calculations
+        // This handles multiple edge materials per specification (including custom edges)
+        if (completeOrder.orderCalculations?.edgeConsumption) {
+          for (const edgeConsumption of completeOrder.orderCalculations.edgeConsumption) {
+            if (edgeConsumption.totalEdgeLengthMeters > 0) {
+              // Find the edge material in specifications
+              const relatedSpec = specsWithPieces.find(
+                s => (s.material?.title || s.material?.name) === edgeConsumption.materialName
+              );
+
+              if (!relatedSpec) {
+                console.warn(`Could not find specification for edge material: ${edgeConsumption.edgeMaterialName}`);
+                continue;
               }
-              return sum + pieceEdgeLength;
-            }, 0);
 
-            if (totalEdgeLength > 0) {
-              // Get the correct variant ID for the edge material - check both variantId and variant.id
+              // Find edge material - check default and all custom edges in pieces
+              let edgeMaterialToAdd = null;
+
+              // Check if it's the default edge material
+              if (relatedSpec.edgeMaterial?.name === edgeConsumption.edgeMaterialName) {
+                edgeMaterialToAdd = relatedSpec.edgeMaterial;
+              } else {
+                // Search in custom edges
+                for (const piece of relatedSpec.pieces) {
+                  const customEdges = [
+                    piece.customEdgeTop,
+                    piece.customEdgeBottom,
+                    piece.customEdgeLeft,
+                    piece.customEdgeRight,
+                  ].filter(Boolean);
+
+                  for (const customEdge of customEdges) {
+                    if (customEdge?.name === edgeConsumption.edgeMaterialName) {
+                      edgeMaterialToAdd = customEdge;
+                      break;
+                    }
+                  }
+                  if (edgeMaterialToAdd) break;
+                }
+              }
+
+              if (!edgeMaterialToAdd) {
+                console.warn(`Could not find edge material: ${edgeConsumption.edgeMaterialName}`);
+                continue;
+              }
+
+              // Get the correct variant ID for the edge material
               let edgeMerchandiseId: string;
-              if (spec.edgeMaterial.variantId) {
-                edgeMerchandiseId = spec.edgeMaterial.variantId;
-              } else if (spec.edgeMaterial.variant?.id) {
-                edgeMerchandiseId = spec.edgeMaterial.variant.id;
+              if (edgeMaterialToAdd.variantId) {
+                edgeMerchandiseId = edgeMaterialToAdd.variantId;
+              } else if (edgeMaterialToAdd.variant?.id) {
+                edgeMerchandiseId = edgeMaterialToAdd.variant.id;
               } else {
                 // Fallback to product ID if no variant ID available
-                edgeMerchandiseId = spec.edgeMaterial.id;
-                console.warn(`Using product ID as fallback for edge material: ${spec.edgeMaterial.name}`);
+                edgeMerchandiseId = edgeMaterialToAdd.id;
+                console.warn(`Using product ID as fallback for edge material: ${edgeMaterialToAdd.name}`);
               }
 
               allLineItems.push({
                 variantId: edgeMerchandiseId,
-                quantity: Math.ceil(totalEdgeLength), // Round up to whole meters
+                quantity: Math.ceil(edgeConsumption.totalEdgeLengthMeters), // Round up to whole meters
                 attributes: [
                   {
                     key: "_edge_specification",
                     value: JSON.stringify({
-                      edgeMaterial: spec.edgeMaterial,
-                      totalEdgeLength: totalEdgeLength,
-                      relatedMaterial: spec.material.name,
+                      edgeMaterial: edgeMaterialToAdd,
+                      totalEdgeLength: edgeConsumption.totalEdgeLengthMeters,
+                      relatedMaterial: edgeConsumption.materialName,
+                      consumptionByThickness: edgeConsumption.consumptionByThickness,
                     }),
                   },
                 ],

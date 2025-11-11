@@ -105,42 +105,67 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
       materialLayouts: materialLayouts, // Store layouts for plan numbering
     })
 
-    // Add edge material if present (grouped with the material)
-    if (spec.edgeMaterial) {
+  })
 
-      const totalEdgeLength = spec.pieces.reduce((sum, piece) => {
-        let pieceEdgeLength = 0
+  // Add edge materials from edge consumption calculations
+  // This handles multiple edge materials per specification (including custom edges)
+  if (orderCalculations?.edgeConsumption) {
+    orderCalculations.edgeConsumption.forEach((edgeConsumption, edgeIndex) => {
+      if (edgeConsumption.totalEdgeLengthMeters > 0) {
+        // Find the related specification to get edge material details
+        const relatedSpecIndex = specifications.findIndex(
+          s => (s.material?.title || s.material?.name) === edgeConsumption.materialName
+        );
+        const relatedSpec = relatedSpecIndex >= 0 ? specifications[relatedSpecIndex] : null;
 
-        // Use same calculation as edgeCalculations.ts
-        if (piece.edgeTop) pieceEdgeLength += (piece.length * piece.quantity) / 1000
-        if (piece.edgeBottom) pieceEdgeLength += (piece.length * piece.quantity) / 1000
-        if (piece.edgeLeft) pieceEdgeLength += (piece.width * piece.quantity) / 1000
-        if (piece.edgeRight) pieceEdgeLength += (piece.width * piece.quantity) / 1000
+        if (!relatedSpec) {
+          console.warn(`Could not find specification for edge: ${edgeConsumption.edgeMaterialName}`);
+          return;
+        }
 
+        // Find the edge material object (default or custom)
+        let edgeMaterialObj = null;
+        if (relatedSpec.edgeMaterial?.name === edgeConsumption.edgeMaterialName) {
+          edgeMaterialObj = relatedSpec.edgeMaterial;
+        } else {
+          // Search in custom edges
+          for (const piece of relatedSpec.pieces) {
+            const customEdges = [
+              piece.customEdgeTop,
+              piece.customEdgeBottom,
+              piece.customEdgeLeft,
+              piece.customEdgeRight,
+            ].filter(Boolean);
 
-        return sum + pieceEdgeLength
-      }, 0)
+            for (const customEdge of customEdges) {
+              if (customEdge?.name === edgeConsumption.edgeMaterialName) {
+                edgeMaterialObj = customEdge;
+                break;
+              }
+            }
+            if (edgeMaterialObj) break;
+          }
+        }
 
-
-      if (totalEdgeLength > 0) {
-        const originalEdgeUnitPrice = spec.edgeMaterial.price?.amount || 0
-        const discountedEdgeUnitPrice = applyDiscount(originalEdgeUnitPrice)
+        const originalEdgeUnitPrice = edgeMaterialObj?.price?.amount || 0;
+        const discountedEdgeUnitPrice = applyDiscount(originalEdgeUnitPrice);
+        const roundedQuantity = Math.ceil(edgeConsumption.totalEdgeLengthMeters);
 
         orderItems.push({
-          id: `edge-${specIndex}`,
-          name: `${spec.edgeMaterial.name}`,
-          code: spec.edgeMaterial.code || '',
-          quantity: Math.ceil(totalEdgeLength),
+          id: `edge-${relatedSpecIndex}-${edgeIndex}`,
+          name: edgeConsumption.edgeMaterialName,
+          code: edgeMaterialObj?.code || '',
+          quantity: roundedQuantity,
           unit: 'm',
           unitPrice: discountedEdgeUnitPrice,
-          totalPrice: Math.ceil(totalEdgeLength) * discountedEdgeUnitPrice,
+          totalPrice: roundedQuantity * discountedEdgeUnitPrice,
           type: 'edge',
-          materialIndex: specIndex + 1,
+          materialIndex: relatedSpecIndex + 1,
           isEdgeForMaterial: true,
-        })
+        });
       }
-    }
-  })
+    });
+  }
 
   // Add cutting services
   const totalCuttingCost = orderCalculations.totals?.totalCuttingCost || 0
