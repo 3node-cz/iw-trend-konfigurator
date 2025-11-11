@@ -5,11 +5,67 @@ import type {
   CuttingPiece,
   EdgeMaterial,
 } from '../types/shopify'
+import { searchMaterials } from '../services/shopifyApi'
 
 interface MaterialSpec {
   selectedEdgeMaterial: EdgeMaterial | null
   glueType: string
   cuttingPieces: CuttingPiece[]
+}
+
+// Helper to fetch first edge from alternative_products metafield (List - Product type)
+const fetchDefaultEdge = async (material: MaterialSearchResult): Promise<EdgeMaterial | null> => {
+  try {
+    const alternativeProducts = material.metafields?.['custom.alternative_products']
+    if (!alternativeProducts) return null
+
+    // Handle List-Product metafield: can be array or JSON string
+    let productIds: string[] = []
+    if (Array.isArray(alternativeProducts)) {
+      productIds = alternativeProducts
+    } else if (typeof alternativeProducts === 'string') {
+      try {
+        const parsed = JSON.parse(alternativeProducts)
+        productIds = Array.isArray(parsed) ? parsed : []
+      } catch {
+        // If not JSON, treat as single product ID/handle
+        productIds = [alternativeProducts]
+      }
+    }
+
+    if (productIds.length === 0) return null
+
+    // Search for first edge product
+    const results = await searchMaterials({
+      query: productIds[0],
+      collection: 'hrany',
+      limit: 1,
+    })
+
+    if (results.length === 0) return null
+
+    const edge = results[0]
+    return {
+      id: edge.id,
+      variantId: edge.variant?.id,
+      code: edge.variant?.sku,
+      name: edge.title,
+      productCode: edge.variant?.sku || edge.handle,
+      availability: edge.variant?.availableForSale ? 'available' : 'unavailable',
+      thickness: 0.8,
+      availableThicknesses: [0.4, 0.8, 2],
+      warehouse: 'Default',
+      price: edge.variant?.price ? {
+        amount: parseFloat(edge.variant.price),
+        currency: 'EUR',
+        perUnit: 'm',
+      } : undefined,
+      image: edge.image,
+    }
+  } catch (error) {
+    console.error('Error fetching default edge:', error)
+    return null
+  }
 }
 
 export const useMaterialSpecs = (
@@ -41,28 +97,69 @@ export const useMaterialSpecs = (
 
   // Update materialSpecs when materials array changes, preserving existing data
   useEffect(() => {
-    setMaterialSpecs((prevSpecs) => {
+    const updateSpecs = async () => {
       const newSpecs: { [materialId: string]: MaterialSpec } = {}
+      const edgeFetchPromises: { [materialId: string]: Promise<EdgeMaterial | null> } = {}
 
-      materials.forEach((material) => {
-        if (prevSpecs[material.id]) {
+      // First pass: Set up specs and identify materials that need default edges
+      for (const material of materials) {
+        if (materialSpecs[material.id]) {
           // Preserve existing specification if material already exists
-          newSpecs[material.id] = prevSpecs[material.id]
+          newSpecs[material.id] = materialSpecs[material.id]
         } else {
           // Initialize new material from existingSpecifications or defaults
           const existingSpec = existingSpecifications.find(
             (spec) => spec.material.id === material.id,
           )
-          newSpecs[material.id] = {
-            selectedEdgeMaterial: existingSpec?.edgeMaterial || null,
-            glueType: existingSpec?.glueType || 'PUR transparentná/bílá',
-            cuttingPieces: existingSpec?.pieces || [],
+
+          if (existingSpec?.edgeMaterial) {
+            // Use existing edge if available
+            newSpecs[material.id] = {
+              selectedEdgeMaterial: existingSpec.edgeMaterial,
+              glueType: existingSpec.glueType || 'PUR transparentná/bílá',
+              cuttingPieces: existingSpec.pieces || [],
+            }
+          } else {
+            // Try to fetch default edge from alternative_products
+            newSpecs[material.id] = {
+              selectedEdgeMaterial: null,
+              glueType: existingSpec?.glueType || 'PUR transparentná/bílá',
+              cuttingPieces: existingSpec?.pieces || [],
+            }
+            // Start async fetch
+            edgeFetchPromises[material.id] = fetchDefaultEdge(material)
           }
         }
-      })
+      }
 
-      return newSpecs
-    })
+      // Update specs immediately with what we have
+      setMaterialSpecs(newSpecs)
+
+      // Wait for edge fetches and update specs with default edges
+      const materialIds = Object.keys(edgeFetchPromises)
+      if (materialIds.length > 0) {
+        const edgeResults = await Promise.all(
+          materialIds.map(id => edgeFetchPromises[id])
+        )
+
+        // Update specs with fetched edges
+        setMaterialSpecs(prevSpecs => {
+          const updatedSpecs = { ...prevSpecs }
+          materialIds.forEach((materialId, index) => {
+            const defaultEdge = edgeResults[index]
+            if (defaultEdge && updatedSpecs[materialId]) {
+              updatedSpecs[materialId] = {
+                ...updatedSpecs[materialId],
+                selectedEdgeMaterial: defaultEdge,
+              }
+            }
+          })
+          return updatedSpecs
+        })
+      }
+    }
+
+    updateSpecs()
   }, [materials, existingSpecifications])
 
   const handleEdgeMaterialChange = useCallback(

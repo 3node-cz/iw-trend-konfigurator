@@ -89,7 +89,7 @@ function App() {
 
   const handleOrderCreated = (orderData: OrderFormData) => {
     setCurrentOrder(orderData);
-    setCurrentView("material-selection");
+    setCurrentView("cutting-specification");
   };
 
   const handleBackToOrders = () => {
@@ -107,8 +107,8 @@ function App() {
     if (specifications) {
       setCuttingSpecifications(specifications);
     }
-    setCurrentView("material-selection");
-    // Don't reset selectedMaterials or cutting specs - preserve them when going back
+    // Go back to orders instead of material-selection (page merged)
+    setCurrentView("orders");
   };
 
   const handleBackToCuttingSpecification = () => {
@@ -343,8 +343,7 @@ function App() {
           />
         )}
         {currentView === "cutting-specification" &&
-          currentOrder &&
-          selectedMaterials.length > 0 && (
+          currentOrder && (
             <CuttingSpecificationPage
               materials={selectedMaterials.map(
                 (material) =>

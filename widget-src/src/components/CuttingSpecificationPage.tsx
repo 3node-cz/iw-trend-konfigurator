@@ -9,7 +9,6 @@ import {
   Alert,
   IconButton,
 } from "@mui/material";
-import Grid from "@mui/system/Grid";
 import {
   ArrowBack as ArrowBackIcon,
   Add as AddIcon,
@@ -306,6 +305,47 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
         )}
       </Box>
 
+      {/* Material Search - Show at top if no materials yet */}
+      {materials.length === 0 && onAddMaterial && (
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+            <SearchIcon color="primary" />
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Vyhľadať a pridať materiály
+            </Typography>
+          </Box>
+
+          <MaterialSearch
+            onSearch={handleSearch}
+            isLoading={isLoadingSearch}
+            placeholder="Začnite zadaním názvu alebo kódu materiálu..."
+            searchValue={searchQuery}
+          />
+
+          {searchResults.length > 0 && (
+            <Box sx={{ mt: 3 }}>
+              <MaterialResultsTable
+                results={searchResults}
+                onAddMaterial={handleAddMaterialToOrder}
+                selectedMaterialIds={[]}
+                customerDiscount={customer?.discountPercentage || 0}
+              />
+            </Box>
+          )}
+
+          {searchQuery.length >= 2 &&
+            searchResults.length === 0 &&
+            !isLoadingSearch && (
+              <Typography
+                variant="body2"
+                sx={{ mt: 2, color: "text.secondary", textAlign: "center" }}
+              >
+                Nenašli sa žiadne materiály pre "{searchQuery}"
+              </Typography>
+            )}
+        </Paper>
+      )}
+
       {/* Multiple Materials - Scrollable Cards */}
       {materials.filter(material => materialSpecs[material.id]).map((material, index) => {
         const materialSpec = materialSpecs[material.id];
@@ -358,15 +398,15 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
               )}
             </Box>
 
-            {/* Material and Edge Selection */}
-            <Grid container spacing={3} sx={{ mb: 3 }}>
+            {/* Material and Edge Selection - Single Row Layout */}
+            <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
               {/* Material Info Card */}
-              <Grid size={{ xs: 12, md: 6 }}>
+              <Box sx={{ flex: 1 }}>
                 <MaterialInfoCard material={material} />
-              </Grid>
+              </Box>
 
               {/* Edge Selection Card */}
-              <Grid size={{ xs: 12, md: 6 }}>
+              <Box sx={{ flex: 1 }}>
                 <EdgeSelectionCard
                   selectedEdge={materialSpec?.selectedEdgeMaterial || null}
                   glueType={materialSpec?.glueType || 'PUR transparentná/bílá'}
@@ -377,8 +417,8 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
                     handleGlueTypeChange(material.id, glue)
                   }
                 />
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
 
             {/* Cutting Pieces Section */}
             <Paper sx={{ p: 3, mb: 3 }}>
@@ -453,8 +493,8 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
         );
       })}
 
-      {/* Add More Materials Section */}
-      {onAddMaterial && (
+      {/* Add More Materials Section - Only show if materials already exist */}
+      {materials.length > 0 && onAddMaterial && (
         <Paper sx={{ p: 3, mb: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
             <SearchIcon color="primary" />

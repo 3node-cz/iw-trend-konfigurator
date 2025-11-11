@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogTitle,
@@ -86,6 +86,16 @@ const CustomEdgeDialog: React.FC<CustomEdgeDialogProps> = ({
     left: false,
     right: false,
   })
+
+  // Reset state when dialog opens with new initialEdges
+  useEffect(() => {
+    if (open) {
+      setCustomEdgeTop(initialEdges.customEdgeTop || null)
+      setCustomEdgeBottom(initialEdges.customEdgeBottom || null)
+      setCustomEdgeLeft(initialEdges.customEdgeLeft || null)
+      setCustomEdgeRight(initialEdges.customEdgeRight || null)
+    }
+  }, [open, initialEdges])
 
   const handleSearch = async (position: EdgePosition, query: string) => {
     setSearchQueries((prev) => ({ ...prev, [position]: query }))
