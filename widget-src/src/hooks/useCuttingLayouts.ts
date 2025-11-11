@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { OptimizedGuillotineCuttingOptimizer } from '../utils/guillotineCutting'
 import type { CuttingSpecification, CuttingPiece } from '../types/shopify'
+import type { CuttingConfig } from '../main'
 import { getEffectiveBoardDimensions, applyDupelTransform } from '../config/cutting'
 
 export interface UnplacedPieceInfo {
@@ -27,10 +28,14 @@ export interface CuttingLayoutData {
   unplacedPiecesInfo?: UnplacedPieceInfo[]
 }
 
-export const useCuttingLayouts = (specifications: CuttingSpecification[]) => {
+export const useCuttingLayouts = (
+  specifications: CuttingSpecification[],
+  cuttingConfig?: CuttingConfig
+) => {
   const cuttingLayouts = useMemo(() => {
     const allLayouts: CuttingLayoutData[] = []
-    
+    const sawWidth = cuttingConfig?.sawWidth || 2 // Default to 2mm if not provided
+
     specifications.forEach((specification, specIndex) => {
       if (specification.pieces.length === 0) {
         return
@@ -69,7 +74,8 @@ export const useCuttingLayouts = (specifications: CuttingSpecification[]) => {
 
       const optimizer = new OptimizedGuillotineCuttingOptimizer(
         effectiveDimensions.width,
-        effectiveDimensions.height
+        effectiveDimensions.height,
+        sawWidth
       )
 
       // Use multi-board optimization with rotation setting
@@ -117,7 +123,7 @@ export const useCuttingLayouts = (specifications: CuttingSpecification[]) => {
     })
     
     return allLayouts
-  }, [specifications])
+  }, [specifications, cuttingConfig])
 
   const overallStats = useMemo(() => {
     const stats = cuttingLayouts.reduce(

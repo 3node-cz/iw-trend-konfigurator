@@ -403,12 +403,20 @@ export const useMaterialSpecs = (
 
         // Check material dimension constraints
         if (piece.length > 0 && piece.width > 0) {
-          // Check if piece fits in material either way (with rotation)
+          // Check if piece fits in material (consider rotation setting)
           const fitsNormally = piece.length <= maxLength && piece.width <= maxWidth
           const fitsRotated = piece.length <= maxWidth && piece.width <= maxLength
 
-          if (!fitsNormally && !fitsRotated) {
-            pieceErrors.push(`Rozmery presahujú materiál (max ${maxLength}×${maxWidth} mm)`)
+          if (piece.allowRotation) {
+            // Rotation allowed - piece must fit in at least one orientation
+            if (!fitsNormally && !fitsRotated) {
+              pieceErrors.push(`Rozmery presahujú materiál (max ${maxLength}×${maxWidth} mm)`)
+            }
+          } else {
+            // Rotation NOT allowed - piece must fit exactly as specified
+            if (!fitsNormally) {
+              pieceErrors.push(`Dielec ${piece.length}×${piece.width} mm nezmestí sa na dosku ${maxLength}×${maxWidth} mm (rotácia zakázaná)`)
+            }
           }
         }
       }

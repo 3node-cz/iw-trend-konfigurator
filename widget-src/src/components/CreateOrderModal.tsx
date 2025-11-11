@@ -22,12 +22,14 @@ import {
 import { FormTextField, FormSelect } from "./common"
 import type { CustomerOrderData } from "../services/customerApi";
 import { ORDER_CONFIG } from "../constants";
+import type { ShopConfig } from "../main";
 
 interface CreateOrderModalProps {
   open: boolean;
   onClose: () => void;
   onOrderCreated?: (orderData: OrderFormData) => void;
   customer?: CustomerOrderData | null;
+  shopConfig: ShopConfig;
 }
 
 const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
@@ -35,6 +37,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   onClose,
   onOrderCreated,
   customer,
+  shopConfig,
 }) => {
 
   const [formData, setFormData] = useState<OrderFormData>(() => {
@@ -51,7 +54,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
       costCenter: "",
       cuttingCenter: "",
       deliveryMethod: "",
-      processingType: "Zlikvidovať",
+      processingType: shopConfig.processingTypes[0] || "Zlikvidovať",
       ...createOrderWithCustomerDefaults(customer),
     };
   });
@@ -64,16 +67,10 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   console.log('CreateOrderModal - Discount type:', typeof customer?.discountPercentage);
   console.log('CreateOrderModal - Show discount field?', customer && customer.discountPercentage > 0);
 
-  const locations = [
-    "ZIL - IW TREND, s.r.o., K cintorínu, Žilina",
-    "DCD - IW TREND, s.r.o., Lieskavská cesta 20, Žilina",
-    "PAR - IW TREND, s.r.o., Nitrianska cesta 50360, CEBO HOLDING, Partizánske",
-    "CEN - IW TREND, s.r.o., Pri majerí 6, Bratislava",
-  ];
-
-  const deliveryMethods = ["Osobný odber", "Doprava IW Trend"];
-
-  const processingTypes = ["Formátovať", "Zlikvidovať", "Uskladniť", "Priebaliť k dielcom", "Odber s objednávkou"];
+  // Use dynamic options from shop config
+  const locations = shopConfig.transferLocations;
+  const deliveryMethods = shopConfig.deliveryMethods;
+  const processingTypes = shopConfig.processingTypes;
 
   const handleSubmit = () => {
     try {
@@ -281,29 +278,45 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
           </Grid>
 
           {/* Customer Discount - Read-only, comes from customer data - Only show if customer is logged in and has discount */}
-          {customer && customer.discountPercentage > 0 && (
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label="Zľava zákazníka (%)"
-                type="number"
-                value={formData.discountPercentage.toString()}
-                onChange={handleFieldChange("discountPercentage")}
-                error={!!errors.discountPercentage}
-                helperText={errors.discountPercentage}
-                size="small"
-                fullWidth
-                InputProps={{
-                  readOnly: true,
-                }}
-                sx={{
-                  "& .MuiInputBase-input": {
-                    backgroundColor: "#f5f5f5",
-                    color: "text.secondary",
-                  },
-                }}
-              />
-            </Grid>
-          )}
+          {(() => {
+            const shouldShow = customer && customer.discountPercentage > 0;
+            console.log('🔍 Discount field render check:', {
+              hasCustomer: !!customer,
+              discount: customer?.discountPercentage,
+              shouldShow,
+              formDataDiscount: formData.discountPercentage
+            });
+
+            if (!shouldShow) {
+              console.log('❌ Discount field NOT rendering');
+              return null;
+            }
+
+            console.log('✅ Discount field IS rendering');
+            return (
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  label="Zľava zákazníka (%)"
+                  type="number"
+                  value={formData.discountPercentage.toString()}
+                  onChange={handleFieldChange("discountPercentage")}
+                  error={!!errors.discountPercentage}
+                  helperText={errors.discountPercentage}
+                  size="small"
+                  fullWidth
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                  sx={{
+                    "& .MuiInputBase-input": {
+                      backgroundColor: "#f5f5f5",
+                      color: "text.secondary",
+                    },
+                  }}
+                />
+              </Grid>
+            );
+          })()}
 
           {/* Notes */}
           <Grid size={{ xs: 12 }}>

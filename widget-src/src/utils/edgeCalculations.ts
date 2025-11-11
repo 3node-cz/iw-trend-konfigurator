@@ -17,17 +17,24 @@ export interface MaterialEdgeConsumption {
 
 /**
  * Calculate edge material consumption for a cutting piece
+ * Includes edge buffer (extra length on each side)
+ *
+ * @param piece - The cutting piece
+ * @param edgeBuffer - Buffer per side in mm (default 30mm)
  */
 export const calculatePieceEdgeConsumption = (
   piece: CuttingPiece,
+  edgeBuffer: number = 30
 ): EdgeConsumption[] => {
   const consumptionMap = new Map<number, number>()
 
   // Calculate perimeter for each edge thickness
-  const addEdgeLength = (thickness: number | null, length: number) => {
+  // Edge length = piece edge + buffer on each side (2x buffer total)
+  const addEdgeLength = (thickness: number | null, baseLength: number) => {
     if (thickness && thickness > 0) {
+      const edgeLengthWithBuffer = baseLength + (edgeBuffer * 2)
       const current = consumptionMap.get(thickness) || 0
-      consumptionMap.set(thickness, current + length)
+      consumptionMap.set(thickness, current + edgeLengthWithBuffer)
     }
   }
 
@@ -51,11 +58,13 @@ export const calculatePieceEdgeConsumption = (
 
 /**
  * Calculate total edge consumption for all pieces using the same edge material
+ * @param edgeBuffer - Buffer per side in mm (default 30mm)
  */
 export const calculateMaterialEdgeConsumption = (
   pieces: CuttingPiece[],
   materialName: string,
   edgeMaterialName: string,
+  edgeBuffer: number = 30
 ): MaterialEdgeConsumption => {
   const consumptionMap = new Map<
     number,
@@ -64,7 +73,7 @@ export const calculateMaterialEdgeConsumption = (
 
   // Process all pieces
   pieces.forEach((piece) => {
-    const pieceConsumption = calculatePieceEdgeConsumption(piece)
+    const pieceConsumption = calculatePieceEdgeConsumption(piece, edgeBuffer)
 
     pieceConsumption.forEach((consumption) => {
       const existing = consumptionMap.get(consumption.thickness) || {

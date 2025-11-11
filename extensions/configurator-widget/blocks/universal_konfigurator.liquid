@@ -5,6 +5,10 @@
 {% endcomment %}
 
 {% assign primary_color = shop.metafields.configurator.primary_color | default: "#007cba" %}
+{% assign cutting_config = shop.metafields.configurator.cutting_config %}
+{% assign transfer_locations = shop.metafields.configurator.transfer_locations %}
+{% assign delivery_methods = shop.metafields.configurator.delivery_methods %}
+{% assign processing_types = shop.metafields.configurator.processing_types %}
 
 <!-- React App Container -->
 <div class="universal-configurator" id="configurator-{{ block.id }}">
@@ -49,7 +53,11 @@
     "description": "{{ block.settings.description }}",
     "primaryColor": "{{ primary_color }}",
     "showCustomerDetails": {{ block.settings.show_customer_details }},
-    "showMetafields": {{ block.settings.show_metafields }}
+    "showMetafields": {{ block.settings.show_metafields }},
+    "cuttingConfig": {% if cutting_config %}{{ cutting_config }}{% else %}{"sawWidth":2,"edgeBuffer":30,"boardTrim":15}{% endif %},
+    "transferLocations": {% if transfer_locations %}{{ transfer_locations }}{% else %}["Bratislava","Košice","Žilina"]{% endif %},
+    "deliveryMethods": {% if delivery_methods %}{{ delivery_methods }}{% else %}["Doprava","Osobný odber"]{% endif %},
+    "processingTypes": {% if processing_types %}{{ processing_types }}{% else %}["Zlikvidovať","Osobný odber odpadu"]{% endif %}
   },
   "blockId": "{{ block.id }}"
 }

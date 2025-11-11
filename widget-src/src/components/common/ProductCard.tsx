@@ -12,6 +12,7 @@ import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material'
 import type { MaterialSearchResult } from '../../types/shopify'
 import { AvailabilityChip } from './'
 import { formatPriceNumber } from '../../utils/formatting'
+import { calculateAvailability } from '../../utils/availability'
 
 interface ProductCardProps {
   material: MaterialSearchResult
@@ -71,7 +72,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
               <AvailabilityChip
-                availability={material.variant?.availableForSale ? 'available' : 'unavailable'}
+                availability={calculateAvailability(material)}
                 size="small"
               />
               <Typography variant="caption" color="text.secondary">

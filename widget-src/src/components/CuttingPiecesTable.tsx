@@ -20,7 +20,6 @@ import {
 } from "@mui/material";
 import {
   Delete as DeleteIcon,
-  Visibility as VisibilityIcon,
 } from "@mui/icons-material";
 import type { CuttingPiece, EdgeMaterial } from "../types/shopify";
 import {
@@ -66,6 +65,34 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   useEffect(() => {
     validationErrorsRef.current = validationErrors;
   }, [validationErrors]);
+
+  // Helper function to determine which field has errors (DRY principle)
+  const getFieldErrors = useCallback((errors: string[]) => {
+    // Check if errors relate to length, width, or both
+    // Patterns that indicate field-specific errors:
+    // - "Dĺžka" -> length field
+    // - "Šírka" -> width field
+    // - "Rozmery presahujú", "nezmestí sa" -> both fields (dimensional)
+    // - "Blok" -> block errors shown on first piece (not field-specific)
+
+    const hasLengthError = errors.some((error) =>
+      error.includes("Dĺžka")
+    );
+    const hasWidthError = errors.some((error) =>
+      error.includes("Šírka")
+    );
+    // Dimensional errors affect both length and width
+    const hasDimensionalError = errors.some((error) =>
+      error.includes("Rozmery presahujú") ||
+      error.includes("nezmestí sa") ||
+      error.includes("rotácia zakázaná")
+    );
+
+    return {
+      hasLengthError: hasLengthError || hasDimensionalError,
+      hasWidthError: hasWidthError || hasDimensionalError,
+    };
+  }, []);
 
   // Helper function to check if all edges have the same value
   const getEdgeAllAroundValue = useCallback(
@@ -271,14 +298,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         cell: ({ row }) => {
           const piece = row.original;
           const errors = validationErrorsRef.current[piece.id] || [];
-          const hasLengthError = errors.some(
-            (error) =>
-              error.includes("Dĺžka") || error.includes("Rozmery presahujú"),
-          );
-          const hasWidthError = errors.some(
-            (error) =>
-              error.includes("Šírka") || error.includes("Rozmery presahujú"),
-          );
+          const { hasLengthError, hasWidthError } = getFieldErrors(errors);
 
           return (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
@@ -624,18 +644,8 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         id: "actions",
         header: "Akcie",
         cell: ({ row }) => {
-          const piece = row.original;
           return (
             <Box sx={{ display: "flex", gap: 0.5 }}>
-              <IconButton
-                size="small"
-                color="primary"
-                onClick={() => handlePreviewPiece(piece)}
-                title="Zobraziť náhľad"
-                disabled={!onPreviewPiece || !piece.length || !piece.width}
-              >
-                <VisibilityIcon />
-              </IconButton>
               <IconButton
                 size="small"
                 color="error"
@@ -656,6 +666,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       handleRemovePiece,
       handlePreviewPiece,
       onPreviewPiece,
+      getFieldErrors,
     ],
   );
 

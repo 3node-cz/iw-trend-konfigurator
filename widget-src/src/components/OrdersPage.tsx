@@ -7,17 +7,20 @@ import OrdersTable from "./OrdersTable";
 import type { OrderFormData } from "../types/shopify";
 import type { SavedConfiguration } from "../types/optimized-saved-config";
 import type { CustomerOrderData } from "../services/customerApi";
+import type { ShopConfig } from "../main";
 
 interface OrdersPageProps {
   onOrderCreated?: (orderData: OrderFormData) => void;
   onLoadConfiguration?: (order: SavedConfiguration) => void; // Navigate to order summary with loaded config
   customer?: CustomerOrderData | null;
+  shopConfig: ShopConfig;
 }
 
 const OrdersPage: React.FC<OrdersPageProps> = ({
   onOrderCreated,
   onLoadConfiguration,
   customer,
+  shopConfig,
 }) => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
@@ -91,7 +94,7 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
         maxWidth={false}
         sx={{ maxWidth: "1920px", mx: "auto", py: 3 }}
       >
-        <OrdersHeader onOrderCreated={handleOrderCreated} customer={customer} />
+        <OrdersHeader onOrderCreated={handleOrderCreated} customer={customer} shopConfig={shopConfig} />
         {/* Temporarily hidden - filters section */}
         {/* <OrdersFilters onFiltersChange={handleFiltersChange} /> */}
         <OrdersTable

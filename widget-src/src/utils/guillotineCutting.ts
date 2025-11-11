@@ -92,15 +92,17 @@ interface BlockGroup {
 export class OptimizedGuillotineCuttingOptimizer {
   private boardWidth: number
   private boardHeight: number
+  private sawWidth: number // Kerf - material lost to saw blade
   private freeRectangles: Rectangle[] = []
   private placedPieces: PlacedPiece[] = []
   private cutLines: CutLine[] = []
   private cutCounter = 0
   private groupCounter = 0
 
-  constructor(boardWidth: number, boardHeight: number) {
+  constructor(boardWidth: number, boardHeight: number, sawWidth: number = 2) {
     this.boardWidth = boardWidth
     this.boardHeight = boardHeight
+    this.sawWidth = sawWidth
     this.freeRectangles = [
       { x: 0, y: 0, width: boardWidth, height: boardHeight },
     ]
@@ -849,15 +851,16 @@ export class OptimizedGuillotineCuttingOptimizer {
     rect: Rectangle,
     placed: { x: number; y: number; width: number; height: number },
   ) {
-    const remainingWidth = rect.width - placed.width
-    const remainingHeight = rect.height - placed.height
+    // Account for saw width (kerf) when calculating remaining space
+    const remainingWidth = rect.width - placed.width - this.sawWidth
+    const remainingHeight = rect.height - placed.height - this.sawWidth
 
     const newRects: Rectangle[] = []
 
     // Create larger continuous areas when possible
     if (remainingWidth > 0) {
       newRects.push({
-        x: rect.x + placed.width,
+        x: rect.x + placed.width + this.sawWidth,
         y: rect.y,
         width: remainingWidth,
         height: rect.height,
@@ -878,7 +881,7 @@ export class OptimizedGuillotineCuttingOptimizer {
     if (remainingHeight > 0) {
       newRects.push({
         x: rect.x,
-        y: rect.y + placed.height,
+        y: rect.y + placed.height + this.sawWidth,
         width: placed.width,
         height: remainingHeight,
       })

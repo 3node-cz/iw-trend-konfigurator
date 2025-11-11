@@ -28,12 +28,22 @@ interface ShopifyShop {
   name: string;
 }
 
+interface CuttingConfig {
+  sawWidth: number;
+  edgeBuffer: number;
+  boardTrim: number;
+}
+
 interface ShopifySettings {
   title: string;
   description: string;
   primaryColor: string;
   showCustomerDetails: boolean;
   showMetafields: boolean;
+  cuttingConfig: CuttingConfig;
+  transferLocations: string[];
+  deliveryMethods: string[];
+  processingTypes: string[];
 }
 
 interface ShopifyWidgetConfig {

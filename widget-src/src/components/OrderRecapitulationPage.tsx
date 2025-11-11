@@ -28,6 +28,7 @@ import type {
   CompleteOrder,
 } from "../types/shopify";
 import type { CuttingLayout } from "../utils/guillotineCutting";
+import type { CuttingConfig } from "../main";
 import {
   AvailabilityChip,
   CuttingDiagramThumbnail,
@@ -50,6 +51,7 @@ import {
 interface OrderRecapitulationPageProps {
   order: OrderFormData;
   specifications: CuttingSpecification[];
+  cuttingConfig: CuttingConfig;
   onBack?: () => void;
   onSubmitOrder?: (completeOrder: CompleteOrder) => void;
   onOrderSuccess?: (checkoutUrl: string, orderName: string) => void;
@@ -58,6 +60,7 @@ interface OrderRecapitulationPageProps {
 const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
   order,
   specifications,
+  cuttingConfig,
   onBack,
   onSubmitOrder,
   onOrderSuccess,
@@ -74,10 +77,12 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
   useScrollOnStepChange();
 
   // Use custom hooks for cutting layouts and order calculations
-  const { cuttingLayouts, overallStats } = useCuttingLayouts(specifications);
+  const { cuttingLayouts, overallStats } = useCuttingLayouts(specifications, cuttingConfig);
   const orderCalculations = useOrderCalculations(
     specifications,
     cuttingLayouts,
+    undefined,
+    cuttingConfig.edgeBuffer,
   );
 
   // Use order submission hook

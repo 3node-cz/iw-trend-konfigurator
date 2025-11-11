@@ -20,6 +20,7 @@ import {
 import type { MaterialSearchResult } from "../types/shopify";
 import MaterialAllResultsModal from "./MaterialAllResultsModal";
 import { AvailabilityChip } from "./common";
+import { calculateAvailability } from "../utils/availability";
 import { formatPrice } from "../utils/formatting";
 
 interface MaterialResultsTableProps {
@@ -69,21 +70,20 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {results.map((material) => {
-              // Extract warehouse availability from metafields
-              const localWarehouseStock =
-                material.metafields?.["custom.local_warehouse_stock"] ||
-                material.variant?.metafields?.["custom.local_warehouse_stock"];
-              const centralWarehouseStock =
-                material.metafields?.["custom.central_warehouse_stock"] ||
-                material.variant?.metafields?.[
-                  "custom.central_warehouse_stock"
-                ];
+            {results.map((material, index) => {
+              // Debug: Log all metafields for first material
+              if (index === 0) {
+                console.log('📦 First material metafields:', {
+                  title: material.title,
+                  productMetafields: material.metafields ? Object.keys(material.metafields) : [],
+                  variantMetafields: material.variant?.metafields ? Object.keys(material.variant.metafields) : [],
+                  allProductMetafields: material.metafields,
+                  allVariantMetafields: material.variant?.metafields
+                });
+              }
 
-              // Combined availability - available if either warehouse has stock
-              const isAvailable =
-                (localWarehouseStock && parseInt(localWarehouseStock) > 0) ||
-                (centralWarehouseStock && parseInt(centralWarehouseStock) > 0);
+              // Calculate availability using unified function
+              const availability = calculateAvailability(material);
 
               // Extract pricing info
               const basePrice = material.variant?.price || "0";
@@ -150,7 +150,7 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                   {/* Availability - combined from local and central warehouse */}
                   <TableCell sx={{ textAlign: "center" }}>
                     <AvailabilityChip
-                      availability={isAvailable ? "available" : "unavailable"}
+                      availability={availability}
                       size="small"
                     />
                   </TableCell>

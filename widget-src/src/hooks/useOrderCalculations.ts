@@ -25,13 +25,14 @@ export interface OrderCalculations {
 export const useOrderCalculations = (
   specifications: CuttingSpecification[],
   cuttingLayouts: CuttingLayoutData[] = [],
-  cuttingCostConfig: CuttingCostConfig = DEFAULT_CUTTING_COSTS
+  cuttingCostConfig: CuttingCostConfig = DEFAULT_CUTTING_COSTS,
+  edgeBuffer: number = 30
 ): OrderCalculations => {
-  
+
   const calculations = useMemo(() => {
     const edgeConsumption: MaterialEdgeConsumption[] = []
     const cuttingCosts: CuttingCostBreakdown[] = []
-    
+
     // Process each material specification
     specifications.forEach(spec => {
       // Calculate edge consumption if edge material is selected
@@ -48,7 +49,8 @@ export const useOrderCalculations = (
           materialEdgeConsumption = calculateMaterialEdgeConsumption(
             piecesWithEdges,
             spec.material?.title || spec.material?.name || 'Unknown Material',
-            spec.edgeMaterial.name
+            spec.edgeMaterial.name,
+            edgeBuffer
           )
           edgeConsumption.push(materialEdgeConsumption)
         }
@@ -98,7 +100,7 @@ export const useOrderCalculations = (
         totalCuts
       }
     }
-  }, [specifications, cuttingLayouts, cuttingCostConfig])
-  
+  }, [specifications, cuttingLayouts, cuttingCostConfig, edgeBuffer])
+
   return calculations
 }

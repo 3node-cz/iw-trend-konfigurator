@@ -21,6 +21,7 @@ import { searchEdgeMaterials } from '../services/shopifyApi'
 import type { EdgeMaterial, MaterialSearchResult } from '../types/shopify'
 import { AvailabilityChip } from './common'
 import { GLUE_TYPES } from '../constants'
+import { calculateAvailability } from '../utils/availability'
 
 interface EdgeSelectionCardProps {
   selectedEdge: EdgeMaterial | null
@@ -110,22 +111,6 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
     setEdgeSearchQuery(query)
   }
 
-  // Helper function to calculate availability from warehouse stock metafields
-  const calculateAvailability = (result: MaterialSearchResult): 'available' | 'unavailable' => {
-    const localWarehouseStock =
-      result.metafields?.["custom.local_warehouse_stock"] ||
-      result.variant?.metafields?.["custom.local_warehouse_stock"];
-    const centralWarehouseStock =
-      result.metafields?.["custom.central_warehouse_stock"] ||
-      result.variant?.metafields?.["custom.central_warehouse_stock"];
-
-    // Combined availability - available if either warehouse has stock
-    const isAvailable =
-      (localWarehouseStock && parseInt(localWarehouseStock) > 0) ||
-      (centralWarehouseStock && parseInt(centralWarehouseStock) > 0);
-
-    return isAvailable ? 'available' : 'unavailable';
-  }
 
   // Convert MaterialSearchResult to EdgeMaterial with image
   const convertToEdgeMaterial = (

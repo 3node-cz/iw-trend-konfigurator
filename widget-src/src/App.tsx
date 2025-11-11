@@ -37,6 +37,29 @@ function App() {
     isLoggedIn,
     testCustomer,
   } = useCustomer();
+
+  // Get shop configuration from window.ConfiguratorConfig (already loaded by Liquid template)
+  const getShopConfig = () => {
+    try {
+      const widgetConfigs = (window as any).ConfiguratorConfig;
+      if (widgetConfigs) {
+        const firstBlockId = Object.keys(widgetConfigs)[0];
+        return widgetConfigs[firstBlockId]?.settings;
+      }
+    } catch (error) {
+      console.error('Error accessing shop config:', error);
+    }
+    // Return defaults if not available
+    return {
+      cuttingConfig: { sawWidth: 2, edgeBuffer: 30, boardTrim: 15 },
+      transferLocations: ["Bratislava", "Košice", "Žilina"],
+      deliveryMethods: ["Doprava", "Osobný odber"],
+      processingTypes: ["Zlikvidovať", "Osobný odber odpadu"],
+    };
+  };
+
+  const shopConfig = getShopConfig();
+
   const [selectedMaterials, setSelectedMaterials] = useState<
     SelectedMaterial[]
   >([]);
@@ -77,7 +100,13 @@ function App() {
     setCheckoutUrl("");
   };
 
-  const handleBackToMaterialSelection = () => {
+  const handleBackToMaterialSelection = (
+    specifications?: CuttingSpecification[],
+  ) => {
+    // Save specifications if provided (when coming back from cutting spec page)
+    if (specifications) {
+      setCuttingSpecifications(specifications);
+    }
     setCurrentView("material-selection");
     // Don't reset selectedMaterials or cutting specs - preserve them when going back
   };
@@ -301,6 +330,7 @@ function App() {
             onOrderCreated={handleOrderCreated}
             onLoadConfiguration={handleLoadConfiguration}
             customer={customer}
+            shopConfig={shopConfig}
           />
         )}
         {currentView === "material-selection" && currentOrder && (
@@ -346,6 +376,7 @@ function App() {
               onContinue={handleCuttingSpecificationComplete}
               onAddMaterial={handleAddMaterialToCuttingSpec}
               onRemoveMaterial={handleRemoveMaterialFromCuttingSpec}
+              cuttingConfig={shopConfig.cuttingConfig}
             />
           )}
         {currentView === "recapitulation" &&
@@ -357,6 +388,7 @@ function App() {
               onBack={handleBackToCuttingSpecification}
               onSubmitOrder={handleOrderSubmit}
               onOrderSuccess={handleOrderSuccess}
+              cuttingConfig={shopConfig.cuttingConfig}
             />
           )}
         {currentView === "success" && currentOrder && checkoutUrl && (

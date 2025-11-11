@@ -35,6 +35,7 @@ import type {
   SelectedMaterial,
 } from "../types/shopify";
 import type { OrderFormData } from "../schemas/orderSchema";
+import type { CuttingConfig } from "../main";
 import { transformToSelectedMaterial } from "../utils/data-transformation";
 
 interface CuttingSpecificationPageProps {
@@ -42,7 +43,8 @@ interface CuttingSpecificationPageProps {
   orderName: string;
   orderData?: OrderFormData | null;
   existingSpecifications?: CuttingSpecification[];
-  onBack?: () => void;
+  cuttingConfig: CuttingConfig;
+  onBack?: (specifications?: CuttingSpecification[]) => void;
   onContinue?: (specifications: CuttingSpecification[]) => void;
   onAddMaterial?: (material: SelectedMaterial) => void;
   onRemoveMaterial?: (materialId: string) => void;
@@ -135,6 +137,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
   orderName,
   orderData,
   existingSpecifications = [],
+  cuttingConfig,
   onBack,
   onContinue,
   onAddMaterial,
@@ -185,7 +188,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
 
   // Calculate cutting layouts to check for unplaced pieces
   const specifications = generateSpecifications();
-  const { overallStats } = useCuttingLayouts(specifications);
+  const { overallStats } = useCuttingLayouts(specifications, cuttingConfig);
 
   // Check if there are any validation errors across all materials
   const hasAnyValidationErrors = useCallback(() => {
@@ -212,6 +215,12 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
 
     const specifications = generateSpecifications();
     onContinue?.(specifications);
+  };
+
+  const handleBack = () => {
+    // Save current specifications before going back to preserve state
+    const specifications = generateSpecifications();
+    onBack?.(specifications);
   };
 
   const handleRemoveMaterial = (materialId: string, materialName: string) => {
@@ -265,7 +274,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
           <Button
             variant="outlined"
             startIcon={<ArrowBackIcon />}
-            onClick={onBack}
+            onClick={handleBack}
           >
             Späť
           </Button>

@@ -125,6 +125,7 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
                   y="0"
                   opacity={backgroundOpacity}
                   preserveAspectRatio="xMidYMid slice"
+                  transform={`rotate(90 ${displayWidth / 2} ${displayHeight / 2})`}
                 />
               </pattern>
 

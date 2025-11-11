@@ -9,6 +9,7 @@ import {
 } from '@mui/material'
 import type { MaterialSearchResult } from '../types/shopify'
 import { AvailabilityChip } from './common'
+import { calculateAvailability } from '../utils/availability'
 import { formatPrice } from '../utils/formatting'
 
 interface MaterialInfoCardProps {
@@ -83,11 +84,7 @@ const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
                 Dostupnosť
               </Typography>
               <AvailabilityChip
-                availability={
-                  material.variant.inventoryQuantity > 0
-                    ? "available"
-                    : "unavailable"
-                }
+                availability={calculateAvailability(material)}
                 size="small"
               />
             </Box>
