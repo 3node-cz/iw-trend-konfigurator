@@ -107,12 +107,19 @@ export const createMinimalSavedConfig = (
         allowRotation: piece.allowRotation,
         withoutEdge: piece.withoutEdge,
         duplicate: piece.duplicate,
+        isDupel: piece.isDupel,
+        algorithmValue: piece.algorithmValue,
         // Preserve all edge settings
         edgeAllAround: piece.edgeAllAround,
         edgeTop: piece.edgeTop,
         edgeBottom: piece.edgeBottom,
         edgeLeft: piece.edgeLeft,
         edgeRight: piece.edgeRight,
+        // Save custom edge material IDs (not full objects)
+        customEdgeTopId: piece.customEdgeTop?.id || null,
+        customEdgeBottomId: piece.customEdgeBottom?.id || null,
+        customEdgeLeftId: piece.customEdgeLeft?.id || null,
+        customEdgeRightId: piece.customEdgeRight?.id || null,
         notes: piece.notes
       }))
     }))
@@ -142,12 +149,19 @@ export const migrateToOptimizedFormat = (oldConfig: any): SavedConfiguration => 
         allowRotation: piece.allowRotation || false,
         withoutEdge: piece.withoutEdge || false,
         duplicate: piece.duplicate || false,
+        isDupel: piece.isDupel || false,
+        algorithmValue: piece.algorithmValue || 0,
         // Preserve all edge settings
         edgeAllAround: piece.edgeAllAround || null,
         edgeTop: piece.edgeTop || null,
         edgeBottom: piece.edgeBottom || null,
         edgeLeft: piece.edgeLeft || null,
         edgeRight: piece.edgeRight || null,
+        // Preserve custom edge IDs
+        customEdgeTopId: piece.customEdgeTopId || null,
+        customEdgeBottomId: piece.customEdgeBottomId || null,
+        customEdgeLeftId: piece.customEdgeLeftId || null,
+        customEdgeRightId: piece.customEdgeRightId || null,
         notes: piece.notes || ''
       }))
     }))

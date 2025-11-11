@@ -26,13 +26,22 @@ export const loadOrderConfiguration = async (
   const uniqueMaterialIds = [
     ...new Set(savedOrder.specifications.map((spec) => spec.materialId)),
   ]
-  const uniqueEdgeIds = [
-    ...new Set(
-      savedOrder.specifications
-        .map((spec) => spec.edgeMaterialId)
-        .filter((id): id is string => id !== null),
-    ),
-  ]
+
+  // Collect all edge IDs (default + custom edges from pieces)
+  const allEdgeIds = new Set<string>()
+  savedOrder.specifications.forEach((spec) => {
+    if (spec.edgeMaterialId) {
+      allEdgeIds.add(spec.edgeMaterialId)
+    }
+    // Collect custom edge IDs from pieces
+    spec.pieces.forEach((piece: any) => {
+      if (piece.customEdgeTopId) allEdgeIds.add(piece.customEdgeTopId)
+      if (piece.customEdgeBottomId) allEdgeIds.add(piece.customEdgeBottomId)
+      if (piece.customEdgeLeftId) allEdgeIds.add(piece.customEdgeLeftId)
+      if (piece.customEdgeRightId) allEdgeIds.add(piece.customEdgeRightId)
+    })
+  })
+  const uniqueEdgeIds = Array.from(allEdgeIds)
 
 
   await Promise.all(
@@ -67,11 +76,28 @@ export const loadOrderConfiguration = async (
       ? edgeCache.get(savedSpec.edgeMaterialId) || null
       : null
 
+    // Map custom edge IDs to EdgeMaterial objects in pieces
+    const piecesWithCustomEdges = savedSpec.pieces.map((piece: any) => ({
+      ...piece,
+      customEdgeTop: piece.customEdgeTopId
+        ? edgeCache.get(piece.customEdgeTopId) || null
+        : null,
+      customEdgeBottom: piece.customEdgeBottomId
+        ? edgeCache.get(piece.customEdgeBottomId) || null
+        : null,
+      customEdgeLeft: piece.customEdgeLeftId
+        ? edgeCache.get(piece.customEdgeLeftId) || null
+        : null,
+      customEdgeRight: piece.customEdgeRightId
+        ? edgeCache.get(piece.customEdgeRightId) || null
+        : null,
+    }))
+
     specifications.push({
       material,
       edgeMaterial,
       glueType: savedSpec.glueType,
-      pieces: savedSpec.pieces,
+      pieces: piecesWithCustomEdges,
     })
   }
 
