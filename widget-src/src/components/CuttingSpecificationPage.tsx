@@ -384,84 +384,19 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
                 )}
               </Box>
 
-              <Box sx={{ display: "flex", gap: 1 }}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<SearchIcon />}
-                  onClick={() => {
-                    // Scroll to material search section below this material
-                    document.getElementById(`material-search-${material.id}`)?.scrollIntoView({
-                      behavior: 'smooth',
-                      block: 'center'
-                    });
-                  }}
-                  sx={{ whiteSpace: 'nowrap' }}
-                >
-                  Zmeniť materiál
-                </Button>
+              {materials.length > 1 && (
                 <IconButton
                   onClick={() =>
                     handleRemoveMaterial(material.id, material.title)
                   }
                   color="error"
                   size="small"
-                  title="Odstrániť materiál"
+                  sx={{ ml: 2 }}
                 >
                   <DeleteIcon />
                 </IconButton>
-              </Box>
+              )}
             </Box>
-
-            {/* Material Search Section - For changing this material */}
-            {onAddMaterial && (
-              <Paper
-                id={`material-search-${material.id}`}
-                sx={{ p: 2, mb: 2, backgroundColor: '#f5f5f5' }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-                  <SearchIcon color="primary" fontSize="small" />
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    Vyhľadať a zmeniť tento materiál
-                  </Typography>
-                </Box>
-
-                <MaterialSearch
-                  onSearch={handleSearch}
-                  isLoading={isLoadingSearch}
-                  placeholder="Zadajte názov alebo kód materiálu..."
-                  searchValue={searchQuery}
-                />
-
-                {searchResults.length > 0 && (
-                  <Box sx={{ mt: 2 }}>
-                    <MaterialResultsTable
-                      results={searchResults}
-                      onAddMaterial={(newMaterial) => {
-                        // First remove the old material
-                        removeMaterial(material.id);
-                        onRemoveMaterial?.(material.id);
-                        // Then add the new one
-                        handleAddMaterialToOrder(newMaterial);
-                      }}
-                      selectedMaterialIds={materials.map((m) => m.id)}
-                      customerDiscount={customer?.discountPercentage || 0}
-                    />
-                  </Box>
-                )}
-
-                {searchQuery.length >= 2 &&
-                  searchResults.length === 0 &&
-                  !isLoadingSearch && (
-                    <Typography
-                      variant="body2"
-                      sx={{ mt: 2, color: "text.secondary", textAlign: "center" }}
-                    >
-                      Nenašli sa žiadne materiály pre "{searchQuery}"
-                    </Typography>
-                  )}
-              </Paper>
-            )}
 
             {/* Material and Edge Selection - Single Row Layout */}
             <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>

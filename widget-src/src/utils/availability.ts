@@ -52,36 +52,21 @@ export const getAvailabilityText = (availability: string): string => {
  * @returns AvailabilityStatus - 'available' (Skladom) or 'unavailable' (Na objednávku)
  */
 export const calculateAvailability = (product: MaterialSearchResult): AvailabilityStatus => {
-  // Check warehouse stock metafields at both product-level and variant-level
-  // This works for all product types (materials, edges, etc.)
-  const localWarehouseStock =
-    product.metafields?.["custom.local_warehouse_stock"] ||
-    product.variant?.metafields?.["custom.local_warehouse_stock"]
-
-  const centralWarehouseStock =
-    product.metafields?.["custom.central_warehouse_stock"] ||
-    product.variant?.metafields?.["custom.central_warehouse_stock"]
-
-  // Parse stock values safely
-  const localStock = localWarehouseStock ? parseInt(localWarehouseStock, 10) : 0
-  const centralStock = centralWarehouseStock ? parseInt(centralWarehouseStock, 10) : 0
+  // Use inventory quantity from variant (standard Shopify field)
+  const inventoryQuantity = product.variant?.inventoryQuantity || 0
 
   // DEBUG: Log stock calculation for troubleshooting
   console.log('🔍 [Availability Debug]', {
     productTitle: product.title,
     productId: product.id,
     variantSku: product.variant?.sku,
-    metafields: product.metafields,
-    variantMetafields: product.variant?.metafields,
-    localWarehouseStock,
-    centralWarehouseStock,
-    localStock,
-    centralStock,
-    isAvailable: localStock > 0 || centralStock > 0
+    inventoryQuantity,
+    availableForSale: product.variant?.availableForSale,
+    isAvailable: inventoryQuantity > 0
   })
 
-  // Product is available if either warehouse has stock > 0
-  const isAvailable = localStock > 0 || centralStock > 0
+  // Product is available if inventory quantity > 0
+  const isAvailable = inventoryQuantity > 0
 
   return isAvailable ? 'available' : 'unavailable'
 }

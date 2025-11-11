@@ -101,7 +101,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
                       url
                       altText
                     }
-                    metafields(first: 10) {
+                    materialHeight: metafield(namespace: "material", key: "height") {
+                      value
+                    }
+                    materialWidth: metafield(namespace: "material", key: "width") {
+                      value
+                    }
+                    materialThickness: metafield(namespace: "material", key: "thickness") {
+                      value
+                    }
+                    allMetafields: metafields(first: 10) {
                       edges {
                         node {
                           namespace
@@ -112,6 +121,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
                     }
                   }
                 }
+              }
+              alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
+                value
               }
             }
             ... on ProductVariant {
@@ -144,8 +156,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
                     }
                   }
                 }
+                alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
+                  value
+                }
               }
-              metafields(first: 10) {
+              materialHeight: metafield(namespace: "material", key: "height") {
+                value
+              }
+              materialWidth: metafield(namespace: "material", key: "width") {
+                value
+              }
+              materialThickness: metafield(namespace: "material", key: "thickness") {
+                value
+              }
+              allMetafields: metafields(first: 10) {
                 edges {
                   node {
                     namespace
@@ -197,7 +221,22 @@ export async function loader({ request }: LoaderFunctionArgs) {
                         url
                         altText
                       }
-                      metafields(first: 10) {
+                      localWarehouseStock: metafield(namespace: "custom", key: "local_warehouse_stock") {
+                        value
+                      }
+                      centralWarehouseStock: metafield(namespace: "custom", key: "central_warehouse_stock") {
+                        value
+                      }
+                      materialHeight: metafield(namespace: "material", key: "height") {
+                        value
+                      }
+                      materialWidth: metafield(namespace: "material", key: "width") {
+                        value
+                      }
+                      materialThickness: metafield(namespace: "material", key: "thickness") {
+                        value
+                      }
+                      allMetafields: metafields(first: 10) {
                         edges {
                           node {
                             namespace
@@ -209,7 +248,25 @@ export async function loader({ request }: LoaderFunctionArgs) {
                     }
                   }
                 }
-                metafields(first: 10) {
+                localWarehouseStock: metafield(namespace: "custom", key: "local_warehouse_stock") {
+                  value
+                }
+                centralWarehouseStock: metafield(namespace: "custom", key: "central_warehouse_stock") {
+                  value
+                }
+                alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
+                  value
+                }
+                materialHeight: metafield(namespace: "material", key: "height") {
+                  value
+                }
+                materialWidth: metafield(namespace: "material", key: "width") {
+                  value
+                }
+                materialThickness: metafield(namespace: "material", key: "thickness") {
+                  value
+                }
+                allMetafields: metafields(first: 10) {
                   edges {
                     node {
                       namespace
@@ -241,25 +298,51 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     // Transform the results to match our expected format
     const transformToMaterial = (product: any, variant: any) => {
-      // Extract metafields into a more usable format
-      const productMetafields = product.metafields.edges.reduce((acc: any, metafield: any) => {
-        const { namespace, key, value } = metafield.node;
-        acc[`${namespace}.${key}`] = value;
-        return acc;
-      }, {});
-
-      const variantMetafields = variant?.metafields.edges.reduce((acc: any, metafield: any) => {
+      // Extract metafields from allMetafields (generic metafields list)
+      const productMetafields = product.allMetafields?.edges?.reduce((acc: any, metafield: any) => {
         const { namespace, key, value } = metafield.node;
         acc[`${namespace}.${key}`] = value;
         return acc;
       }, {}) || {};
 
-      // Debug: Log all available metafields for the first product/variant
-      if (product.handle) {
-        console.log('📦 Product metafields for', product.title, ':', Object.keys(productMetafields));
-        if (variant) {
-          console.log('📦 Variant metafields for', variant.title, ':', Object.keys(variantMetafields));
+      const variantMetafields = variant?.allMetafields?.edges?.reduce((acc: any, metafield: any) => {
+        const { namespace, key, value } = metafield.node;
+        acc[`${namespace}.${key}`] = value;
+        return acc;
+      }, {}) || {};
+
+      // Add specific metafields that we explicitly queried
+      if (product.alternativeProducts?.value) {
+        productMetafields['custom.alternative_products'] = product.alternativeProducts.value;
+      }
+      if (product.materialHeight?.value) {
+        productMetafields['material.height'] = product.materialHeight.value;
+      }
+      if (product.materialWidth?.value) {
+        productMetafields['material.width'] = product.materialWidth.value;
+      }
+      if (product.materialThickness?.value) {
+        productMetafields['material.thickness'] = product.materialThickness.value;
+      }
+
+      // Add variant-specific metafields
+      if (variant) {
+        if (variant.materialHeight?.value) {
+          variantMetafields['material.height'] = variant.materialHeight.value;
         }
+        if (variant.materialWidth?.value) {
+          variantMetafields['material.width'] = variant.materialWidth.value;
+        }
+        if (variant.materialThickness?.value) {
+          variantMetafields['material.thickness'] = variant.materialThickness.value;
+        }
+      }
+
+      // Debug: Log all available metafields
+      console.log('📦 Product metafields for', product.title, ':', Object.keys(productMetafields));
+      if (variant) {
+        console.log('📦 Variant metafields for', variant.title, ':', Object.keys(variantMetafields));
+        console.log('📦 Variant inventory:', variant.inventoryQuantity);
       }
 
       // Get images - prefer variant image, fallback to product featured image
