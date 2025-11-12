@@ -57,6 +57,58 @@ export const calculatePieceEdgeConsumption = (
 }
 
 /**
+ * Calculate edge consumption for specific edges of a piece
+ * Used when a piece has mixed edge materials
+ *
+ * @param piece - The cutting piece
+ * @param includeEdges - Which edges to include in calculation
+ * @param edgeBuffer - Buffer per side in mm (default 30mm)
+ */
+export const calculateSelectiveEdgeConsumption = (
+  piece: CuttingPiece,
+  includeEdges: {
+    top?: boolean
+    bottom?: boolean
+    left?: boolean
+    right?: boolean
+  },
+  edgeBuffer: number = 30
+): EdgeConsumption[] => {
+  const consumptionMap = new Map<number, number>()
+
+  const addEdgeLength = (thickness: number | null, baseLength: number) => {
+    if (thickness && thickness > 0) {
+      const edgeLengthWithBuffer = baseLength + (edgeBuffer * 2)
+      const current = consumptionMap.get(thickness) || 0
+      consumptionMap.set(thickness, current + edgeLengthWithBuffer)
+    }
+  }
+
+  // Only add edges that are included
+  if (includeEdges.top) {
+    addEdgeLength(piece.edgeTop, piece.length * piece.quantity)
+  }
+  if (includeEdges.bottom) {
+    addEdgeLength(piece.edgeBottom, piece.length * piece.quantity)
+  }
+  if (includeEdges.left) {
+    addEdgeLength(piece.edgeLeft, piece.width * piece.quantity)
+  }
+  if (includeEdges.right) {
+    addEdgeLength(piece.edgeRight, piece.width * piece.quantity)
+  }
+
+  return Array.from(consumptionMap.entries()).map(
+    ([thickness, totalLength]) => ({
+      thickness,
+      totalLength,
+      totalLengthMeters: totalLength / 1000,
+      pieceCount: 1,
+    }),
+  )
+}
+
+/**
  * Calculate total edge consumption for all pieces using the same edge material
  * @param edgeBuffer - Buffer per side in mm (default 30mm)
  */
@@ -74,6 +126,71 @@ export const calculateMaterialEdgeConsumption = (
   // Process all pieces
   pieces.forEach((piece) => {
     const pieceConsumption = calculatePieceEdgeConsumption(piece, edgeBuffer)
+
+    pieceConsumption.forEach((consumption) => {
+      const existing = consumptionMap.get(consumption.thickness) || {
+        length: 0,
+        pieceCount: 0,
+      }
+      consumptionMap.set(consumption.thickness, {
+        length: existing.length + consumption.totalLength,
+        pieceCount: existing.pieceCount + piece.quantity,
+      })
+    })
+  })
+
+  // Convert to consumption array
+  const consumptionByThickness: EdgeConsumption[] = Array.from(
+    consumptionMap.entries(),
+  ).map(([thickness, data]) => ({
+    thickness,
+    totalLength: data.length,
+    totalLengthMeters: data.length / 1000,
+    pieceCount: data.pieceCount,
+  }))
+
+  // Calculate totals
+  const totalEdgeLength = consumptionByThickness.reduce(
+    (sum, item) => sum + item.totalLength,
+    0,
+  )
+  const totalEdgeLengthMeters = totalEdgeLength / 1000
+
+  return {
+    materialName,
+    edgeMaterialName,
+    consumptionByThickness,
+    totalEdgeLength,
+    totalEdgeLengthMeters,
+  }
+}
+
+/**
+ * Calculate edge consumption with support for mixed edge materials
+ * Each piece edge is attributed to the correct edge material
+ */
+export const calculateMaterialEdgeConsumptionWithMixedEdges = (
+  piecesWithEdgeInfo: Array<{
+    piece: CuttingPiece
+    includeEdges: {
+      top?: boolean
+      bottom?: boolean
+      left?: boolean
+      right?: boolean
+    }
+  }>,
+  materialName: string,
+  edgeMaterialName: string,
+  edgeBuffer: number = 30
+): MaterialEdgeConsumption => {
+  const consumptionMap = new Map<
+    number,
+    { length: number; pieceCount: number }
+  >()
+
+  // Process pieces with selective edge calculation
+  piecesWithEdgeInfo.forEach(({ piece, includeEdges }) => {
+    const pieceConsumption = calculateSelectiveEdgeConsumption(piece, includeEdges, edgeBuffer)
 
     pieceConsumption.forEach((consumption) => {
       const existing = consumptionMap.get(consumption.thickness) || {

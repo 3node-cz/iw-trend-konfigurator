@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import type { CuttingSpecification } from '../types/shopify'
 import type { CuttingLayoutData } from './useCuttingLayouts'
-import { 
-  calculateMaterialEdgeConsumption, 
+import {
+  calculateMaterialEdgeConsumption,
+  calculateMaterialEdgeConsumptionWithMixedEdges,
   calculateCuttingCosts,
   DEFAULT_CUTTING_COSTS,
   type MaterialEdgeConsumption,
@@ -39,10 +40,18 @@ export const useOrderCalculations = (
       const materialEdgeConsumptions: MaterialEdgeConsumption[] = []
 
       if (spec.pieces.length > 0) {
-        // Group pieces by their edge materials (considering custom edges)
+        // Group edges by their edge materials (handling mixed edge materials per piece)
         const edgeMaterialGroups = new Map<string, {
           edgeMaterial: { id: string; name: string };
-          pieces: typeof spec.pieces
+          piecesWithEdges: Array<{
+            piece: typeof spec.pieces[0];
+            includeEdges: {
+              top?: boolean;
+              bottom?: boolean;
+              left?: boolean;
+              right?: boolean;
+            }
+          }>
         }>()
 
         spec.pieces.forEach(piece => {
@@ -51,61 +60,80 @@ export const useOrderCalculations = (
 
           if (!hasEdges) return
 
-          // Collect all unique edge materials used in this piece
-          const pieceEdgeMaterials = new Set<string>()
+          // Map each edge to its edge material
+          const edgeToMaterial: Array<{
+            edgeName: 'top' | 'bottom' | 'left' | 'right';
+            hasEdge: boolean;
+            material: typeof spec.edgeMaterial | null;
+          }> = [
+            {
+              edgeName: 'top',
+              hasEdge: !!piece.edgeTop,
+              material: piece.customEdgeTop || (piece.edgeTop ? spec.edgeMaterial : null)
+            },
+            {
+              edgeName: 'bottom',
+              hasEdge: !!piece.edgeBottom,
+              material: piece.customEdgeBottom || (piece.edgeBottom ? spec.edgeMaterial : null)
+            },
+            {
+              edgeName: 'left',
+              hasEdge: !!piece.edgeLeft,
+              material: piece.customEdgeLeft || (piece.edgeLeft ? spec.edgeMaterial : null)
+            },
+            {
+              edgeName: 'right',
+              hasEdge: !!piece.edgeRight,
+              material: piece.customEdgeRight || (piece.edgeRight ? spec.edgeMaterial : null)
+            }
+          ]
 
-          // Check each edge for custom material
-          if (piece.edgeTop && piece.customEdgeTop) {
-            pieceEdgeMaterials.add(piece.customEdgeTop.id)
-          } else if (piece.edgeTop && spec.edgeMaterial) {
-            pieceEdgeMaterials.add(spec.edgeMaterial.id)
-          }
+          // Group edges by their edge material
+          const edgesByMaterial = new Map<string, {
+            material: typeof spec.edgeMaterial;
+            edges: Array<'top' | 'bottom' | 'left' | 'right'>
+          }>()
 
-          if (piece.edgeBottom && piece.customEdgeBottom) {
-            pieceEdgeMaterials.add(piece.customEdgeBottom.id)
-          } else if (piece.edgeBottom && spec.edgeMaterial) {
-            pieceEdgeMaterials.add(spec.edgeMaterial.id)
-          }
+          edgeToMaterial.forEach(({ edgeName, hasEdge, material }) => {
+            if (hasEdge && material) {
+              const key = material.id
+              if (!edgesByMaterial.has(key)) {
+                edgesByMaterial.set(key, {
+                  material,
+                  edges: []
+                })
+              }
+              edgesByMaterial.get(key)!.edges.push(edgeName)
+            }
+          })
 
-          if (piece.edgeLeft && piece.customEdgeLeft) {
-            pieceEdgeMaterials.add(piece.customEdgeLeft.id)
-          } else if (piece.edgeLeft && spec.edgeMaterial) {
-            pieceEdgeMaterials.add(spec.edgeMaterial.id)
-          }
+          // Add piece to each edge material group with only the edges that use that material
+          edgesByMaterial.forEach((value, materialId) => {
+            const { material, edges } = value
 
-          if (piece.edgeRight && piece.customEdgeRight) {
-            pieceEdgeMaterials.add(piece.customEdgeRight.id)
-          } else if (piece.edgeRight && spec.edgeMaterial) {
-            pieceEdgeMaterials.add(spec.edgeMaterial.id)
-          }
+            if (!edgeMaterialGroups.has(materialId)) {
+              edgeMaterialGroups.set(materialId, {
+                edgeMaterial: { id: material.id, name: material.name },
+                piecesWithEdges: []
+              })
+            }
 
-          // For simplicity, use the first edge material found
-          // (pieces with mixed edge materials are complex and rare)
-          const edgeMaterialId = Array.from(pieceEdgeMaterials)[0]
-          if (!edgeMaterialId) return
-
-          // Determine the edge material object
-          const edgeMaterial =
-            piece.customEdgeTop || piece.customEdgeBottom ||
-            piece.customEdgeLeft || piece.customEdgeRight ||
-            spec.edgeMaterial
-
-          if (!edgeMaterial) return
-
-          const key = edgeMaterialId
-          if (!edgeMaterialGroups.has(key)) {
-            edgeMaterialGroups.set(key, {
-              edgeMaterial: { id: edgeMaterial.id, name: edgeMaterial.name },
-              pieces: []
+            edgeMaterialGroups.get(materialId)!.piecesWithEdges.push({
+              piece,
+              includeEdges: {
+                top: edges.includes('top'),
+                bottom: edges.includes('bottom'),
+                left: edges.includes('left'),
+                right: edges.includes('right')
+              }
             })
-          }
-          edgeMaterialGroups.get(key)!.pieces.push(piece)
+          })
         })
 
         // Calculate consumption for each edge material group
         edgeMaterialGroups.forEach(group => {
-          const consumption = calculateMaterialEdgeConsumption(
-            group.pieces,
+          const consumption = calculateMaterialEdgeConsumptionWithMixedEdges(
+            group.piecesWithEdges,
             spec.material?.title || spec.material?.name || 'Unknown Material',
             group.edgeMaterial.name,
             edgeBuffer
