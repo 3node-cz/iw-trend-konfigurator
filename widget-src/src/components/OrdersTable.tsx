@@ -14,7 +14,6 @@ import {
   CircularProgress
 } from '@mui/material'
 import {
-  PlayArrow as PlayArrowIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material'
 import { createConfigurationService } from '../services/configurationService'
@@ -241,7 +240,17 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
           </TableHead>
           <TableBody>
             {filteredConfigurations.map((config) => (
-              <TableRow key={config.id} hover>
+              <TableRow
+                key={config.id}
+                hover
+                onClick={() => onLoadConfiguration?.(config)}
+                sx={{
+                  cursor: 'pointer',
+                  '&:hover': {
+                    backgroundColor: 'action.hover'
+                  }
+                }}
+              >
                 <TableCell>
                   <Typography variant="body2" color="primary" sx={{ fontWeight: 500 }}>
                     {config.name}
@@ -263,24 +272,17 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                   </Typography>
                 </TableCell>
                 <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={() => onLoadConfiguration?.(config)}
-                      title="Načítať a pokračovať"
-                    >
-                      <PlayArrowIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleDeleteOrder(config)}
-                      title="Zmazať"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={(e) => {
+                      e.stopPropagation() // Prevent row click when deleting
+                      handleDeleteOrder(config)
+                    }}
+                    title="Zmazať"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
                 </TableCell>
               </TableRow>
             ))}
