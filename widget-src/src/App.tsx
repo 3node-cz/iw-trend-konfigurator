@@ -345,29 +345,7 @@ function App() {
         {currentView === "cutting-specification" &&
           currentOrder && (
             <CuttingSpecificationPage
-              materials={selectedMaterials.map(
-                (material) =>
-                  ({
-                    id: material.id,
-                    title: material.name,
-                    handle: material.code || "unknown",
-                    vendor: "",
-                    productType: "Material",
-                    tags: [],
-                    image: material.image,
-                    images: material.image ? [material.image] : [],
-                    variant: {
-                      id: material.variantId || material.id,
-                      title: material.name,
-                      sku: material.code || "N/A",
-                      price: material.price.toString(),
-                      inventoryQuantity: 0,
-                      availableForSale: true,
-                      metafields: {},
-                    },
-                    metafields: {},
-                  }) as MaterialSearchResult,
-              )}
+              materials={selectedMaterials}
               orderName={currentOrder.orderName}
               orderData={currentOrder}
               existingSpecifications={cuttingSpecifications}
