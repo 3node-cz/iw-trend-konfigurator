@@ -149,16 +149,17 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
 
         const originalEdgeUnitPrice = edgeMaterialObj?.price?.amount || 0;
         const discountedEdgeUnitPrice = applyDiscount(originalEdgeUnitPrice);
-        const roundedQuantity = Math.ceil(edgeConsumption.totalEdgeLengthMeters);
+        // Keep full precision - don't round to whole meters
+        const edgeQuantity = edgeConsumption.totalEdgeLengthMeters;
 
         orderItems.push({
           id: `edge-${relatedSpecIndex}-${edgeIndex}`,
           name: edgeConsumption.edgeMaterialName,
           code: edgeMaterialObj?.code || '',
-          quantity: roundedQuantity,
+          quantity: edgeQuantity,
           unit: 'm',
           unitPrice: discountedEdgeUnitPrice,
-          totalPrice: roundedQuantity * discountedEdgeUnitPrice,
+          totalPrice: edgeQuantity * discountedEdgeUnitPrice,
           type: 'edge',
           materialIndex: relatedSpecIndex + 1,
           isEdgeForMaterial: true,
@@ -353,7 +354,7 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
                   </TableCell>
                   <TableCell align="right">
                     <Typography variant="body2">
-                      {item.quantity} {item.unit}
+                      {item.type === 'edge' ? formatPriceNumber(item.quantity) : item.quantity} {item.unit}
                     </Typography>
                   </TableCell>
                   <TableCell>

@@ -74,7 +74,7 @@ const OrderCalculationsSummary: React.FC<OrderCalculationsSummaryProps> = ({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {edgeConsumption.map((consumption, index) => 
+                  {edgeConsumption.map((consumption, index) =>
                     consumption.consumptionByThickness.map((thickness, thicknessIndex) => (
                       <TableRow key={`${index}-${thicknessIndex}`} hover>
                         <TableCell>
@@ -84,7 +84,7 @@ const OrderCalculationsSummary: React.FC<OrderCalculationsSummaryProps> = ({
                           {thicknessIndex === 0 ? consumption.edgeMaterialName : ''}
                         </TableCell>
                         <TableCell>
-                          <Chip 
+                          <Chip
                             label={`${thickness.thickness} mm`}
                             size="small"
                             variant="outlined"
@@ -102,6 +102,14 @@ const OrderCalculationsSummary: React.FC<OrderCalculationsSummaryProps> = ({
                 </TableBody>
               </Table>
             </TableContainer>
+            <Box sx={{ mt: 2, p: 1.5, backgroundColor: '#f8f9fa', borderRadius: 1, border: '1px solid #e0e0e0' }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5, fontWeight: 500 }}>
+                ℹ️ Informácia o výpočte
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Uvedená dĺžka zahŕňa buffer 30 mm na každú stranu (60 mm celkom na každú hranu) pre bezpečné ohranenie.
+              </Typography>
+            </Box>
           </AccordionDetails>
         </Accordion>
       )}

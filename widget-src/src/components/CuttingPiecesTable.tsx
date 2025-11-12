@@ -17,6 +17,7 @@ import {
   Box,
   Typography,
   Switch,
+  Tooltip,
 } from "@mui/material";
 import {
   Delete as DeleteIcon,
@@ -316,7 +317,23 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
           const piece = row.original;
           return (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  transition: "all 0.2s ease",
+                  "&:focus-within": {
+                    outline: "2px solid",
+                    outlineColor: "primary.main",
+                    outlineOffset: "2px",
+                    boxShadow: "0 0 0 4px rgba(25, 118, 210, 0.15)",
+                    backgroundColor: "rgba(25, 118, 210, 0.04)",
+                  },
+                }}
+              >
                 <Switch
                   size="small"
                   checked={piece.allowRotation}
@@ -325,26 +342,26 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                       allowRotation: e.target.checked,
                     })
                   }
-                  sx={{
-                    "& .MuiSwitch-switchBase": {
-                      "&:focus-visible": {
-                        outline: "2px solid",
-                        outlineColor: "primary.main",
-                        outlineOffset: "2px",
-                        boxShadow: "0 0 0 4px rgba(25, 118, 210, 0.15)",
-                      },
-                    },
-                    "& .MuiSwitch-track": {
-                      ".Mui-focusVisible + &": {
-                        border: "2px solid",
-                        borderColor: "primary.main",
-                      },
-                    },
-                  }}
                 />
                 <Typography variant="caption">Rotácia</Typography>
               </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  transition: "all 0.2s ease",
+                  "&:focus-within": {
+                    outline: "2px solid",
+                    outlineColor: "primary.main",
+                    outlineOffset: "2px",
+                    boxShadow: "0 0 0 4px rgba(25, 118, 210, 0.15)",
+                    backgroundColor: "rgba(25, 118, 210, 0.04)",
+                  },
+                }}
+              >
                 <Switch
                   size="small"
                   checked={piece.withoutEdge}
@@ -353,22 +370,6 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                       withoutEdge: e.target.checked,
                     })
                   }
-                  sx={{
-                    "& .MuiSwitch-switchBase": {
-                      "&:focus-visible": {
-                        outline: "2px solid",
-                        outlineColor: "primary.main",
-                        outlineOffset: "2px",
-                        boxShadow: "0 0 0 4px rgba(25, 118, 210, 0.15)",
-                      },
-                    },
-                    "& .MuiSwitch-track": {
-                      ".Mui-focusVisible + &": {
-                        border: "2px solid",
-                        borderColor: "primary.main",
-                      },
-                    },
-                  }}
                 />
                 <Typography variant="caption">Bez orezu</Typography>
                 <HelpTooltip
@@ -382,7 +383,23 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                   }
                 />
               </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  transition: "all 0.2s ease",
+                  "&:focus-within": {
+                    outline: "2px solid",
+                    outlineColor: "primary.main",
+                    outlineOffset: "2px",
+                    boxShadow: "0 0 0 4px rgba(25, 118, 210, 0.15)",
+                    backgroundColor: "rgba(25, 118, 210, 0.04)",
+                  },
+                }}
+              >
                 <Switch
                   size="small"
                   checked={piece.isDupel || false}
@@ -391,22 +408,6 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                       isDupel: e.target.checked,
                     })
                   }
-                  sx={{
-                    "& .MuiSwitch-switchBase": {
-                      "&:focus-visible": {
-                        outline: "2px solid",
-                        outlineColor: "primary.main",
-                        outlineOffset: "2px",
-                        boxShadow: "0 0 0 4px rgba(25, 118, 210, 0.15)",
-                      },
-                    },
-                    "& .MuiSwitch-track": {
-                      ".Mui-focusVisible + &": {
-                        border: "2px solid",
-                        borderColor: "primary.main",
-                      },
-                    },
-                  }}
                 />
                 <Typography variant="caption">Dupel</Typography>
                 <HelpTooltip
@@ -577,19 +578,20 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
           const hasAnyEdge = piece.edgeTop || piece.edgeBottom || piece.edgeLeft || piece.edgeRight;
 
           return hasAnyEdge ? (
-            <IconButton
-              size="small"
-              onClick={() =>
-                setCustomEdgeDialog({
-                  open: true,
-                  pieceId: row.original.id,
-                  piece: row.original,
-                })
-              }
-              title="Iná hrana"
-            >
-              <TuneIcon fontSize="small" />
-            </IconButton>
+            <Tooltip title="Nastaviť inú hranu pre jednotlivé strany">
+              <IconButton
+                size="small"
+                onClick={() =>
+                  setCustomEdgeDialog({
+                    open: true,
+                    pieceId: row.original.id,
+                    piece: row.original,
+                  })
+                }
+              >
+                <TuneIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           ) : null;
         },
       }),
@@ -616,19 +618,20 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
               }}
               placeholder="Poznámka"
             />
-            <IconButton
-              size="small"
-              onClick={() =>
-                setNotesDialog({
-                  open: true,
-                  pieceId: row.original.id,
-                  value: getValue() || "",
-                })
-              }
-              title="Upraviť poznámku"
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
+            <Tooltip title="Upraviť poznámku">
+              <IconButton
+                size="small"
+                onClick={() =>
+                  setNotesDialog({
+                    open: true,
+                    pieceId: row.original.id,
+                    value: getValue() || "",
+                  })
+                }
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </Box>
         ),
       }),
@@ -658,28 +661,29 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
             );
           }
           return (
-            <Box
-              sx={{
-                cursor: onPreviewPiece ? "pointer" : "default",
-                "&:hover": onPreviewPiece
-                  ? {
-                      opacity: 0.8,
-                      transform: "scale(1.05)",
-                    }
-                  : {},
-                transition: "all 0.2s ease",
-              }}
-              onClick={() => onPreviewPiece && handlePreviewPiece(piece)}
-              title={onPreviewPiece ? "Kliknite pre detail náhľadu" : ""}
-            >
-              <PieceShapePreview
-                piece={piece}
-                containerSize={80}
-                showBackground={false}
-                showRotationIndicator={false}
-                showEdges={true}
-              />
-            </Box>
+            <Tooltip title={onPreviewPiece ? "Kliknite pre detail náhľadu" : ""} arrow>
+              <Box
+                sx={{
+                  cursor: onPreviewPiece ? "pointer" : "default",
+                  "&:hover": onPreviewPiece
+                    ? {
+                        opacity: 0.8,
+                        transform: "scale(1.05)",
+                      }
+                    : {},
+                  transition: "all 0.2s ease",
+                }}
+                onClick={() => onPreviewPiece && handlePreviewPiece(piece)}
+              >
+                <PieceShapePreview
+                  piece={piece}
+                  containerSize={80}
+                  showBackground={false}
+                  showRotationIndicator={false}
+                  showEdges={true}
+                />
+              </Box>
+            </Tooltip>
           );
         },
         size: 90,
@@ -692,14 +696,15 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         cell: ({ row }) => {
           return (
             <Box sx={{ display: "flex", gap: 0.5 }}>
-              <IconButton
-                size="small"
-                color="error"
-                onClick={() => handleRemovePiece(row.original.id)}
-                title="Odstrániť dielec"
-              >
-                <DeleteIcon />
-              </IconButton>
+              <Tooltip title="Odstrániť dielec">
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => handleRemovePiece(row.original.id)}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Tooltip>
             </Box>
           );
         },
