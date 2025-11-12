@@ -61,7 +61,7 @@ function App() {
   const shopConfig = getShopConfig();
 
   const [selectedMaterials, setSelectedMaterials] = useState<
-    SelectedMaterial[]
+    MaterialSearchResult[]
   >([]);
   const [cuttingSpecifications, setCuttingSpecifications] = useState<
     CuttingSpecification[]
@@ -115,7 +115,7 @@ function App() {
     setCurrentView("cutting-specification");
   };
 
-  const handleMaterialSelectionComplete = (materials: SelectedMaterial[]) => {
+  const handleMaterialSelectionComplete = (materials: MaterialSearchResult[]) => {
     // Store all selected materials
     setSelectedMaterials(materials);
 
@@ -130,7 +130,7 @@ function App() {
     }
   };
 
-  const handleAddMaterialToCuttingSpec = (material: SelectedMaterial) => {
+  const handleAddMaterialToCuttingSpec = (material: MaterialSearchResult) => {
     // Add the new material to the selected materials list
     setSelectedMaterials((prevMaterials) => {
       // Check if material is already in the list (by id)

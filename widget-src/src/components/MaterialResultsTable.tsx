@@ -85,6 +85,14 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
               // Calculate availability using unified function
               const availability = calculateAvailability(material);
 
+              // Debug availability in search results
+              console.log('🔍 [MaterialResultsTable] Availability:', {
+                title: material.title,
+                inventoryQuantity: material.variant?.inventoryQuantity,
+                availableForSale: material.variant?.availableForSale,
+                availability,
+              });
+
               // Extract pricing info
               const basePrice = material.variant?.price || "0";
               const discount =

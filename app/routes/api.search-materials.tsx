@@ -323,6 +323,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
       }, {}) || {};
 
       // Add specific metafields that we explicitly queried
+      console.log('🔍 [API] Checking product.alternativeProducts:', {
+        exists: !!product.alternativeProducts,
+        value: product.alternativeProducts?.value,
+        fullObject: product.alternativeProducts,
+      });
       if (product.alternativeProducts?.value) {
         productMetafields['custom.alternative_products'] = product.alternativeProducts.value;
       }
@@ -338,6 +343,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
       // Add variant-specific metafields
       if (variant) {
+        console.log('🔍 [API] Checking variant.alternativeProducts:', {
+          exists: !!variant.alternativeProducts,
+          value: variant.alternativeProducts?.value,
+          fullObject: variant.alternativeProducts,
+        });
         if (variant.alternativeProducts?.value) {
           variantMetafields['custom.alternative_products'] = variant.alternativeProducts.value;
         }

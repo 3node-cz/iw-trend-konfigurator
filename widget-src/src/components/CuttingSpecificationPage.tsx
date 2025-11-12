@@ -45,7 +45,7 @@ interface CuttingSpecificationPageProps {
   cuttingConfig: CuttingConfig;
   onBack?: (specifications?: CuttingSpecification[]) => void;
   onContinue?: (specifications: CuttingSpecification[]) => void;
-  onAddMaterial?: (material: SelectedMaterial) => void;
+  onAddMaterial?: (material: MaterialSearchResult) => void;
   onRemoveMaterial?: (materialId: string) => void;
 }
 
@@ -250,8 +250,8 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
 
   const handleAddMaterialToOrder = (material: MaterialSearchResult) => {
     if (onAddMaterial) {
-      const selectedMaterial = transformToSelectedMaterial(material);
-      onAddMaterial(selectedMaterial);
+      // Pass full MaterialSearchResult to preserve variant and metafields
+      onAddMaterial(material);
 
       // Clear search results after adding
       clearResults();
