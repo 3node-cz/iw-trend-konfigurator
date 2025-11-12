@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { createCartViaBackend, createCartStorefront } from "../api/cart";
 import type { CompleteOrder } from "../types/shopify";
 import { SHOPIFY_API } from "../constants";
+import { createSubmittedOrderService } from "../services/submittedOrderService";
 
 // Helper function to get variant ID from product ID - only for service products
 const getVariantIdFromProduct = async (productId: string): Promise<string> => {
@@ -212,7 +213,30 @@ export const useOrderSubmission = () => {
         // Alternative: Use Storefront API (requires manual token setup)
         // const result = await createCartStorefront(allLineItems)
 
-        // 4. Set success state with checkout URL (no automatic redirect)
+        // 4. Save order reference for history tracking
+        try {
+          const submittedService = createSubmittedOrderService();
+          await submittedService.saveOrderReference({
+            id: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            draftOrderId: result.cart.id,
+            orderId: null, // Will be updated when draft converts to order
+            orderName: result.cart.id.split('/').pop() || result.cart.id,
+            submittedAt: new Date().toISOString(),
+            status: 'draft',
+            totalPieces: completeOrder.specifications.reduce(
+              (sum, spec) => sum + spec.pieces.reduce((ps, p) => ps + p.quantity, 0),
+              0
+            ),
+            totalBoards: completeOrder.cuttingLayouts?.length || 0,
+            materialNames: completeOrder.specifications.map(s => s.material.title)
+          });
+          console.log('✅ Order reference saved to customer history');
+        } catch (historyError) {
+          console.error('⚠️ Failed to save order reference (non-critical):', historyError);
+          // Don't fail the order submission if history tracking fails
+        }
+
+        // 5. Set success state with checkout URL (no automatic redirect)
         setState((prev) => ({
           ...prev,
           isSubmitting: false,

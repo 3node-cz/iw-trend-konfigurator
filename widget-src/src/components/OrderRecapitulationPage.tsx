@@ -47,6 +47,8 @@ import {
   getGroupedLayoutShortTitle,
   getGroupedLayoutDescription,
 } from "../utils/layoutGrouping";
+import { createDraftOrderService } from "../services/draftOrderService";
+import { createSavedOrder } from "../types/savedOrder";
 
 interface OrderRecapitulationPageProps {
   order: OrderFormData;
@@ -84,6 +86,40 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     undefined,
     cuttingConfig.edgeBuffer,
   );
+
+  // Auto-save draft order when reaching recapitulation page
+  useEffect(() => {
+    const autoSaveDraft = async () => {
+      if (!customer) {
+        console.log('⚠️ Skipping auto-save: No customer logged in');
+        return;
+      }
+
+      try {
+        console.log('💾 Auto-saving draft order...');
+        const draftService = createDraftOrderService();
+
+        // Create draft order with current state
+        const draftOrder = createSavedOrder(
+          order,
+          specifications,
+          cuttingLayouts,
+          orderCalculations
+        );
+
+        // Set status to draft
+        draftOrder.status = 'draft';
+
+        await draftService.saveDraftOrder(draftOrder);
+        console.log('✅ Draft order auto-saved successfully');
+      } catch (error) {
+        console.error('❌ Failed to auto-save draft order:', error);
+        // Don't show error to user - auto-save is background operation
+      }
+    };
+
+    autoSaveDraft();
+  }, []); // Only run once when component mounts
 
   // Use order submission hook
   const {
