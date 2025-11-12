@@ -198,7 +198,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
                     }
                   }
                 }
-              }
             }
           }
         }
