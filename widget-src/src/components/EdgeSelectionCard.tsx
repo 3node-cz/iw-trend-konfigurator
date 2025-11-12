@@ -271,7 +271,7 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
               color="text.secondary"
               sx={{ mb: 2 }}
             >
-              Vyberte hranu pre materiál
+              Vybraná hrana
             </Typography>
 
             {/* Edge Preview Section */}
