@@ -331,6 +331,13 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                         outline: "2px solid",
                         outlineColor: "primary.main",
                         outlineOffset: "2px",
+                        boxShadow: "0 0 0 4px rgba(25, 118, 210, 0.15)",
+                      },
+                    },
+                    "& .MuiSwitch-track": {
+                      ".Mui-focusVisible + &": {
+                        border: "2px solid",
+                        borderColor: "primary.main",
                       },
                     },
                   }}
@@ -352,6 +359,13 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                         outline: "2px solid",
                         outlineColor: "primary.main",
                         outlineOffset: "2px",
+                        boxShadow: "0 0 0 4px rgba(25, 118, 210, 0.15)",
+                      },
+                    },
+                    "& .MuiSwitch-track": {
+                      ".Mui-focusVisible + &": {
+                        border: "2px solid",
+                        borderColor: "primary.main",
                       },
                     },
                   }}
@@ -383,6 +397,13 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                         outline: "2px solid",
                         outlineColor: "primary.main",
                         outlineOffset: "2px",
+                        boxShadow: "0 0 0 4px rgba(25, 118, 210, 0.15)",
+                      },
+                    },
+                    "& .MuiSwitch-track": {
+                      ".Mui-focusVisible + &": {
+                        border: "2px solid",
+                        borderColor: "primary.main",
                       },
                     },
                   }}
@@ -759,25 +780,42 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                 <React.Fragment key={row.id}>
                   {/* Main piece row */}
                   <TableRow hover>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell
-                        key={cell.id}
-                        sx={{
-                          py: 0.5,
-                          px: 1,
-                          verticalAlign: "middle",
-                          borderBottom: hasErrors
-                            ? "none"
-                            : "1px solid rgba(224, 224, 224, 1)",
-                          height: "80px",
-                        }}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
+                    {row.getVisibleCells().map((cell) => {
+                      // Determine if this is an edge column with a custom edge
+                      const columnId = cell.column.id;
+                      const hasCustomEdge =
+                        (columnId === "edgeTop" && piece.customEdgeTop) ||
+                        (columnId === "edgeBottom" && piece.customEdgeBottom) ||
+                        (columnId === "edgeLeft" && piece.customEdgeLeft) ||
+                        (columnId === "edgeRight" && piece.customEdgeRight);
+
+                      return (
+                        <TableCell
+                          key={cell.id}
+                          sx={{
+                            py: 0.5,
+                            px: 1,
+                            verticalAlign: "middle",
+                            borderBottom: hasErrors
+                              ? "none"
+                              : "1px solid rgba(224, 224, 224, 1)",
+                            height: "80px",
+                            backgroundColor: hasCustomEdge
+                              ? "rgba(255, 193, 7, 0.08)"
+                              : "transparent",
+                            borderLeft: hasCustomEdge
+                              ? "3px solid rgba(255, 193, 7, 0.6)"
+                              : "none",
+                            transition: "background-color 0.2s ease",
+                          }}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      );
+                    })}
                   </TableRow>
 
                   {/* Error row - shown below the piece if there are errors */}
