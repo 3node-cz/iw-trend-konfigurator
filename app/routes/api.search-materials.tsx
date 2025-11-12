@@ -75,10 +75,139 @@ export async function loader({ request }: LoaderFunctionArgs) {
     let graphqlQuery = '';
     let variables = {};
 
-    // Always use products search API for consistency
-    // The node() API might have different permissions than products search
-    {
-      // Regular search query
+    // For direct GID lookups, use node() API as it's more reliable
+    // For other searches, use products() search API
+    const isDirectGidLookup = query && query.startsWith('id:') && query.includes('gid://shopify/');
+
+    if (isDirectGidLookup) {
+      // Extract the GID from the query
+      const gid = query.replace('id:', '').trim();
+      console.log('🔍 Using node() API for direct GID lookup:', gid);
+
+      graphqlQuery = `
+        query getProduct($id: ID!) {
+          node(id: $id) {
+            ... on Product {
+              id
+                title
+                handle
+                vendor
+                productType
+                tags
+                featuredImage {
+                  url
+                  altText
+                }
+                images(first: 5) {
+                  edges {
+                    node {
+                      url
+                      altText
+                    }
+                  }
+                }
+                variants(first: 10) {
+                  edges {
+                    node {
+                      id
+                      title
+                      sku
+                      price
+                      inventoryQuantity
+                      availableForSale
+                      image {
+                        url
+                        altText
+                      }
+                      localWarehouseStock: metafield(namespace: "custom", key: "local_warehouse_stock") {
+                        value
+                      }
+                      centralWarehouseStock: metafield(namespace: "custom", key: "central_warehouse_stock") {
+                        value
+                      }
+                      materialHeight: metafield(namespace: "material", key: "height") {
+                        value
+                      }
+                      materialWidth: metafield(namespace: "material", key: "width") {
+                        value
+                      }
+                      materialThickness: metafield(namespace: "material", key: "thickness") {
+                        value
+                      }
+                      alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
+                        value
+                        references(first: 10) {
+                          edges {
+                            node {
+                              ... on Product {
+                                id
+                                title
+                                handle
+                              }
+                            }
+                          }
+                        }
+                      }
+                      allMetafields: metafields(first: 10) {
+                        edges {
+                          node {
+                            namespace
+                            key
+                            value
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                localWarehouseStock: metafield(namespace: "custom", key: "local_warehouse_stock") {
+                  value
+                }
+                centralWarehouseStock: metafield(namespace: "custom", key: "central_warehouse_stock") {
+                  value
+                }
+                alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
+                  value
+                  references(first: 10) {
+                    edges {
+                      node {
+                        ... on Product {
+                          id
+                          title
+                          handle
+                        }
+                      }
+                    }
+                  }
+                }
+                materialHeight: metafield(namespace: "material", key: "height") {
+                  value
+                }
+                materialWidth: metafield(namespace: "material", key: "width") {
+                  value
+                }
+                materialThickness: metafield(namespace: "material", key: "thickness") {
+                  value
+                }
+                allMetafields: metafields(first: 10) {
+                  edges {
+                    node {
+                      namespace
+                      key
+                      value
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+      variables = {
+        id: gid
+      };
+    } else {
+      // Use products() search API for text searches
       graphqlQuery = `
         query searchProducts($query: String!, $first: Int!) {
           products(first: $first, query: $query) {
@@ -360,12 +489,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
       };
     };
 
-    // Handle products search results (all queries now use products search API)
-    const materials = result.data.products.edges.map((edge: any) => {
-      const product = edge.node;
+    // Handle both node() and products() API responses
+    let materials = [];
+
+    if (isDirectGidLookup && result.data.node) {
+      // Handle node() API response (direct GID lookup)
+      const product = result.data.node;
       const variant = product.variants.edges[0]?.node;
-      return transformToMaterial(product, variant);
-    });
+      materials = [transformToMaterial(product, variant)];
+      console.log('✅ node() API returned product');
+    } else if (result.data.products) {
+      // Handle products() search API response
+      materials = result.data.products.edges.map((edge: any) => {
+        const product = edge.node;
+        const variant = product.variants.edges[0]?.node;
+        return transformToMaterial(product, variant);
+      });
+      console.log(`✅ products() API returned ${materials.length} products`);
+    }
 
     console.log(`✅ Found ${materials.length} materials`);
 
