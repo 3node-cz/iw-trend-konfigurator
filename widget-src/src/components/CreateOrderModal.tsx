@@ -70,12 +70,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Debug: Log customer discount info
-  console.log('CreateOrderModal - Customer:', customer);
-  console.log('CreateOrderModal - Customer discount:', customer?.discountPercentage);
-  console.log('CreateOrderModal - Discount type:', typeof customer?.discountPercentage);
-  console.log('CreateOrderModal - Show discount field?', customer && customer.discountPercentage > 0);
-
   // Use dynamic options from shop config
   const locations = shopConfig.transferLocations;
   const deliveryMethods = shopConfig.deliveryMethods;
@@ -290,19 +284,11 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
           {(() => {
             // Show if customer is logged in and has discountPercentage property (even if it's 0)
             const shouldShow = customer && customer.discountPercentage !== undefined;
-            console.log('🔍 Discount field render check:', {
-              hasCustomer: !!customer,
-              discount: customer?.discountPercentage,
-              shouldShow,
-              formDataDiscount: formData.discountPercentage
-            });
 
             if (!shouldShow) {
-              console.log('❌ Discount field NOT rendering');
               return null;
             }
 
-            console.log('✅ Discount field IS rendering');
             return (
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField

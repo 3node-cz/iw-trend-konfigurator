@@ -18,15 +18,7 @@ const fetchDefaultEdge = async (material: MaterialSearchResult): Promise<EdgeMat
   try {
     const alternativeProducts = material.metafields?.['custom.alternative_products']
 
-    console.log('🔍 [Edge Auto-Selection Debug]', {
-      materialTitle: material.title,
-      materialId: material.id,
-      alternativeProducts,
-      metafieldsAvailable: Object.keys(material.metafields || {}),
-    })
-
     if (!alternativeProducts) {
-      console.log('⚠️ No alternative_products metafield found for', material.title)
       return null
     }
 
@@ -44,40 +36,32 @@ const fetchDefaultEdge = async (material: MaterialSearchResult): Promise<EdgeMat
       }
     }
 
-    console.log('📋 Product IDs from alternative_products:', productIds)
-
     if (productIds.length === 0) {
-      console.log('⚠️ No product IDs found in alternative_products')
       return null
     }
 
     // Prepare query - if it's a GID, prefix with "id:" for the backend API
     let edgeQuery = productIds[0]
-    if (edgeQuery.startsWith('gid://shopify/')) {
+    const isGidSearch = edgeQuery.startsWith('gid://shopify/')
+    if (isGidSearch) {
       edgeQuery = `id:${edgeQuery}`
-      console.log('🔍 Using GID search with id: prefix:', edgeQuery)
     }
 
     // Search for first edge product
+    // Note: Don't use collection filter with GID search - backend needs no collection for direct node query
     const results = await searchMaterials({
       query: edgeQuery,
-      collection: 'hrany',
+      collection: isGidSearch ? undefined : 'hrany',
       limit: 1,
     })
 
-    console.log('🔎 Edge search results:', {
-      query: productIds[0],
-      resultsCount: results.length,
-      firstResult: results[0]?.title,
-    })
-
     if (results.length === 0) {
-      console.log('❌ No edge found for query:', productIds[0])
+      console.warn('⚠️ Edge not found:', productIds[0])
       return null
     }
 
     const edge = results[0]
-    const edgeMaterial = {
+    return {
       id: edge.id,
       variantId: edge.variant?.id,
       code: edge.variant?.sku,
@@ -94,9 +78,6 @@ const fetchDefaultEdge = async (material: MaterialSearchResult): Promise<EdgeMat
       } : undefined,
       image: edge.image,
     }
-
-    console.log('✅ Default edge loaded:', edgeMaterial.name)
-    return edgeMaterial
   } catch (error) {
     console.error('❌ Error fetching default edge:', error)
     return null

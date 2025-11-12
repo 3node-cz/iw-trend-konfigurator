@@ -55,16 +55,6 @@ export const calculateAvailability = (product: MaterialSearchResult): Availabili
   // Use inventory quantity from variant (standard Shopify field)
   const inventoryQuantity = product.variant?.inventoryQuantity || 0
 
-  // DEBUG: Log stock calculation for troubleshooting
-  console.log('🔍 [Availability Debug]', {
-    productTitle: product.title,
-    productId: product.id,
-    variantSku: product.variant?.sku,
-    inventoryQuantity,
-    availableForSale: product.variant?.availableForSale,
-    isAvailable: inventoryQuantity > 0
-  })
-
   // Product is available if inventory quantity > 0
   const isAvailable = inventoryQuantity > 0
 

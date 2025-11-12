@@ -71,27 +71,8 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
           </TableHead>
           <TableBody>
             {results.map((material, index) => {
-              // Debug: Log all metafields for first material
-              if (index === 0) {
-                console.log('📦 First material metafields:', {
-                  title: material.title,
-                  productMetafields: material.metafields ? Object.keys(material.metafields) : [],
-                  variantMetafields: material.variant?.metafields ? Object.keys(material.variant.metafields) : [],
-                  allProductMetafields: material.metafields,
-                  allVariantMetafields: material.variant?.metafields
-                });
-              }
-
               // Calculate availability using unified function
               const availability = calculateAvailability(material);
-
-              // Debug availability in search results
-              console.log('🔍 [MaterialResultsTable] Availability:', {
-                title: material.title,
-                inventoryQuantity: material.variant?.inventoryQuantity,
-                availableForSale: material.variant?.availableForSale,
-                availability,
-              });
 
               // Extract pricing info
               const basePrice = material.variant?.price || "0";

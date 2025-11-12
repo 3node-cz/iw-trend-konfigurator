@@ -17,14 +17,6 @@ interface MaterialInfoCardProps {
 }
 
 const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({ material }) => {
-  // Debug availability issue
-  console.log('📦 [MaterialInfoCard] Material data:', {
-    title: material.title,
-    inventoryQuantity: material.variant?.inventoryQuantity,
-    availableForSale: material.variant?.availableForSale,
-    availability: calculateAvailability(material),
-  });
-
   return (
     <Card>
       <CardContent sx={{ p: 3 }}>
