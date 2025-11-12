@@ -15,8 +15,10 @@ import {
   InputAdornment,
   CircularProgress,
   Avatar,
+  IconButton,
+  Tooltip,
 } from '@mui/material'
-import { Search as SearchIcon, Clear as ClearIcon } from '@mui/icons-material'
+import { Search as SearchIcon, Clear as ClearIcon, Delete as DeleteIcon } from '@mui/icons-material'
 import { searchEdgeMaterials } from '../services/shopifyApi'
 import type { EdgeMaterial, MaterialSearchResult } from '../types/shopify'
 import { AvailabilityChip } from './common'
@@ -187,6 +189,10 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
               ),
             }}
           />
+
+          {!selectedEdge && edgeSearchQuery.length === 0 && !isSearching && (
+            <Divider sx={{ my: 2 }} />
+          )}
         </Box>
 
         {/* Edge Search Results */}
@@ -266,31 +272,14 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
         {/* Selected Edge Display */}
         {selectedEdge ? (
           <Box sx={{ mb: 3 }}>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mb: 2 }}
-            >
-              Vybraná hrana
-            </Typography>
-
-            {/* Edge Preview Section */}
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 2,
-                mb: 2,
-                p: 2,
-                bgcolor: '#f8f9fa',
-                borderRadius: 1,
-              }}
-            >
+            {/* Edge Preview Section - matches MaterialInfoCard layout */}
+            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
               <Avatar
                 src={selectedEdge.image}
                 alt={selectedEdge.name}
                 sx={{
-                  width: 60,
-                  height: 60,
+                  width: 100,
+                  height: 100,
                   borderRadius: 1,
                   bgcolor: '#f5f5f5',
                   border: '1px solid #e0e0e0',
@@ -302,41 +291,52 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
 
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 600, mb: 0.5, color: 'primary.main' }}
+                  variant="body1"
+                  sx={{ fontWeight: 500, mb: 1, color: 'primary.main' }}
                 >
                   {selectedEdge.name}
                 </Typography>
 
                 <Typography
-                  variant="caption"
+                  variant="body2"
                   color="primary"
-                  sx={{ display: 'block', mb: 0.5 }}
+                  sx={{ fontWeight: 500 }}
                 >
                   {selectedEdge.productCode}
                 </Typography>
+              </Box>
 
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}
-                >
-                  <AvailabilityChip
-                    availability={selectedEdge.availability}
+              <Box>
+                <Tooltip title="Odstrániť hranu">
+                  <IconButton
+                    onClick={() => onEdgeChange(null)}
                     size="small"
-                  />
-                </Box>
+                    color="error"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Tooltip>
               </Box>
             </Box>
 
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => onEdgeChange(null)}
-              sx={{ mb: 2 }}
-            >
-              Zrušiť výber
-            </Button>
-
             <Divider sx={{ my: 2 }} />
+
+            {/* Availability Section */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mb: 0.5 }}
+                >
+                  Dostupnosť
+                </Typography>
+                <AvailabilityChip
+                  availability={selectedEdge.availability}
+                  size="small"
+                />
+              </Box>
+            </Box>
           </Box>
         ) : (
           <Box sx={{ mb: 3 }}>
