@@ -51,9 +51,16 @@ const fetchDefaultEdge = async (material: MaterialSearchResult): Promise<EdgeMat
       return null
     }
 
+    // Prepare query - if it's a GID, prefix with "id:" for the backend API
+    let edgeQuery = productIds[0]
+    if (edgeQuery.startsWith('gid://shopify/')) {
+      edgeQuery = `id:${edgeQuery}`
+      console.log('🔍 Using GID search with id: prefix:', edgeQuery)
+    }
+
     // Search for first edge product
     const results = await searchMaterials({
-      query: productIds[0],
+      query: edgeQuery,
       collection: 'hrany',
       limit: 1,
     })
