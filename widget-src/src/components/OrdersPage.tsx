@@ -50,10 +50,18 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
   };
 
   const handleLoadDraft = (draft: SavedOrder) => {
-    // TODO: Load draft order (similar to loading saved configuration)
-    console.log('Loading draft order:', draft);
-    setAlertMessage(`Načítavam návrh objednávky: ${draft.orderInfo.orderName}`);
-    setShowAlert(true);
+    // Convert SavedOrder to SavedConfiguration format for loading
+    const savedConfig: SavedConfiguration = {
+      id: draft.id,
+      name: draft.orderInfo.orderName,
+      orderInfo: draft.orderInfo,
+      specifications: draft.specifications,
+      savedAt: draft.createdAt.toISOString(),
+      version: draft.version
+    };
+
+    // Use existing configuration loading logic
+    onLoadConfiguration?.(savedConfig);
   };
 
   const handleDeleteDraft = (draft: SavedOrder) => {

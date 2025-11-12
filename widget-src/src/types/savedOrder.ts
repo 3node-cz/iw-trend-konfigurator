@@ -71,11 +71,12 @@ export const createSavedOrder = (
     sum + spec.pieces.reduce((pieceSum, piece) => pieceSum + piece.quantity, 0), 0
   )
   const totalBoards = cuttingLayouts?.length || 0
-  const materialNames = specifications.map(spec => spec.material.name)
+  const materialNames = specifications.map(spec => spec.material.title)
 
   // Estimate cost (simplified calculation)
   const estimatedCost = specifications.reduce((sum, spec) => {
-    const materialCost = Number(spec.material.price.amount) * spec.pieces.reduce((total, piece) => total + piece.quantity, 0)
+    const materialPrice = spec.material.variant?.price ? parseFloat(spec.material.variant.price) : 0
+    const materialCost = materialPrice * spec.pieces.reduce((total, piece) => total + piece.quantity, 0)
     return sum + materialCost
   }, 0)
 
@@ -124,12 +125,13 @@ export const calculateOrderSummary = (
     sum + spec.pieces.reduce((pieceSum, piece) => pieceSum + piece.quantity, 0), 0
   )
   const totalBoards = cuttingLayouts?.length || 0
-  const materialNames = specifications.map(spec => spec.material.name)
+  const materialNames = specifications.map(spec => spec.material.title)
 
   // Use order calculations if available, otherwise estimate
   const estimatedCost = orderCalculations?.totals?.totalCuttingCost ||
     specifications.reduce((sum, spec) => {
-      const materialCost = Number(spec.material.price.amount) * spec.pieces.reduce((total, piece) => total + piece.quantity, 0)
+      const materialPrice = spec.material.variant?.price ? parseFloat(spec.material.variant.price) : 0
+      const materialCost = materialPrice * spec.pieces.reduce((total, piece) => total + piece.quantity, 0)
       return sum + materialCost
     }, 0)
 
