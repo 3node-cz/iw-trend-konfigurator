@@ -18,7 +18,12 @@ const fetchDefaultEdge = async (material: MaterialSearchResult): Promise<EdgeMat
   try {
     const alternativeProducts = material.metafields?.['custom.alternative_products']
 
+    console.log('🔍 [useMaterialSpecs] Material:', material.title)
+    console.log('🔍 [useMaterialSpecs] Raw metafield value:', alternativeProducts)
+    console.log('🔍 [useMaterialSpecs] Metafield type:', typeof alternativeProducts)
+
     if (!alternativeProducts) {
+      console.log('⚠️ [useMaterialSpecs] No alternative_products metafield found')
       return null
     }
 
@@ -26,26 +31,54 @@ const fetchDefaultEdge = async (material: MaterialSearchResult): Promise<EdgeMat
     let productIds: string[] = []
     if (Array.isArray(alternativeProducts)) {
       productIds = alternativeProducts
+      console.log('🔍 [useMaterialSpecs] Metafield is array:', productIds)
     } else if (typeof alternativeProducts === 'string') {
       try {
         const parsed = JSON.parse(alternativeProducts)
         productIds = Array.isArray(parsed) ? parsed : []
+        console.log('🔍 [useMaterialSpecs] Parsed JSON array:', productIds)
       } catch {
         // If not JSON, treat as single product ID/handle
         productIds = [alternativeProducts]
+        console.log('🔍 [useMaterialSpecs] Treating as single string value:', productIds)
       }
     }
 
     if (productIds.length === 0) {
+      console.log('⚠️ [useMaterialSpecs] No product IDs extracted from metafield')
       return null
     }
 
-    // Prepare query - if it's a GID, prefix with "id:" for the backend API
-    let edgeQuery = productIds[0]
-    const isGidSearch = edgeQuery.startsWith('gid://shopify/')
-    if (isGidSearch) {
-      edgeQuery = `id:${edgeQuery}`
+    // Prepare query - handle both numeric IDs and full GIDs
+    let productId = productIds[0]
+    let isNumericId = false
+    let isGidSearch = false
+
+    // Check if it's a numeric ID (like 15514881327486)
+    if (/^\d+$/.test(productId)) {
+      console.log('🔍 [useMaterialSpecs] Detected numeric product ID:', productId)
+      // Convert numeric ID to full GID
+      productId = `gid://shopify/Product/${productId}`
+      isNumericId = true
+      isGidSearch = true
+    } else if (productId.startsWith('gid://shopify/')) {
+      console.log('🔍 [useMaterialSpecs] Detected full GID:', productId)
+      isGidSearch = true
     }
+
+    // For GID searches, prefix with "id:" for the backend API
+    let edgeQuery = productId
+    if (isGidSearch) {
+      edgeQuery = `id:${productId}`
+    }
+
+    console.log('🔎 [useMaterialSpecs] Searching for edge:', {
+      originalValue: productIds[0],
+      convertedToGid: isNumericId,
+      finalGid: productId,
+      finalQuery: edgeQuery,
+      collection: isGidSearch ? undefined : 'hrany'
+    })
 
     // Search for first edge product
     // Note: Don't use collection filter with GID search - backend needs no collection for direct node query
@@ -55,8 +88,25 @@ const fetchDefaultEdge = async (material: MaterialSearchResult): Promise<EdgeMat
       limit: 1,
     })
 
+    console.log('📦 [useMaterialSpecs] Search results count:', results.length)
+    if (results.length > 0) {
+      console.log('✅ [useMaterialSpecs] Found edge:', results[0].title, results[0].id)
+    }
+
     if (results.length === 0) {
-      console.warn('⚠️ Edge not found:', productIds[0])
+      // GID search failed - the product doesn't exist or metafield is incorrect
+      console.error(
+        '❌ Edge product not found!',
+        '\n📍 GID from metafield:', productIds[0],
+        '\n📍 Material:', material.title,
+        '\n\n' +
+        '💡 Possible causes:\n' +
+        '   1. Product doesn\'t exist in this store\n' +
+        '   2. GID is from a different store (test vs production)\n' +
+        '   3. Product was deleted and metafield wasn\'t updated\n' +
+        '\n🔧 Solution: Update the "alternative_products" metafield in Shopify Admin\n' +
+        '   to reference the correct edge product for this material.'
+      )
       return null
     }
 

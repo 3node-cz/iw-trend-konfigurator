@@ -66,12 +66,6 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
   const pathGenerator = new SVGPathGenerator(geometry, scale)
   const piecePath = pathGenerator.generatePath()
 
-  // Generate unique IDs for SVG definitions
-  const patternId = `pattern-${Date.now()}-${Math.random()
-    .toString(36)
-    .substr(2, 9)}`
-  const clipId = `clip-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-
   // Extract individual edge thicknesses (numbers, not strings)
   // Priority: individual edge first, then edgeAllAround as fallback, then null
   const edgeThicknesses = {
@@ -95,6 +89,34 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
         mx: 'auto',
       }}
     >
+      {/* Background image layer */}
+      {showBackground && backgroundImage && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: offsetY,
+            left: offsetX,
+            width: displayWidth,
+            height: displayHeight,
+            overflow: 'hidden',
+            borderRadius: '4px',
+          }}
+        >
+          <img
+            src={backgroundImage}
+            alt="Material"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              opacity: backgroundOpacity,
+              transform: 'rotate(90deg) scale(1.4)',
+              transformOrigin: 'center center',
+            }}
+          />
+        </Box>
+      )}
+
       <svg
         width={actualWidth}
         height={actualHeight}
@@ -105,53 +127,13 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
           left: 0,
         }}
       >
-        {/* SVG Definitions for patterns and clipping */}
-        <defs>
-          {showBackground && backgroundImage && (
-            <>
-              {/* Pattern definition for background image */}
-              <pattern
-                id={patternId}
-                patternUnits="userSpaceOnUse"
-                width={displayWidth}
-                height={displayHeight}
-                x={offsetX}
-                y={offsetY}
-              >
-                <image
-                  href={backgroundImage}
-                  width={displayWidth}
-                  height={displayHeight}
-                  x="0"
-                  y="0"
-                  opacity={backgroundOpacity}
-                  preserveAspectRatio="xMidYMid slice"
-                  transform={`rotate(90 ${displayWidth / 2} ${displayHeight / 2})`}
-                />
-              </pattern>
-
-              {/* Clipping path to match the piece shape */}
-              <clipPath id={clipId}>
-                <path d={piecePath} />
-              </clipPath>
-            </>
-          )}
-        </defs>
-
         <g transform={`translate(${offsetX}, ${offsetY})`}>
           {/* Main piece shape */}
           <path
             d={piecePath}
-            fill={
-              showBackground && backgroundImage
-                ? `url(#${patternId})`
-                : '#ffffff'
-            }
+            fill="none"
             stroke="#1976d2"
             strokeWidth="2"
-            clipPath={
-              showBackground && backgroundImage ? `url(#${clipId})` : undefined
-            }
             style={{
               filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.1))',
             }}

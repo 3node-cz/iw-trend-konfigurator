@@ -28,6 +28,27 @@ const PiecePreviewDialog: React.FC<PiecePreviewDialogProps> = ({
 }) => {
   if (!piece) return null
 
+  // Calculate container dimensions based on piece aspect ratio
+  // Max dimension of 600px, maintaining aspect ratio
+  const maxDimension = 600
+  const aspectRatio = piece.length / piece.width
+  let containerWidth: number
+  let containerHeight: number
+
+  if (aspectRatio > 1) {
+    // Piece is longer than wide
+    containerWidth = maxDimension
+    containerHeight = maxDimension / aspectRatio
+  } else {
+    // Piece is wider than long or square
+    containerHeight = maxDimension
+    containerWidth = maxDimension * aspectRatio
+  }
+
+  // Minimum dimensions for visibility
+  containerWidth = Math.max(containerWidth, 200)
+  containerHeight = Math.max(containerHeight, 200)
+
   return (
     <Dialog
       open={open}
@@ -70,9 +91,10 @@ const PiecePreviewDialog: React.FC<PiecePreviewDialogProps> = ({
           <Box sx={{ mb: 3 }}>
             <PieceShapePreview
               piece={piece}
-              containerSize={600}
+              containerWidth={containerWidth}
+              containerHeight={containerHeight}
               backgroundImage={material?.image}
-              backgroundOpacity={0.3}
+              backgroundOpacity={1.0}
             />
           </Box>
 

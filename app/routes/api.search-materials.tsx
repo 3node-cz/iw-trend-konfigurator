@@ -31,16 +31,30 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     if (query && query.trim()) {
       // Check if this is a Shopify GID search (for loading saved configurations)
-      if (query.startsWith('id:gid://shopify/')) {
-        const shopifyId = query.replace('id:', '');
-        console.log('🔍 Shopify GID search detected:', shopifyId);
-        searchQuery = `id:${shopifyId}`;
+      if (query.startsWith('id:')) {
+        // Extract the ID part after "id:"
+        const idPart = query.replace('id:', '');
+
+        if (idPart.startsWith('gid://shopify/')) {
+          // Already a full GID
+          console.log('🔍 Shopify GID search detected:', idPart);
+          searchQuery = `id:${idPart}`;
+        } else if (/^\d+$/.test(idPart)) {
+          // Numeric ID - convert to full GID
+          const fullGid = `gid://shopify/Product/${idPart}`;
+          console.log('🔍 Numeric product ID detected, converting:', idPart, '->', fullGid);
+          searchQuery = `id:${fullGid}`;
+        } else {
+          // Some other format, use as-is
+          console.log('🔍 Unknown ID format:', idPart);
+          searchQuery = `id:${idPart}`;
+        }
       } else {
-        // Check if it's a numeric ID (like from old variant IDs)
+        // Check if it's a plain numeric ID (like from old variant IDs)
         if (/^\d+$/.test(query)) {
           // For numeric queries, search across multiple fields including variant IDs and SKUs
           searchQuery = `title:*${query}* OR vendor:*${query}* OR product_type:*${query}* OR tag:*${query}* OR sku:*${query}* OR variant_id:${query} OR barcode:${query}`;
-          console.log('🔍 Numeric ID detected, using enhanced search for:', query);
+          console.log('🔍 Numeric search term detected, using enhanced search for:', query);
         } else {
           // Regular text search - include SKU field for product codes
           searchQuery = `title:*${query}* OR vendor:*${query}* OR product_type:*${query}* OR tag:*${query}* OR sku:*${query}*`;
@@ -61,135 +75,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     let graphqlQuery = '';
     let variables = {};
 
-    if (query.startsWith('id:gid://shopify/') && !collection) {
-      // Direct node query for exact ID lookup (but only if no collection filter is needed)
-      const shopifyId = query.replace('id:', '');
-      console.log('🔍 Using direct node query for ID:', shopifyId);
-
-      graphqlQuery = `
-        query getProductOrVariant($id: ID!) {
-          node(id: $id) {
-            id
-            ... on Product {
-              title
-              handle
-              vendor
-              productType
-              tags
-              featuredImage {
-                url
-                altText
-              }
-              images(first: 5) {
-                edges {
-                  node {
-                    url
-                    altText
-                  }
-                }
-              }
-              variants(first: 10) {
-                edges {
-                  node {
-                    id
-                    title
-                    sku
-                    price
-                    inventoryQuantity
-                    availableForSale
-                    image {
-                      url
-                      altText
-                    }
-                    materialHeight: metafield(namespace: "material", key: "height") {
-                      value
-                    }
-                    materialWidth: metafield(namespace: "material", key: "width") {
-                      value
-                    }
-                    materialThickness: metafield(namespace: "material", key: "thickness") {
-                      value
-                    }
-                    alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
-                      value
-                    }
-                    allMetafields: metafields(first: 10) {
-                      edges {
-                        node {
-                          namespace
-                          key
-                          value
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-              alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
-                value
-              }
-            }
-            ... on ProductVariant {
-              id
-              title
-              sku
-              price
-              inventoryQuantity
-              availableForSale
-              image {
-                url
-                altText
-              }
-              product {
-                id
-                title
-                handle
-                vendor
-                productType
-                tags
-                featuredImage {
-                  url
-                  altText
-                }
-                images(first: 5) {
-                  edges {
-                    node {
-                      url
-                      altText
-                    }
-                  }
-                }
-                alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
-                  value
-                }
-              }
-              materialHeight: metafield(namespace: "material", key: "height") {
-                value
-              }
-              materialWidth: metafield(namespace: "material", key: "width") {
-                value
-              }
-              materialThickness: metafield(namespace: "material", key: "thickness") {
-                value
-              }
-              alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
-                value
-              }
-              allMetafields: metafields(first: 10) {
-                edges {
-                  node {
-                    namespace
-                    key
-                    value
-                  }
-                }
-              }
-            }
-          }
-        }
-      `;
-      variables = { id: shopifyId };
-    } else {
+    // Always use products search API for consistency
+    // The node() API might have different permissions than products search
+    {
       // Regular search query
       graphqlQuery = `
         query searchProducts($query: String!, $first: Int!) {
@@ -244,6 +132,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
                       }
                       alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
                         value
+                        references(first: 10) {
+                          edges {
+                            node {
+                              ... on Product {
+                                id
+                                title
+                                handle
+                              }
+                            }
+                          }
+                        }
                       }
                       allMetafields: metafields(first: 10) {
                         edges {
@@ -265,6 +164,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
                 }
                 alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
                   value
+                  references(first: 10) {
+                    edges {
+                      node {
+                        ... on Product {
+                          id
+                          title
+                          handle
+                        }
+                      }
+                    }
+                  }
                 }
                 materialHeight: metafield(namespace: "material", key: "height") {
                   value
@@ -326,9 +236,23 @@ export async function loader({ request }: LoaderFunctionArgs) {
       console.log('🔍 [API] Checking product.alternativeProducts:', {
         exists: !!product.alternativeProducts,
         value: product.alternativeProducts?.value,
+        references: product.alternativeProducts?.references,
         fullObject: product.alternativeProducts,
       });
-      if (product.alternativeProducts?.value) {
+
+      // For list.product_reference metafields, use the resolved references
+      // Extract the GIDs from the references field
+      if (product.alternativeProducts?.references?.edges) {
+        const productGids = product.alternativeProducts.references.edges
+          .map((edge: any) => edge.node?.id)
+          .filter(Boolean);
+
+        if (productGids.length > 0) {
+          productMetafields['custom.alternative_products'] = JSON.stringify(productGids);
+          console.log('✅ [API] Resolved product references:', productGids);
+        }
+      } else if (product.alternativeProducts?.value) {
+        // Fallback to value if references aren't available
         productMetafields['custom.alternative_products'] = product.alternativeProducts.value;
       }
       if (product.materialHeight?.value) {
@@ -346,9 +270,22 @@ export async function loader({ request }: LoaderFunctionArgs) {
         console.log('🔍 [API] Checking variant.alternativeProducts:', {
           exists: !!variant.alternativeProducts,
           value: variant.alternativeProducts?.value,
+          references: variant.alternativeProducts?.references,
           fullObject: variant.alternativeProducts,
         });
-        if (variant.alternativeProducts?.value) {
+
+        // For list.product_reference metafields, use the resolved references
+        if (variant.alternativeProducts?.references?.edges) {
+          const variantGids = variant.alternativeProducts.references.edges
+            .map((edge: any) => edge.node?.id)
+            .filter(Boolean);
+
+          if (variantGids.length > 0) {
+            variantMetafields['custom.alternative_products'] = JSON.stringify(variantGids);
+            console.log('✅ [API] Resolved variant references:', variantGids);
+          }
+        } else if (variant.alternativeProducts?.value) {
+          // Fallback to value if references aren't available
           variantMetafields['custom.alternative_products'] = variant.alternativeProducts.value;
         }
         if (variant.materialHeight?.value) {
@@ -423,29 +360,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
       };
     };
 
-    let materials = [];
-
-    if (query.startsWith('id:gid://shopify/') && !collection) {
-      // Handle direct node query result
-      const node = result.data.node;
-      if (node) {
-        if (node.__typename === 'Product') {
-          // It's a product
-          const variant = node.variants.edges[0]?.node;
-          materials.push(transformToMaterial(node, variant));
-        } else if (node.__typename === 'ProductVariant') {
-          // It's a variant - use the variant and its product
-          materials.push(transformToMaterial(node.product, node));
-        }
-      }
-    } else {
-      // Handle regular search results
-      materials = result.data.products.edges.map((edge: any) => {
-        const product = edge.node;
-        const variant = product.variants.edges[0]?.node;
-        return transformToMaterial(product, variant);
-      });
-    }
+    // Handle products search results (all queries now use products search API)
+    const materials = result.data.products.edges.map((edge: any) => {
+      const product = edge.node;
+      const variant = product.variants.edges[0]?.node;
+      return transformToMaterial(product, variant);
+    });
 
     console.log(`✅ Found ${materials.length} materials`);
 
