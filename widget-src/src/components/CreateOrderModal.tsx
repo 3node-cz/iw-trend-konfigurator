@@ -44,6 +44,14 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     const defaultDeliveryDate = new Date();
     defaultDeliveryDate.setDate(defaultDeliveryDate.getDate() + ORDER_CONFIG.DEFAULT_DELIVERY_DAYS);
 
+    const customerDefaults = createOrderWithCustomerDefaults(customer);
+
+    // Validate processingType - ensure it's in available options before spreading
+    if (customerDefaults.processingType && !shopConfig.processingTypes.includes(customerDefaults.processingType)) {
+      console.warn(`⚠️ Customer's processingType "${customerDefaults.processingType}" not in available options, using default`);
+      customerDefaults.processingType = shopConfig.processingTypes[0] || "Zlikvidovať";
+    }
+
     return {
       orderName: "",
       deliveryDate: defaultDeliveryDate,
@@ -55,7 +63,8 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
       cuttingCenter: "",
       deliveryMethod: "",
       processingType: shopConfig.processingTypes[0] || "Zlikvidovať",
-      ...createOrderWithCustomerDefaults(customer),
+      discountPercentage: 0, // Always initialize to prevent undefined.toString() crash
+      ...customerDefaults,
     };
   });
 
@@ -277,9 +286,10 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             />
           </Grid>
 
-          {/* Customer Discount - Read-only, comes from customer data - Only show if customer is logged in and has discount */}
+          {/* Customer Discount - Read-only, comes from customer data - Only show if customer is logged in and has discount defined */}
           {(() => {
-            const shouldShow = customer && customer.discountPercentage > 0;
+            // Show if customer is logged in and has discountPercentage property (even if it's 0)
+            const shouldShow = customer && customer.discountPercentage !== undefined;
             console.log('🔍 Discount field render check:', {
               hasCustomer: !!customer,
               discount: customer?.discountPercentage,
@@ -298,7 +308,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                 <TextField
                   label="Zľava zákazníka (%)"
                   type="number"
-                  value={formData.discountPercentage.toString()}
+                  value={(formData.discountPercentage ?? 0).toString()}
                   onChange={handleFieldChange("discountPercentage")}
                   error={!!errors.discountPercentage}
                   helperText={errors.discountPercentage}
