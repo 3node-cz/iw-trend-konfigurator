@@ -20,12 +20,15 @@ export const loadOrderConfiguration = async (
   specifications: CuttingSpecification[]
 }> => {
 
+  console.log('🔄 Loading order configuration:', savedOrder.id)
   materialCache.clear()
   edgeCache.clear()
 
   const uniqueMaterialIds = [
     ...new Set(savedOrder.specifications.map((spec) => spec.materialId)),
   ]
+
+  console.log('📦 Material IDs to load:', uniqueMaterialIds)
 
   // Collect all edge IDs (default + custom edges from pieces)
   const allEdgeIds = new Set<string>()
@@ -43,12 +46,17 @@ export const loadOrderConfiguration = async (
   })
   const uniqueEdgeIds = Array.from(allEdgeIds)
 
+  console.log('🔲 Edge IDs to load:', uniqueEdgeIds)
 
   await Promise.all(
     uniqueMaterialIds.map(async (materialId) => {
+      console.log('🔍 Fetching material:', materialId)
       const material = await fetchMaterialById(materialId)
       if (material) {
+        console.log('✅ Material loaded:', materialId, material.title)
         materialCache.set(materialId, material)
+      } else {
+        console.error('❌ Failed to load material:', materialId)
       }
     }),
   )
@@ -127,12 +135,16 @@ async function fetchMaterialById(
 ): Promise<MaterialSearchResult | null> {
 
   try {
+    console.log('🔎 fetchMaterialById called with:', materialId)
+
     // Strategy 1: Try direct GID search first (for valid GIDs)
+    console.log('   Strategy 1: Trying direct GID search with query:', `id:${materialId}`)
     let results = await searchMaterials({
       query: `id:${materialId}`,
       limit: 1,
     })
 
+    console.log('   Strategy 1 results:', results.length, results.length > 0 ? results[0].id : 'none')
 
     // Strategy 2: If direct search fails, try enhanced numeric search
     if (results.length === 0) {
@@ -141,15 +153,19 @@ async function fetchMaterialById(
       // Extract numeric part if it's a GID
       if (materialId.includes('gid://shopify/')) {
         numericId = materialId.replace(/^gid:\/\/shopify\/(Product|ProductVariant)\//, '');
+        console.log('   Extracted numeric ID:', numericId)
       } else {
+        console.log('   Not a GID, using as-is:', numericId)
       }
 
       // Use the enhanced numeric search (same as what's working in the API)
+      console.log('   Strategy 2: Trying numeric search with query:', numericId)
       const fallbackResults = await searchMaterials({
         query: numericId,
         limit: 5,
       });
 
+      console.log('   Strategy 2 results:', fallbackResults.length, fallbackResults.length > 0 ? fallbackResults[0].id : 'none')
 
       if (fallbackResults.length > 0) {
         return fallbackResults[0];
@@ -157,13 +173,13 @@ async function fetchMaterialById(
     }
 
     if (results.length === 0) {
-      console.warn(`Material not found for ID ${materialId} (tried both GID and numeric search)`);
+      console.warn(`❌ Material not found for ID ${materialId} (tried both GID and numeric search)`);
       return null
     }
 
     return results[0]
   } catch (error) {
-    console.error('Error fetching material by ID:', error)
+    console.error('💥 Error fetching material by ID:', error)
     return null
   }
 }

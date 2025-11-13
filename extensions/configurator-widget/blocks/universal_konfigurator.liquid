@@ -37,8 +37,9 @@
       "lastName": "{{ customer.last_name }}",
       "email": "{{ customer.email }}",
       "metafields": {
-        "saved_configurations": {% if customer.metafields.custom.saved_configurations %}"{{ customer.metafields.custom.saved_configurations | escape }}"{% else %}null{% endif %},
-        "discount_percentage": {% if customer.metafields.custom.discount_percentage %}"{{ customer.metafields.custom.discount_percentage | escape }}"{% else %}null{% endif %}
+        "custom.saved_configurations": {% if customer.metafields.custom.saved_configurations %}"{{ customer.metafields.custom.saved_configurations | escape }}"{% else %}null{% endif %},
+        "custom.discount_percentage": {% if customer.metafields.custom.discount_percentage %}"{{ customer.metafields.custom.discount_percentage | escape }}"{% else %}null{% endif %},
+        "custom.draft_orders": {% if customer.metafields.custom.draft_orders %}"{{ customer.metafields.custom.draft_orders | escape }}"{% else %}null{% endif %}
       }
     }
   {% else %}
