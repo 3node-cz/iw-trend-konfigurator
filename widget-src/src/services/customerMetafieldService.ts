@@ -18,12 +18,30 @@ export const updateCustomerMetafield = async (
   type: string = 'json'
 ): Promise<UpdateMetafieldResult> => {
   try {
+    // Get customer ID from window.ConfiguratorConfig
+    const widgetConfigs = (window as any).ConfiguratorConfig
+    if (!widgetConfigs) {
+      console.error('No ConfiguratorConfig found')
+      return { success: false, error: 'Customer configuration not found' }
+    }
+
+    const firstBlockId = Object.keys(widgetConfigs)[0]
+    const customer = widgetConfigs[firstBlockId]?.customer
+
+    if (!customer?.id) {
+      console.error('No customer ID found in ConfiguratorConfig')
+      return { success: false, error: 'Customer ID not found' }
+    }
+
+    console.log('💾 Updating customer metafield:', { namespace, key, customer_id: customer.id })
+
     const response = await fetch('/apps/configurator/api/update-metafield', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        customer_id: customer.id,
         namespace,
         key,
         value,
@@ -32,18 +50,29 @@ export const updateCustomerMetafield = async (
     })
 
     if (!response.ok) {
+      const errorText = await response.text()
+      console.error('❌ HTTP error updating metafield:', response.status, errorText)
       throw new Error(`HTTP error! status: ${response.status}`)
     }
 
     const result = await response.json()
 
-    if (result.error) {
-      return { success: false, error: result.error }
+    if (result.error || !result.success) {
+      console.error('❌ Backend error updating metafield:', result.error, result.details)
+      return { success: false, error: result.error || 'Update failed' }
     }
 
+    // Update the cached window.ConfiguratorConfig with the new value
+    const metafieldKey = `${namespace}.${key}`
+    if (customer.metafields) {
+      customer.metafields[metafieldKey] = value
+      console.log('🔄 Updated cached metafield in window.ConfiguratorConfig')
+    }
+
+    console.log('✅ Customer metafield updated successfully')
     return { success: true }
   } catch (error) {
-    console.error('Error updating customer metafield:', error)
+    console.error('💥 Error updating customer metafield:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

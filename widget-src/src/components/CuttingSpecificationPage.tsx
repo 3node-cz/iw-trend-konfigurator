@@ -27,6 +27,7 @@ import { useMaterialSearch } from "../hooks/useMaterialSearch";
 import { useCustomer } from "../hooks/useCustomer";
 import { useScrollOnStepChange } from "../hooks/useScrollIntoView";
 import { useCuttingLayouts } from "../hooks/useCuttingLayouts";
+import { useAutoSaveDraft } from "../hooks/useAutoSaveDraft";
 import type {
   MaterialSearchResult,
   CuttingSpecification,
@@ -187,7 +188,16 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
 
   // Calculate cutting layouts to check for unplaced pieces
   const specifications = generateSpecifications();
-  const { overallStats } = useCuttingLayouts(specifications, cuttingConfig);
+  const { cuttingLayouts, overallStats } = useCuttingLayouts(specifications, cuttingConfig);
+
+  // Auto-save draft order as user works
+  useAutoSaveDraft({
+    orderData,
+    specifications,
+    cuttingLayouts,
+    currentStep: 'cutting-specification',
+    enabled: customer !== null && specifications.length > 0
+  });
 
   // Check if there are any validation errors across all materials
   const hasAnyValidationErrors = useCallback(() => {

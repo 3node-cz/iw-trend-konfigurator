@@ -22,6 +22,7 @@ export interface SavedOrder {
   // Order status and metadata
   status: 'draft' | 'saved' | 'submitted' | 'processing' | 'completed' | 'cancelled'
   version: string // For schema versioning
+  savedFromStep?: 'material-selection' | 'cutting-specification' | 'order-form' | 'recapitulation' // Track where draft was saved from
 
   // Basic order information (from form)
   orderInfo: OrderFormData
