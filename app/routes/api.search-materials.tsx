@@ -85,7 +85,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       console.log('🔍 Using node() API for direct GID lookup:', gid);
 
       graphqlQuery = `
-        query getProduct($id: ID!) {
+        query getNode($id: ID!) {
           node(id: $id) {
             ... on Product {
               id
@@ -198,6 +198,74 @@ export async function loader({ request }: LoaderFunctionArgs) {
                     }
                   }
                 }
+            }
+            ... on ProductVariant {
+              id
+              title
+              sku
+              price
+              inventoryQuantity
+              availableForSale
+              image {
+                url
+                altText
+              }
+              localWarehouseStock: metafield(namespace: "custom", key: "local_warehouse_stock") {
+                value
+              }
+              remoteWarehouseStock: metafield(namespace: "custom", key: "remote_warehouse_stock") {
+                value
+              }
+              alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
+                value
+                references(first: 10) {
+                  edges {
+                    node {
+                      ... on ProductVariant {
+                        id
+                      }
+                    }
+                  }
+                }
+              }
+              materialHeight: metafield(namespace: "material", key: "height") {
+                value
+              }
+              materialWidth: metafield(namespace: "material", key: "width") {
+                value
+              }
+              materialThickness: metafield(namespace: "material", key: "thickness") {
+                value
+              }
+              product {
+                id
+                title
+                handle
+                vendor
+                productType
+                tags
+                featuredImage {
+                  url
+                  altText
+                }
+                images(first: 5) {
+                  edges {
+                    node {
+                      url
+                      altText
+                    }
+                  }
+                }
+                allMetafields: metafields(first: 10) {
+                  edges {
+                    node {
+                      namespace
+                      key
+                      value
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -493,10 +561,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     if (isDirectGidLookup && result.data.node) {
       // Handle node() API response (direct GID lookup)
-      const product = result.data.node;
-      const variant = product.variants.edges[0]?.node;
-      materials = [transformToMaterial(product, variant)];
-      console.log('✅ node() API returned product');
+      const node = result.data.node;
+
+      // Check if it's a ProductVariant or Product
+      if (node.product) {
+        // It's a ProductVariant - node has .product and is itself the variant
+        console.log('✅ node() API returned ProductVariant');
+        materials = [transformToMaterial(node.product, node)];
+      } else if (node.variants) {
+        // It's a Product - node has .variants
+        console.log('✅ node() API returned Product');
+        const variant = node.variants.edges[0]?.node;
+        materials = [transformToMaterial(node, variant)];
+      } else {
+        console.log('⚠️ node() API returned unknown node type');
+      }
     } else if (result.data.products) {
       // Handle products() search API response
       materials = result.data.products.edges.map((edge: any) => {

@@ -135,9 +135,8 @@ const CuttingDiagramThumbnail: React.FC<CuttingDiagramThumbnailProps> = ({
       <Box sx={{
         display: 'flex',
         justifyContent: 'center',
-        marginTop: description ? 0 : 'auto',
-        flexGrow: description ? 0 : 1,
-        alignItems: description ? 'flex-start' : 'flex-end'
+        flexGrow: 1,
+        alignItems: 'center'
       }}>
         <svg
           width={svgWidth}
