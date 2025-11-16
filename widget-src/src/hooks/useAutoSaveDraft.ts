@@ -44,7 +44,6 @@ export const useAutoSaveDraft = ({
     }
 
     try {
-      console.log('💾 Auto-saving draft order...')
       const draftService = createDraftOrderService()
 
       // Create draft order with current state
@@ -67,13 +66,11 @@ export const useAutoSaveDraft = ({
       })
 
       if (currentState === lastSaveRef.current) {
-        console.log('⏭️ Skipping auto-save: No changes detected')
         return
       }
 
       await draftService.saveDraftOrder(draftOrder)
       lastSaveRef.current = currentState
-      console.log('✅ Draft order auto-saved successfully')
     } catch (error) {
       console.error('❌ Failed to auto-save draft order:', error)
       // Don't show error to user - auto-save is background operation

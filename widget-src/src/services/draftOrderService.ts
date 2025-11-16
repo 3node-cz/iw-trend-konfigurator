@@ -18,8 +18,6 @@ export interface DraftOrderService {
 export const createDraftOrderService = (): DraftOrderService => {
   const saveDraftOrder = async (order: SavedOrder): Promise<{ success: boolean; error?: string }> => {
     try {
-      console.log('💾 Saving draft order:', order.id)
-
       // Get existing drafts
       const existingDrafts = await getDraftOrders()
 
@@ -31,10 +29,8 @@ export const createDraftOrderService = (): DraftOrderService => {
           ...order,
           updatedAt: new Date()
         }
-        console.log('📝 Updated existing draft order:', order.id)
       } else {
         existingDrafts.push(order)
-        console.log('✨ Created new draft order:', order.id)
       }
 
       // Save back to metafield
@@ -44,10 +40,6 @@ export const createDraftOrderService = (): DraftOrderService => {
         JSON.stringify(existingDrafts),
         'json'
       )
-
-      if (result.success) {
-        console.log('✅ Draft order saved successfully')
-      }
 
       return result
     } catch (error) {
@@ -64,7 +56,6 @@ export const createDraftOrderService = (): DraftOrderService => {
       const metafieldValue = await getCustomerMetafield(DRAFT_ORDERS_NAMESPACE, DRAFT_ORDERS_KEY)
 
       if (!metafieldValue) {
-        console.log('📋 No draft orders found')
         return []
       }
 
@@ -77,7 +68,6 @@ export const createDraftOrderService = (): DraftOrderService => {
         updatedAt: new Date(draft.updatedAt)
       }))
 
-      console.log(`📋 Loaded ${parsedDrafts.length} draft orders`)
       return parsedDrafts
     } catch (error) {
       console.error('❌ Error loading draft orders:', error)
@@ -87,8 +77,6 @@ export const createDraftOrderService = (): DraftOrderService => {
 
   const deleteDraftOrder = async (orderId: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      console.log('🗑️ Deleting draft order:', orderId)
-
       const existingDrafts = await getDraftOrders()
       const filteredDrafts = existingDrafts.filter(d => d.id !== orderId)
 
@@ -103,10 +91,6 @@ export const createDraftOrderService = (): DraftOrderService => {
         JSON.stringify(filteredDrafts),
         'json'
       )
-
-      if (result.success) {
-        console.log('✅ Draft order deleted successfully')
-      }
 
       return result
     } catch (error) {

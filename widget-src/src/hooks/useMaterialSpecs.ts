@@ -53,7 +53,7 @@ const generatePlaceholderEdges = (
           id: SHOPIFY_API.PLACEHOLDER_EDGE.PRODUCT_ID,
           variantId: SHOPIFY_API.PLACEHOLDER_EDGE.VARIANT_ID,
           code: SHOPIFY_API.PLACEHOLDER_EDGE.SKU,
-          name: `[CHÝBA] ${materialName} - ${width}mm hrana pre ${thickness}mm dosku`,
+          name: `${materialName} - ${width}mm hrana pre ${thickness}mm dosku`,
           productCode: SHOPIFY_API.PLACEHOLDER_EDGE.SKU,
           availability: 'available', // Placeholder is always "available" for ordering
           warehouse: 'Na objednávku',
