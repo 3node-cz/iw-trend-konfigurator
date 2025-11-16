@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { authenticate } from "~/shopify.server";
+import { COLLECTION_HANDLE_TO_ID } from "~/constants";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   console.log('🔍 Material search endpoint hit');
@@ -66,8 +67,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
 
     // Add collection filter to search query if specified
+    // Convert collection handle to ID for proper GraphQL filtering
     if (collection) {
-      searchQuery += ` AND collection:${collection}`;
+      const collectionId = COLLECTION_HANDLE_TO_ID[collection];
+      if (collectionId) {
+        searchQuery += ` AND collection_id:${collectionId}`;
+        console.log('🔍 Collection filter:', `${collection} → ID: ${collectionId}`);
+      } else {
+        console.warn('⚠️ Unknown collection handle:', collection);
+      }
     }
 
     console.log('🔍 Final search query:', searchQuery);

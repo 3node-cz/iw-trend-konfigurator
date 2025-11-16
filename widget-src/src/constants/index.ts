@@ -56,6 +56,18 @@ export const COLLECTIONS = {
   EDGES: 'hrany-konfigurator', // Collection for edge materials
 } as const
 
+// Shopify Collection IDs (numeric IDs for GraphQL filtering)
+export const COLLECTION_IDS = {
+  BOARDS: '735247827326', // Porezove produkty collection ID
+  EDGES: '735538577790', // Hrany konfigurator collection ID
+} as const
+
+// Map collection handles to IDs for backend filtering
+export const COLLECTION_HANDLE_TO_ID: Record<string, string> = {
+  [COLLECTIONS.BOARDS]: COLLECTION_IDS.BOARDS,
+  [COLLECTIONS.EDGES]: COLLECTION_IDS.EDGES,
+} as const
+
 // Edge Material Keywords
 export const EDGE_KEYWORDS = {
   SLOVAK: ['hrana', 'hranový', 'abs'],
