@@ -54,11 +54,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
         // Check if it's a plain numeric ID (like from old variant IDs)
         if (/^\d+$/.test(query)) {
           // For numeric queries, search across multiple fields including variant IDs and SKUs
-          searchQuery = `title:*${query}* OR vendor:*${query}* OR product_type:*${query}* OR tag:*${query}* OR sku:*${query}* OR variant_id:${query} OR barcode:${query}`;
+          searchQuery = `(title:*${query}* OR vendor:*${query}* OR product_type:*${query}* OR tag:*${query}* OR sku:*${query}* OR variant_id:${query} OR barcode:${query})`;
           console.log('🔍 Numeric search term detected, using enhanced search for:', query);
         } else {
           // Regular text search - include SKU field for product codes
-          searchQuery = `title:*${query}* OR vendor:*${query}* OR product_type:*${query}* OR tag:*${query}* OR sku:*${query}*`;
+          // Wrap in parentheses for proper AND precedence with collection filter
+          searchQuery = `(title:*${query}* OR vendor:*${query}* OR product_type:*${query}* OR tag:*${query}* OR sku:*${query}*)`;
         }
       }
     } else {
@@ -71,7 +72,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     if (collection) {
       const collectionId = COLLECTION_HANDLE_TO_ID[collection];
       if (collectionId) {
-        searchQuery += ` AND collection_id:${collectionId}`;
+        // Wrap search query to ensure proper operator precedence
+        searchQuery = `${searchQuery} AND collection_id:${collectionId}`;
         console.log('🔍 Collection filter:', `${collection} → ID: ${collectionId}`);
       } else {
         console.warn('⚠️ Unknown collection handle:', collection);
