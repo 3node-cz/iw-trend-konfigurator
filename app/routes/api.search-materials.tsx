@@ -24,8 +24,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const limit = parseInt(url.searchParams.get("limit") || "250");
     const collection = url.searchParams.get("collection");
     const warehouse = url.searchParams.get("warehouse");
+    const debugNoFilter = url.searchParams.get("debug_no_filter") === "true"; // Debug param to test without collection filter
 
-    console.log('🔍 Search params:', { query, limit, collection, warehouse });
+    console.log('🔍 Search params:', { query, limit, collection, warehouse, debugNoFilter });
 
     // Build GraphQL query
     let searchQuery = '';
@@ -67,17 +68,22 @@ export async function loader({ request }: LoaderFunctionArgs) {
       searchQuery = '*';
     }
 
-    // Add collection filter to search query if specified
+    // Add collection filter to search query if specified (unless debug mode)
     // Convert collection handle to ID for proper GraphQL filtering
-    if (collection) {
+    if (collection && !debugNoFilter) {
       const collectionId = COLLECTION_HANDLE_TO_ID[collection];
       if (collectionId) {
         // Wrap search query to ensure proper operator precedence
+        const queryWithoutCollection = searchQuery;
         searchQuery = `${searchQuery} AND collection_id:${collectionId}`;
         console.log('🔍 Collection filter:', `${collection} → ID: ${collectionId}`);
+        console.log('🔍 Query without collection:', queryWithoutCollection);
+        console.log('🔍 Query with collection:', searchQuery);
       } else {
         console.warn('⚠️ Unknown collection handle:', collection);
       }
+    } else if (debugNoFilter) {
+      console.log('🐛 DEBUG MODE: Collection filter disabled');
     }
 
     console.log('🔍 Final search query:', searchQuery);
