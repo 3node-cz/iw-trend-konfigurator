@@ -288,20 +288,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
         id: gid
       };
     } else if (useCollectionAPI) {
-      // Use collection() API for collection-filtered searches (works better with Smart Collections)
+      // Use collection() API for collection-filtered searches
+      // Note: collection.products() does NOT support query parameter, so we fetch all and filter in JS
       const collectionId = COLLECTION_HANDLE_TO_ID[collection];
       const collectionGid = `gid://shopify/Collection/${collectionId}`;
 
-      console.log('🔍 Using collection() API for Smart Collection filtering:', collectionGid);
-      console.log('🔍 Search query within collection:', searchQuery);
+      console.log('🔍 Using collection() API for Smart Collection:', collectionGid);
+      console.log('🔍 Will filter products in JavaScript with query:', searchQuery);
 
       graphqlQuery = `
-        query searchCollectionProducts($collectionId: ID!, $query: String!, $first: Int!) {
+        query searchCollectionProducts($collectionId: ID!, $first: Int!) {
           collection(id: $collectionId) {
             id
             title
             handle
-            products(first: $first, query: $query) {
+            products(first: $first) {
               edges {
                 node {
                   id
@@ -422,8 +423,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       `;
       variables = {
         collectionId: collectionGid,
-        query: searchQuery,
-        first: Math.min(limit, 250) // Shopify limit
+        first: 250 // Fetch max products, we'll filter in JS
       };
     } else {
       // Use products() search API for global text searches (no collection filter)
@@ -753,7 +753,30 @@ export async function loader({ request }: LoaderFunctionArgs) {
         const variant = product.variants.edges[0]?.node;
         return transformToMaterial(product, variant);
       });
-      console.log(`✅ Found ${materials.length} products in collection`);
+      console.log(`✅ Found ${materials.length} total products in collection`);
+
+      // Filter products in JavaScript based on the search query
+      if (query && query.trim() && !query.startsWith('id:')) {
+        const searchTerms = query.toLowerCase().trim();
+        const beforeFilterCount = materials.length;
+
+        materials = materials.filter((mat: any) => {
+          const searchableText = [
+            mat.title,
+            mat.vendor,
+            mat.productType,
+            ...(mat.tags || []),
+            mat.variant?.sku,
+          ].filter(Boolean).join(' ').toLowerCase();
+
+          return searchableText.includes(searchTerms);
+        });
+
+        console.log(`🔍 Filtered from ${beforeFilterCount} to ${materials.length} products matching "${searchTerms}"`);
+      }
+
+      // Apply limit
+      materials = materials.slice(0, limit);
 
       // Debug: Log product types and tags for first few results
       console.log('🔍 [DEBUG] First 5 products returned:');
