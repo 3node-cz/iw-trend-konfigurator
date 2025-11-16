@@ -280,14 +280,23 @@ export const calculateEdgeConsumptionWithVariants = (
     const boardThickness = piece.isDupel ? 36 : 18
 
     // Helper to add edge consumption for one side
-    const addEdge = (edgeWidth: number | null, baseLength: number) => {
+    const addEdge = (
+      edgeWidth: number | null,
+      baseLength: number,
+      customEdge?: EdgeMaterial | null
+    ) => {
       if (!edgeWidth || edgeWidth <= 0) return
 
-      // Match to correct edge variant
-      const edgeVariant = matchEdgeVariant(edgeWidth, boardThickness, availableEdges)
+      // Use custom edge if provided, otherwise match from available edges
+      let edgeVariant: EdgeMaterial | null = customEdge || null
+
       if (!edgeVariant) {
-        console.warn(`No edge variant found for ${edgeWidth}mm width, ${boardThickness}mm board`)
-        return
+        // Match to correct edge variant from available edges
+        edgeVariant = matchEdgeVariant(edgeWidth, boardThickness, availableEdges)
+        if (!edgeVariant) {
+          console.warn(`No edge variant found for ${edgeWidth}mm width, ${boardThickness}mm board`)
+          return
+        }
       }
 
       const variantKey = `${edgeVariant.id}_${edgeWidth}_${boardThickness}`
@@ -308,11 +317,11 @@ export const calculateEdgeConsumptionWithVariants = (
       }
     }
 
-    // Add all four edges
-    addEdge(piece.edgeTop, piece.length)
-    addEdge(piece.edgeBottom, piece.length)
-    addEdge(piece.edgeLeft, piece.width)
-    addEdge(piece.edgeRight, piece.width)
+    // Add all four edges (with custom edge materials if specified)
+    addEdge(piece.edgeTop, piece.length, piece.customEdgeTop)
+    addEdge(piece.edgeBottom, piece.length, piece.customEdgeBottom)
+    addEdge(piece.edgeLeft, piece.width, piece.customEdgeLeft)
+    addEdge(piece.edgeRight, piece.width, piece.customEdgeRight)
   })
 
   // Convert to MaterialEdgeConsumption array
