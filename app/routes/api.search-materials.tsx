@@ -4,7 +4,9 @@ import { authenticate } from "~/shopify.server";
 import { COLLECTION_HANDLE_TO_ID } from "~/constants";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  console.log('🔍 Material search endpoint hit');
+  const DEBUG = process.env.NODE_ENV === 'development';
+
+  if (DEBUG) console.log('🔍 Material search endpoint hit');
 
   try {
     // Authenticate with app proxy
@@ -26,7 +28,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const warehouse = url.searchParams.get("warehouse");
     const debugNoFilter = url.searchParams.get("debug_no_filter") === "true"; // Debug param to test without collection filter
 
-    console.log('🔍 Search params:', { query, limit, collection, warehouse, debugNoFilter });
+    if (DEBUG) console.log('🔍 Search params:', { query, limit, collection, warehouse, debugNoFilter });
 
     // Build GraphQL query
     let searchQuery = '';
@@ -525,77 +527,64 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     console.log('🚀 Executing GraphQL query with variables:', JSON.stringify(variables, null, 2));
 
+    // Helper function to extract alternative products from metafields
+    const extractAlternativeProducts = (source: any): string | undefined => {
+      if (source.alternativeProducts?.references?.edges) {
+        const productGids = source.alternativeProducts.references.edges
+          .map((edge: any) => edge.node?.id)
+          .filter(Boolean);
+
+        if (productGids.length > 0) {
+          if (DEBUG) console.log('✅ [API] Resolved references:', productGids);
+          return JSON.stringify(productGids);
+        }
+      }
+
+      // Fallback to value if references aren't available
+      return source.alternativeProducts?.value;
+    };
+
+    // Helper function to extract dimension metafields
+    const extractDimensionMetafields = (source: any) => {
+      const metafields: any = {};
+
+      if (source.materialHeight?.value) {
+        metafields['material.height'] = source.materialHeight.value;
+      }
+      if (source.materialWidth?.value) {
+        metafields['material.width'] = source.materialWidth.value;
+      }
+      if (source.materialThickness?.value) {
+        metafields['material.thickness'] = source.materialThickness.value;
+      }
+
+      return metafields;
+    };
+
     // Transform the results to match our expected format
     const transformToMaterial = (product: any, variant: any) => {
       // Initialize metafields objects (we query specific metafields, not allMetafields)
       const productMetafields: any = {};
       const variantMetafields: any = {};
 
-      // Add specific metafields that we explicitly queried
-      console.log('🔍 [API] Checking product.alternativeProducts:', {
-        exists: !!product.alternativeProducts,
-        value: product.alternativeProducts?.value,
-        references: product.alternativeProducts?.references,
-        fullObject: product.alternativeProducts,
-      });
-
-      // For list.product_reference metafields, use the resolved references
-      // Extract the GIDs from the references field
-      if (product.alternativeProducts?.references?.edges) {
-        const productGids = product.alternativeProducts.references.edges
-          .map((edge: any) => edge.node?.id)
-          .filter(Boolean);
-
-        if (productGids.length > 0) {
-          productMetafields['custom.alternative_products'] = JSON.stringify(productGids);
-          console.log('✅ [API] Resolved product references:', productGids);
-        }
-      } else if (product.alternativeProducts?.value) {
-        // Fallback to value if references aren't available
-        productMetafields['custom.alternative_products'] = product.alternativeProducts.value;
-      }
-      if (product.materialHeight?.value) {
-        productMetafields['material.height'] = product.materialHeight.value;
-      }
-      if (product.materialWidth?.value) {
-        productMetafields['material.width'] = product.materialWidth.value;
-      }
-      if (product.materialThickness?.value) {
-        productMetafields['material.thickness'] = product.materialThickness.value;
+      // Extract product metafields using helper functions
+      const alternativeProducts = extractAlternativeProducts(product);
+      if (alternativeProducts) {
+        productMetafields['custom.alternative_products'] = alternativeProducts;
       }
 
-      // Add variant-specific metafields
+      // Merge dimension metafields
+      Object.assign(productMetafields, extractDimensionMetafields(product));
+
+      // Add variant-specific metafields using helper functions
       if (variant) {
-        console.log('🔍 [API] Checking variant.alternativeProducts:', {
-          exists: !!variant.alternativeProducts,
-          value: variant.alternativeProducts?.value,
-          references: variant.alternativeProducts?.references,
-          fullObject: variant.alternativeProducts,
-        });
+        const variantAlternativeProducts = extractAlternativeProducts(variant);
+        if (variantAlternativeProducts) {
+          variantMetafields['custom.alternative_products'] = variantAlternativeProducts;
+        }
 
-        // For list.product_reference metafields, use the resolved references
-        if (variant.alternativeProducts?.references?.edges) {
-          const variantGids = variant.alternativeProducts.references.edges
-            .map((edge: any) => edge.node?.id)
-            .filter(Boolean);
-
-          if (variantGids.length > 0) {
-            variantMetafields['custom.alternative_products'] = JSON.stringify(variantGids);
-            console.log('✅ [API] Resolved variant references:', variantGids);
-          }
-        } else if (variant.alternativeProducts?.value) {
-          // Fallback to value if references aren't available
-          variantMetafields['custom.alternative_products'] = variant.alternativeProducts.value;
-        }
-        if (variant.materialHeight?.value) {
-          variantMetafields['material.height'] = variant.materialHeight.value;
-        }
-        if (variant.materialWidth?.value) {
-          variantMetafields['material.width'] = variant.materialWidth.value;
-        }
-        if (variant.materialThickness?.value) {
-          variantMetafields['material.thickness'] = variant.materialThickness.value;
-        }
+        // Merge dimension metafields
+        Object.assign(variantMetafields, extractDimensionMetafields(variant));
       }
 
       // Merge metafields: variant metafields override product metafields
@@ -604,14 +593,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
         ...variantMetafields
       };
 
-      // Debug: Log all available metafields
-      console.log('📦 Product metafields for', product.title, ':', Object.keys(productMetafields));
-      if (variant) {
-        console.log('📦 Variant metafields for', variant.title, ':', Object.keys(variantMetafields));
-        console.log('📦 Variant inventory:', variant.inventoryQuantity);
+      // Debug: Log all available metafields (only in development)
+      if (DEBUG) {
+        console.log('📦 Product metafields for', product.title, ':', Object.keys(productMetafields));
+        if (variant) {
+          console.log('📦 Variant metafields for', variant.title, ':', Object.keys(variantMetafields));
+          console.log('📦 Variant inventory:', variant.inventoryQuantity);
+        }
+        console.log('📦 Merged metafields:', Object.keys(mergedMetafields));
+        console.log('📦 Alternative products:', mergedMetafields['custom.alternative_products']);
       }
-      console.log('📦 Merged metafields:', Object.keys(mergedMetafields));
-      console.log('📦 Alternative products:', mergedMetafields['custom.alternative_products']);
 
       // Get images - prefer variant image, fallback to product featured image
       const variantImage = variant?.image?.url;
@@ -673,7 +664,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
       while (hasNextPage && allFilteredMaterials.length < limit && pageCount < maxPages) {
         pageCount++;
-        console.log(`📄 Fetching page ${pageCount} (cursor: ${cursor || 'start'})...`);
+        if (DEBUG) console.log(`📄 Fetching page ${pageCount} (cursor: ${cursor || 'start'})...`);
 
         const pageVariables = {
           collectionId: collectionGid,
@@ -707,7 +698,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         hasNextPage = collection.products.pageInfo.hasNextPage;
         cursor = collection.products.pageInfo.endCursor;
 
-        console.log(`✅ Fetched ${products.length} products from page ${pageCount}, hasNextPage: ${hasNextPage}`);
+        if (DEBUG) console.log(`✅ Fetched ${products.length} products from page ${pageCount}, hasNextPage: ${hasNextPage}`);
 
         // Transform and filter products
         for (const edge of products) {
@@ -796,15 +787,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
         const variant = product.variants.edges[0]?.node;
         return transformToMaterial(product, variant);
       });
-      console.log(`✅ products() API returned ${materials.length} products`);
+      if (DEBUG) {
+        console.log(`✅ products() API returned ${materials.length} products`);
 
-      // Debug: Log product types and tags for first few results
-      console.log('🔍 [DEBUG] First 5 products returned:');
-      materials.slice(0, 5).forEach((mat: any, idx: number) => {
-        console.log(`   ${idx + 1}. ${mat.title}`);
-        console.log(`      Type: ${mat.productType}`);
-        console.log(`      Tags: ${mat.tags?.join(', ') || 'none'}`);
-      });
+        // Debug: Log product types and tags for first few results
+        console.log('🔍 [DEBUG] First 5 products returned:');
+        materials.slice(0, 5).forEach((mat: any, idx: number) => {
+          console.log(`   ${idx + 1}. ${mat.title}`);
+          console.log(`      Type: ${mat.productType}`);
+          console.log(`      Tags: ${mat.tags?.join(', ') || 'none'}`);
+        });
+      }
     }
 
     console.log(`✅ Returning ${materials.length} materials`);

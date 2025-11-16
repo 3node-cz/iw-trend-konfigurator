@@ -1,29 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import {
-  Card,
-  CardContent,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-  Box,
-  Divider,
-  Button,
-  TextField,
-  InputAdornment,
-  CircularProgress,
-  Avatar,
-  IconButton,
-  Tooltip,
-} from '@mui/material'
-import { Search as SearchIcon, Clear as ClearIcon, Delete as DeleteIcon } from '@mui/icons-material'
 import { searchEdgeMaterials } from '../services/shopifyApi'
 import type { EdgeMaterial, MaterialSearchResult } from '../types/shopify'
-import { AvailabilityChip } from './common'
-import { GLUE_TYPES } from '../constants'
 import { calculateAvailability } from '../utils/availability'
+import ProductSelectionCard from './ProductSelectionCard'
 
 interface EdgeSelectionCardProps {
   selectedEdge: EdgeMaterial | null
@@ -38,7 +17,6 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
   onEdgeChange,
   onGlueTypeChange,
 }) => {
-  const [edgeSearchQuery, setEdgeSearchQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [edgeSearchResults, setEdgeSearchResults] = useState<
     MaterialSearchResult[]
@@ -68,27 +46,8 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
     loadQuickEdges()
   }, [])
 
-  const glueTypes = GLUE_TYPES
-
-  // Use available thicknesses from the selected edge material
-  const thicknessVariants = selectedEdge?.availableThicknesses || [
-    0.4, 0.8, 2.0,
-  ]
-
-  // Debounced search for edge materials
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (edgeSearchQuery.length >= 2) {
-        handleEdgeSearch(edgeSearchQuery)
-      } else {
-        setEdgeSearchResults([])
-      }
-    }, 300)
-
-    return () => clearTimeout(timeoutId)
-  }, [edgeSearchQuery])
-
-  const handleEdgeSearch = async (query: string) => {
+  // Handle search - called by ProductSelectionCard
+  const handleSearch = async (query: string) => {
     if (query.length < 2) {
       setEdgeSearchResults([])
       return
@@ -107,10 +66,6 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
     } finally {
       setIsSearching(false)
     }
-  }
-
-  const handleSearchInputChange = (query: string) => {
-    setEdgeSearchQuery(query)
   }
 
 
@@ -137,308 +92,56 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
     };
   }
 
-  const handleSelectEdge = (edge: EdgeMaterial) => {
-    onEdgeChange(edge)
-    setEdgeSearchQuery('') // Clear search after selection
-    setEdgeSearchResults([]) // Clear results
+  // Handle product selection - converts MaterialSearchResult to EdgeMaterial
+  const handleProductChange = (product: MaterialSearchResult | null) => {
+    if (product) {
+      const edgeMaterial = convertToEdgeMaterial(product)
+      onEdgeChange(edgeMaterial)
+    } else {
+      onEdgeChange(null)
+    }
   }
 
-  const handleSelectEdgeFromSearch = (result: MaterialSearchResult) => {
-    const edgeMaterial = convertToEdgeMaterial(result)
-    handleSelectEdge(edgeMaterial)
-  }
+  // Convert selectedEdge (EdgeMaterial) back to MaterialSearchResult for display
+  const selectedEdgeAsProduct: MaterialSearchResult | null = selectedEdge
+    ? {
+        id: selectedEdge.id,
+        title: selectedEdge.name,
+        handle: selectedEdge.productCode || '',
+        vendor: '',
+        productType: '',
+        tags: [],
+        image: selectedEdge.image,
+        variant: selectedEdge.variantId
+          ? {
+              id: selectedEdge.variantId,
+              title: '',
+              sku: selectedEdge.code,
+              price: selectedEdge.price?.amount?.toString() || '0',
+              inventoryQuantity: 0,
+            }
+          : undefined,
+        warehouse: selectedEdge.warehouse,
+      }
+    : null
 
   return (
-    <Card>
-      <CardContent sx={{ p: 3 }}>
-        <Typography
-          variant="h6"
-          sx={{ mb: 2, fontWeight: 600 }}
-        >
-          Hrana
-        </Typography>
-
-        {/* Edge Search */}
-        <Box sx={{ mb: 3 }}>
-          <TextField
-            fullWidth
-            size="small"
-            placeholder="Hľadať hranu..."
-            value={edgeSearchQuery}
-            onChange={(e) => handleSearchInputChange(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  {isSearching ? (
-                    <CircularProgress size={20} />
-                  ) : (
-                    <SearchIcon sx={{ color: 'text.secondary' }} />
-                  )}
-                </InputAdornment>
-              ),
-              endAdornment: edgeSearchQuery && (
-                <InputAdornment position="end">
-                  <Button
-                    size="small"
-                    onClick={() => handleSearchInputChange('')}
-                    sx={{ minWidth: 'auto', p: 0.5 }}
-                  >
-                    <ClearIcon fontSize="small" />
-                  </Button>
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Box>
-
-        {/* Edge Search Results */}
-        {edgeSearchResults.length > 0 && (
-          <Box sx={{ mb: 3 }}>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mb: 1 }}
-            >
-              Výsledky vyhľadávania ({edgeSearchResults.length})
-            </Typography>
-            {edgeSearchResults.map((result) => (
-              <Box
-                key={result.id}
-                sx={{ mb: 1 }}
-              >
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => handleSelectEdgeFromSearch(result)}
-                  sx={{
-                    justifyContent: 'flex-start',
-                    width: '100%',
-                    textAlign: 'left',
-                    px: 2,
-                    py: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                  }}
-                >
-                  {/* Small edge preview image */}
-                  <Avatar
-                    src={result.image}
-                    alt={result.title}
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 1,
-                      bgcolor: '#f5f5f5',
-                      border: '1px solid #e0e0e0',
-                      flexShrink: 0,
-                    }}
-                    variant="rounded"
-                  >
-                    {!result.image && '📏'}
-                  </Avatar>
-
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography
-                      variant="body2"
-                      sx={{ fontWeight: 500, mb: 0.5 }}
-                    >
-                      {result.title}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                    >
-                      {result.variant?.sku || result.handle}
-                    </Typography>
-                  </Box>
-
-                  <AvailabilityChip
-                    availability={calculateAvailability(result)}
-                    size="small"
-                    sx={{ flexShrink: 0 }}
-                  />
-                </Button>
-              </Box>
-            ))}
-            <Divider sx={{ my: 2 }} />
-          </Box>
-        )}
-
-        {/* Selected Edge Display */}
-        {selectedEdge ? (
-          <Box>
-            {/* Edge Preview Section - matches MaterialInfoCard layout */}
-            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-              <Avatar
-                src={selectedEdge.image}
-                alt={selectedEdge.name}
-                sx={{
-                  width: 100,
-                  height: 100,
-                  borderRadius: 1,
-                  bgcolor: '#f5f5f5',
-                  border: '1px solid #e0e0e0',
-                }}
-                variant="rounded"
-              >
-                {!selectedEdge.image && '📏'}
-              </Avatar>
-
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography
-                  variant="body1"
-                  sx={{ fontWeight: 500, mb: 1, color: 'primary.main' }}
-                >
-                  {selectedEdge.name}
-                </Typography>
-
-                <Typography
-                  variant="body2"
-                  color="primary"
-                  sx={{ fontWeight: 500 }}
-                >
-                  {selectedEdge.productCode}
-                </Typography>
-              </Box>
-
-              <Box>
-                <Tooltip title="Odstrániť hranu">
-                  <IconButton
-                    onClick={() => onEdgeChange(null)}
-                    size="small"
-                    color="error"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </Box>
-
-            <Divider sx={{ my: 2 }} />
-
-            {/* Availability Section */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ display: 'block', mb: 0.5 }}
-                >
-                  Dostupnosť
-                </Typography>
-                <AvailabilityChip
-                  availability={selectedEdge.availability}
-                  size="small"
-                />
-              </Box>
-            </Box>
-          </Box>
-        ) : (
-          <Box>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mb: 2 }}
-            >
-              Vyberte hranu pre materiál
-            </Typography>
-
-            {/* Quick Edge Selection from API */}
-            {isLoadingQuickEdges ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-                <CircularProgress size={24} />
-              </Box>
-            ) : (
-              quickEdges.slice(0, 2).map((result) => (
-                <Box
-                  key={result.id}
-                  sx={{ mb: 1 }}
-                >
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => handleSelectEdgeFromSearch(result)}
-                    sx={{
-                      justifyContent: 'flex-start',
-                      width: '100%',
-                      textAlign: 'left',
-                      px: 2,
-                      py: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 2,
-                    }}
-                  >
-                    {/* Small edge preview image */}
-                    <Avatar
-                      src={result.image}
-                      alt={result.title}
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 1,
-                        bgcolor: '#f5f5f5',
-                        border: '1px solid #e0e0e0',
-                        flexShrink: 0,
-                      }}
-                      variant="rounded"
-                    >
-                      {!result.image && '📏'}
-                    </Avatar>
-
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography
-                        variant="body2"
-                        sx={{ fontWeight: 500, mb: 0.5 }}
-                      >
-                        {result.title}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                      >
-                        {result.variant?.sku || result.handle}
-                      </Typography>
-                    </Box>
-
-                    <AvailabilityChip
-                      availability={calculateAvailability(result)}
-                      size="small"
-                      sx={{ flexShrink: 0 }}
-                    />
-                  </Button>
-                </Box>
-              ))
-            )}
-          </Box>
-        )}
-
-        {/* Thickness Variants */}
-
-        {/* Glue Type - Hidden for now */}
-        {/* <FormControl
-          fullWidth
-          size="small"
-        >
-          <InputLabel>Typ lepidla</InputLabel>
-          <Select
-            value={glueType}
-            onChange={(e) => onGlueTypeChange(e.target.value)}
-            label="Typ lepidla"
-          >
-            {glueTypes.map((type) => (
-              <MenuItem
-                key={type}
-                value={type}
-              >
-                {type}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl> */}
-      </CardContent>
-    </Card>
+    <ProductSelectionCard
+      title="Hrana"
+      searchPlaceholder="Hľadať hranu..."
+      emptyStateText="Vyberte hranu pre materiál"
+      icon="📏"
+      selectedProduct={selectedEdgeAsProduct}
+      onProductChange={handleProductChange}
+      onSearch={handleSearch}
+      isSearching={isSearching}
+      searchResults={edgeSearchResults}
+      showQuickSelection={true}
+      quickSelectionItems={quickEdges}
+      isLoadingQuickSelection={isLoadingQuickEdges}
+      showDeleteButton={true}
+      useCustomResultsTable={false}
+    />
   )
 }
 
