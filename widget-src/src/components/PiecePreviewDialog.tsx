@@ -28,26 +28,34 @@ const PiecePreviewDialog: React.FC<PiecePreviewDialogProps> = ({
 }) => {
   if (!piece) return null
 
-  // Calculate container dimensions based on piece aspect ratio
-  // Max dimension of 600px, maintaining aspect ratio
-  const maxDimension = 600
+  // Calculate container dimensions to fill available space
+  // The longer side always fills the maximum dimension
+  const maxDimension = 800
   const aspectRatio = piece.length / piece.width
   let containerWidth: number
   let containerHeight: number
 
   if (aspectRatio > 1) {
-    // Piece is longer than wide
-    containerWidth = maxDimension
-    containerHeight = maxDimension / aspectRatio
-  } else {
-    // Piece is wider than long or square
+    // Piece is longer than wide - length fills the height
     containerHeight = maxDimension
-    containerWidth = maxDimension * aspectRatio
+    containerWidth = maxDimension / aspectRatio
+  } else {
+    // Piece is wider than long or square - width fills the width
+    containerWidth = maxDimension
+    containerHeight = maxDimension * aspectRatio
   }
 
-  // Minimum dimensions for visibility
-  containerWidth = Math.max(containerWidth, 200)
-  containerHeight = Math.max(containerHeight, 200)
+  // Ensure minimum visibility while maintaining aspect ratio
+  const minDimension = 300
+  if (containerWidth < minDimension || containerHeight < minDimension) {
+    if (aspectRatio > 1) {
+      containerWidth = minDimension
+      containerHeight = minDimension * aspectRatio
+    } else {
+      containerHeight = minDimension
+      containerWidth = minDimension / aspectRatio
+    }
+  }
 
   return (
     <Dialog

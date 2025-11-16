@@ -110,8 +110,6 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
               height: '100%',
               objectFit: 'cover',
               opacity: backgroundOpacity,
-              transform: 'rotate(90deg) scale(1.4)',
-              transformOrigin: 'center center',
             }}
           />
         </Box>
