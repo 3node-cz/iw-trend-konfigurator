@@ -26,9 +26,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     console.log('🔍 Search params:', { query, limit, collection, warehouse });
 
-    // Determine query strategy based on whether collection is specified
-    const useCollectionQuery = collection && !query.startsWith('id:');
-
     // Build GraphQL query
     let searchQuery = '';
 
@@ -68,16 +65,18 @@ export async function loader({ request }: LoaderFunctionArgs) {
       searchQuery = '*';
     }
 
-    console.log('🔍 Search query before collection:', searchQuery);
-    console.log('🔍 Collection filter:', collection || 'none');
-    console.log('🔍 Use collection-based query:', useCollectionQuery);
+    // Add collection filter to search query if specified
+    if (collection) {
+      searchQuery += ` AND collection:${collection}`;
+    }
+
+    console.log('🔍 Final search query:', searchQuery);
 
     // Choose GraphQL query based on search type
     let graphqlQuery = '';
     let variables = {};
 
     // For direct GID lookups, use node() API as it's more reliable
-    // For collection-filtered searches, use collection() API
     // For other searches, use products() search API
     const isDirectGidLookup = query && query.startsWith('id:') && query.includes('gid://shopify/');
 
@@ -275,158 +274,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
       variables = {
         id: gid
       };
-    } else if (useCollectionQuery) {
-      // Use collection() API to get products from a specific collection
-      console.log('🔍 Using collection() API for collection:', collection);
-
-      // Build the collection products query - conditionally include query parameter
-      const hasSearchQuery = searchQuery && searchQuery !== '*';
-
-      graphqlQuery = hasSearchQuery
-        ? `
-        query getCollectionProducts($handle: String!, $first: Int!, $query: String!) {
-          collection(handle: $handle) {
-            id
-            handle
-            title
-            products(first: $first, query: $query) {`
-        : `
-        query getCollectionProducts($handle: String!, $first: Int!) {
-          collection(handle: $handle) {
-            id
-            handle
-            title
-            products(first: $first) {`;
-              edges {
-                node {
-                  id
-                  title
-                  handle
-                  vendor
-                  productType
-                  tags
-                  featuredImage {
-                    url
-                    altText
-                  }
-                  images(first: 5) {
-                    edges {
-                      node {
-                        url
-                        altText
-                      }
-                    }
-                  }
-                  variants(first: 10) {
-                    edges {
-                      node {
-                        id
-                        title
-                        sku
-                        price
-                        inventoryQuantity
-                        availableForSale
-                        image {
-                          url
-                          altText
-                        }
-                        localWarehouseStock: metafield(namespace: "custom", key: "local_warehouse_stock") {
-                          value
-                        }
-                        centralWarehouseStock: metafield(namespace: "custom", key: "central_warehouse_stock") {
-                          value
-                        }
-                        materialHeight: metafield(namespace: "material", key: "height") {
-                          value
-                        }
-                        materialWidth: metafield(namespace: "material", key: "width") {
-                          value
-                        }
-                        materialThickness: metafield(namespace: "material", key: "thickness") {
-                          value
-                        }
-                        alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
-                          value
-                          references(first: 10) {
-                            edges {
-                              node {
-                                ... on Product {
-                                  id
-                                  title
-                                  handle
-                                }
-                              }
-                            }
-                          }
-                        }
-                        allMetafields: metafields(first: 10) {
-                          edges {
-                            node {
-                              namespace
-                              key
-                              value
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                  localWarehouseStock: metafield(namespace: "custom", key: "local_warehouse_stock") {
-                    value
-                  }
-                  centralWarehouseStock: metafield(namespace: "custom", key: "central_warehouse_stock") {
-                    value
-                  }
-                  alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
-                    value
-                    references(first: 10) {
-                      edges {
-                        node {
-                          ... on Product {
-                            id
-                            title
-                            handle
-                          }
-                        }
-                      }
-                    }
-                  }
-                  materialHeight: metafield(namespace: "material", key: "height") {
-                    value
-                  }
-                  materialWidth: metafield(namespace: "material", key: "width") {
-                    value
-                  }
-                  materialThickness: metafield(namespace: "material", key: "thickness") {
-                    value
-                  }
-                  allMetafields: metafields(first: 10) {
-                    edges {
-                      node {
-                        namespace
-                        key
-                        value
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      `;
-
-      // Only include query in variables if we have a search query
-      variables = hasSearchQuery
-        ? {
-            handle: collection,
-            first: Math.min(limit, 250),
-            query: searchQuery
-          }
-        : {
-            handle: collection,
-            first: Math.min(limit, 250)
-          };
     } else {
       // Use products() search API for text searches
       graphqlQuery = `
@@ -743,25 +590,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
       } else {
         console.log('⚠️ node() API returned unknown node type');
       }
-    } else if (result.data.collection) {
-      // Handle collection() API response
-      const collectionData = result.data.collection;
-      console.log(`✅ collection() API returned collection: ${collectionData.title}`);
-
-      materials = collectionData.products.edges.map((edge: any) => {
-        const product = edge.node;
-        const variant = product.variants.edges[0]?.node;
-        return transformToMaterial(product, variant);
-      });
-      console.log(`✅ Found ${materials.length} products in collection "${collectionData.handle}"`);
-
-      // Debug: Log product types and tags for first few results
-      console.log('🔍 [DEBUG] First 5 products from collection:');
-      materials.slice(0, 5).forEach((mat: any, idx: number) => {
-        console.log(`   ${idx + 1}. ${mat.title}`);
-        console.log(`      Type: ${mat.productType}`);
-        console.log(`      Tags: ${mat.tags?.join(', ') || 'none'}`);
-      });
     } else if (result.data.products) {
       // Handle products() search API response
       materials = result.data.products.edges.map((edge: any) => {
