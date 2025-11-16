@@ -525,115 +525,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     console.log('🚀 Executing GraphQL query with variables:', JSON.stringify(variables, null, 2));
 
-    // For collection filtering with JS, we need to paginate and filter
-    if (collection && !debugNoFilter) {
-      const collectionId = COLLECTION_HANDLE_TO_ID[collection];
-      const collectionGid = `gid://shopify/Collection/${collectionId}`;
-
-      let allFilteredMaterials: any[] = [];
-      let hasNextPage = true;
-      let cursor: string | null = null;
-      let pageCount = 0;
-      const maxPages = 20; // Max 3000 products (20 * 150)
-
-      while (hasNextPage && allFilteredMaterials.length < limit && pageCount < maxPages) {
-        pageCount++;
-        console.log(`📄 Fetching page ${pageCount} (cursor: ${cursor || 'start'})...`);
-
-        const pageVariables = {
-          collectionId: collectionGid,
-          first: 150,
-          after: cursor
-        };
-
-        const response = await admin.graphql(graphqlQuery, { variables: pageVariables });
-        const result = await response.json();
-
-        if (result.errors) {
-          console.error('❌ GraphQL errors:', JSON.stringify(result.errors, null, 2));
-          return json({ error: "GraphQL query failed", details: result.errors }, { status: 400 });
-        }
-
-        if (response.body?.errors) {
-          console.error('❌ GraphQL body errors:', JSON.stringify(response.body.errors, null, 2));
-          return json({
-            error: "GraphQL query failed",
-            details: response.body.errors.graphQLErrors || response.body.errors
-          }, { status: 400 });
-        }
-
-        if (!result.data?.collection) {
-          console.error('❌ No collection data in response');
-          break;
-        }
-
-        const collection = result.data.collection;
-        const products = collection.products.edges;
-        hasNextPage = collection.products.pageInfo.hasNextPage;
-        cursor = collection.products.pageInfo.endCursor;
-
-        console.log(`✅ Fetched ${products.length} products from page ${pageCount}, hasNextPage: ${hasNextPage}`);
-
-        // Transform and filter products
-        for (const edge of products) {
-          const product = edge.node;
-          const variant = product.variants.edges[0]?.node;
-          const material = transformToMaterial(product, variant);
-
-          // Filter by search query
-          if (query && query.trim() && !query.startsWith('id:')) {
-            const searchTerms = query.toLowerCase().trim();
-            const searchableText = [
-              material.title,
-              material.vendor,
-              material.productType,
-              ...(material.tags || []),
-              material.variant?.sku,
-            ].filter(Boolean).join(' ').toLowerCase();
-
-            if (!searchableText.includes(searchTerms)) {
-              continue; // Skip this product
-            }
-          }
-
-          allFilteredMaterials.push(material);
-
-          // Stop if we have enough results
-          if (allFilteredMaterials.length >= limit) {
-            hasNextPage = false;
-            break;
-          }
-        }
-      }
-
-      console.log(`✅ Found ${allFilteredMaterials.length} matching products after ${pageCount} pages`);
-      return json(allFilteredMaterials);
-    }
-
-    // For non-collection searches (or debug mode), execute single query
-    const response = await admin.graphql(graphqlQuery, { variables });
-    const result = await response.json();
-
-    console.log('📦 Raw GraphQL response (first product):', JSON.stringify(result?.data?.products?.edges?.[0] || result?.data?.node, null, 2));
-
-    if (result.errors) {
-      console.error('❌ GraphQL errors:', JSON.stringify(result.errors, null, 2));
-      return json({ error: "GraphQL query failed", details: result.errors }, { status: 400 });
-    }
-
-    // Check for errors in the response body (GraphQL client wrapper errors)
-    if (response.body?.errors) {
-      console.error('❌ GraphQL body errors:', JSON.stringify(response.body.errors, null, 2));
-      // Log the graphQLErrors array specifically
-      if (response.body.errors.graphQLErrors) {
-        console.error('❌ Detailed GraphQL errors:', JSON.stringify(response.body.errors.graphQLErrors, null, 2));
-      }
-      return json({
-        error: "GraphQL query failed",
-        details: response.body.errors.graphQLErrors || response.body.errors
-      }, { status: 400 });
-    }
-
     // Transform the results to match our expected format
     const transformToMaterial = (product: any, variant: any) => {
       // Initialize metafields objects (we query specific metafields, not allMetafields)
@@ -768,6 +659,115 @@ export async function loader({ request }: LoaderFunctionArgs) {
         metafields: mergedMetafields
       };
     };
+
+    // For collection filtering with JS, we need to paginate and filter
+    if (collection && !debugNoFilter) {
+      const collectionId = COLLECTION_HANDLE_TO_ID[collection];
+      const collectionGid = `gid://shopify/Collection/${collectionId}`;
+
+      let allFilteredMaterials: any[] = [];
+      let hasNextPage = true;
+      let cursor: string | null = null;
+      let pageCount = 0;
+      const maxPages = 20; // Max 3000 products (20 * 150)
+
+      while (hasNextPage && allFilteredMaterials.length < limit && pageCount < maxPages) {
+        pageCount++;
+        console.log(`📄 Fetching page ${pageCount} (cursor: ${cursor || 'start'})...`);
+
+        const pageVariables = {
+          collectionId: collectionGid,
+          first: 150,
+          after: cursor
+        };
+
+        const response = await admin.graphql(graphqlQuery, { variables: pageVariables });
+        const result = await response.json();
+
+        if (result.errors) {
+          console.error('❌ GraphQL errors:', JSON.stringify(result.errors, null, 2));
+          return json({ error: "GraphQL query failed", details: result.errors }, { status: 400 });
+        }
+
+        if (response.body?.errors) {
+          console.error('❌ GraphQL body errors:', JSON.stringify(response.body.errors, null, 2));
+          return json({
+            error: "GraphQL query failed",
+            details: response.body.errors.graphQLErrors || response.body.errors
+          }, { status: 400 });
+        }
+
+        if (!result.data?.collection) {
+          console.error('❌ No collection data in response');
+          break;
+        }
+
+        const collection = result.data.collection;
+        const products = collection.products.edges;
+        hasNextPage = collection.products.pageInfo.hasNextPage;
+        cursor = collection.products.pageInfo.endCursor;
+
+        console.log(`✅ Fetched ${products.length} products from page ${pageCount}, hasNextPage: ${hasNextPage}`);
+
+        // Transform and filter products
+        for (const edge of products) {
+          const product = edge.node;
+          const variant = product.variants.edges[0]?.node;
+          const material = transformToMaterial(product, variant);
+
+          // Filter by search query
+          if (query && query.trim() && !query.startsWith('id:')) {
+            const searchTerms = query.toLowerCase().trim();
+            const searchableText = [
+              material.title,
+              material.vendor,
+              material.productType,
+              ...(material.tags || []),
+              material.variant?.sku,
+            ].filter(Boolean).join(' ').toLowerCase();
+
+            if (!searchableText.includes(searchTerms)) {
+              continue; // Skip this product
+            }
+          }
+
+          allFilteredMaterials.push(material);
+
+          // Stop if we have enough results
+          if (allFilteredMaterials.length >= limit) {
+            hasNextPage = false;
+            break;
+          }
+        }
+      }
+
+      console.log(`✅ Found ${allFilteredMaterials.length} matching products after ${pageCount} pages`);
+      return json(allFilteredMaterials);
+    }
+
+    // For non-collection searches (or debug mode), execute single query
+    const response = await admin.graphql(graphqlQuery, { variables });
+    const result = await response.json();
+
+    console.log('📦 Raw GraphQL response (first product):', JSON.stringify(result?.data?.products?.edges?.[0] || result?.data?.node, null, 2));
+
+    if (result.errors) {
+      console.error('❌ GraphQL errors:', JSON.stringify(result.errors, null, 2));
+      return json({ error: "GraphQL query failed", details: result.errors }, { status: 400 });
+    }
+
+    // Check for errors in the response body (GraphQL client wrapper errors)
+    if (response.body?.errors) {
+      console.error('❌ GraphQL body errors:', JSON.stringify(response.body.errors, null, 2));
+      // Log the graphQLErrors array specifically
+      if (response.body.errors.graphQLErrors) {
+        console.error('❌ Detailed GraphQL errors:', JSON.stringify(response.body.errors.graphQLErrors, null, 2));
+      }
+      return json({
+        error: "GraphQL query failed",
+        details: response.body.errors.graphQLErrors || response.body.errors
+      }, { status: 400 });
+    }
 
     // Handle different API response types
     let materials = [];
