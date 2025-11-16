@@ -267,7 +267,7 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
 
         {/* Selected Edge Display */}
         {selectedEdge ? (
-          <Box sx={{ mb: 3 }}>
+          <Box>
             {/* Edge Preview Section - matches MaterialInfoCard layout */}
             <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
               <Avatar
@@ -335,7 +335,7 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
             </Box>
           </Box>
         ) : (
-          <Box sx={{ mb: 3 }}>
+          <Box>
             <Typography
               variant="body2"
               color="text.secondary"
@@ -411,8 +411,6 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
                 </Box>
               ))
             )}
-
-            <Divider sx={{ my: 2 }} />
           </Box>
         )}
 

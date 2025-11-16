@@ -40,13 +40,6 @@ const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({
   return (
     <Card>
       <CardContent sx={{ p: 3 }}>
-        <Typography
-          variant="h6"
-          sx={{ mb: 2, fontWeight: 600 }}
-        >
-          Materiál
-        </Typography>
-
         {/* Material Search */}
         {onMaterialSearch && (
           <Box sx={{ mb: 3 }}>
