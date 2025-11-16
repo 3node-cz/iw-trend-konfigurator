@@ -68,17 +68,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
       searchQuery = '*';
     }
 
-    // Add collection filter to search query if specified (unless debug mode)
-    // Convert collection handle to ID for proper GraphQL filtering
+    // Note: Collection filtering is now handled by using the collection() API
+    // instead of adding collection_id to the search query
     if (collection && !debugNoFilter) {
       const collectionId = COLLECTION_HANDLE_TO_ID[collection];
       if (collectionId) {
-        // Wrap search query to ensure proper operator precedence
-        const queryWithoutCollection = searchQuery;
-        searchQuery = `${searchQuery} AND collection_id:${collectionId}`;
-        console.log('🔍 Collection filter:', `${collection} → ID: ${collectionId}`);
-        console.log('🔍 Query without collection:', queryWithoutCollection);
-        console.log('🔍 Query with collection:', searchQuery);
+        console.log('🔍 Collection filter will be applied via collection() API:', `${collection} → ID: ${collectionId}`);
       } else {
         console.warn('⚠️ Unknown collection handle:', collection);
       }
@@ -88,13 +83,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     console.log('🔍 Final search query:', searchQuery);
 
-    // Choose GraphQL query based on search type
+    // Determine which API to use
     let graphqlQuery = '';
     let variables = {};
 
     // For direct GID lookups, use node() API as it's more reliable
-    // For other searches, use products() search API
     const isDirectGidLookup = query && query.startsWith('id:') && query.includes('gid://shopify/');
+
+    // For collection-filtered searches, use collection() API
+    const useCollectionAPI = collection && COLLECTION_HANDLE_TO_ID[collection] && !debugNoFilter;
 
     if (isDirectGidLookup) {
       // Extract the GID from the query
@@ -290,8 +287,148 @@ export async function loader({ request }: LoaderFunctionArgs) {
       variables = {
         id: gid
       };
+    } else if (useCollectionAPI) {
+      // Use collection() API for collection-filtered searches (works better with Smart Collections)
+      const collectionId = COLLECTION_HANDLE_TO_ID[collection];
+      const collectionGid = `gid://shopify/Collection/${collectionId}`;
+
+      console.log('🔍 Using collection() API for Smart Collection filtering:', collectionGid);
+      console.log('🔍 Search query within collection:', searchQuery);
+
+      graphqlQuery = `
+        query searchCollectionProducts($collectionId: ID!, $query: String!, $first: Int!) {
+          collection(id: $collectionId) {
+            id
+            title
+            handle
+            products(first: $first, query: $query) {
+              edges {
+                node {
+                  id
+                  title
+                  handle
+                  vendor
+                  productType
+                  tags
+                  featuredImage {
+                    url
+                    altText
+                  }
+                  images(first: 5) {
+                    edges {
+                      node {
+                        url
+                        altText
+                      }
+                    }
+                  }
+                  variants(first: 10) {
+                    edges {
+                      node {
+                        id
+                        title
+                        sku
+                        price
+                        inventoryQuantity
+                        availableForSale
+                        image {
+                          url
+                          altText
+                        }
+                        localWarehouseStock: metafield(namespace: "custom", key: "local_warehouse_stock") {
+                          value
+                        }
+                        centralWarehouseStock: metafield(namespace: "custom", key: "central_warehouse_stock") {
+                          value
+                        }
+                        materialHeight: metafield(namespace: "material", key: "height") {
+                          value
+                        }
+                        materialWidth: metafield(namespace: "material", key: "width") {
+                          value
+                        }
+                        materialThickness: metafield(namespace: "material", key: "thickness") {
+                          value
+                        }
+                        alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
+                          value
+                          references(first: 10) {
+                            edges {
+                              node {
+                                ... on Product {
+                                  id
+                                  title
+                                  handle
+                                }
+                              }
+                            }
+                          }
+                        }
+                        allMetafields: metafields(first: 10) {
+                          edges {
+                            node {
+                              namespace
+                              key
+                              value
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                  localWarehouseStock: metafield(namespace: "custom", key: "local_warehouse_stock") {
+                    value
+                  }
+                  centralWarehouseStock: metafield(namespace: "custom", key: "central_warehouse_stock") {
+                    value
+                  }
+                  alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
+                    value
+                    references(first: 10) {
+                      edges {
+                        node {
+                          ... on Product {
+                            id
+                            title
+                            handle
+                          }
+                        }
+                      }
+                    }
+                  }
+                  materialHeight: metafield(namespace: "material", key: "height") {
+                    value
+                  }
+                  materialWidth: metafield(namespace: "material", key: "width") {
+                    value
+                  }
+                  materialThickness: metafield(namespace: "material", key: "thickness") {
+                    value
+                  }
+                  allMetafields: metafields(first: 10) {
+                    edges {
+                      node {
+                        namespace
+                        key
+                        value
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+      variables = {
+        collectionId: collectionGid,
+        query: searchQuery,
+        first: Math.min(limit, 250) // Shopify limit
+      };
     } else {
-      // Use products() search API for text searches
+      // Use products() search API for global text searches (no collection filter)
+      console.log('🔍 Using products() API for global search');
+
       graphqlQuery = `
         query searchProducts($query: String!, $first: Int!) {
           products(first: $first, query: $query) {
@@ -606,8 +743,27 @@ export async function loader({ request }: LoaderFunctionArgs) {
       } else {
         console.log('⚠️ node() API returned unknown node type');
       }
+    } else if (result.data.collection) {
+      // Handle collection() API response (collection-filtered search)
+      const collection = result.data.collection;
+      console.log(`✅ collection() API returned collection: ${collection.title} (${collection.handle})`);
+
+      materials = collection.products.edges.map((edge: any) => {
+        const product = edge.node;
+        const variant = product.variants.edges[0]?.node;
+        return transformToMaterial(product, variant);
+      });
+      console.log(`✅ Found ${materials.length} products in collection`);
+
+      // Debug: Log product types and tags for first few results
+      console.log('🔍 [DEBUG] First 5 products returned:');
+      materials.slice(0, 5).forEach((mat: any, idx: number) => {
+        console.log(`   ${idx + 1}. ${mat.title}`);
+        console.log(`      Type: ${mat.productType}`);
+        console.log(`      Tags: ${mat.tags?.join(', ') || 'none'}`);
+      });
     } else if (result.data.products) {
-      // Handle products() search API response
+      // Handle products() search API response (global search)
       materials = result.data.products.edges.map((edge: any) => {
         const product = edge.node;
         const variant = product.variants.edges[0]?.node;
