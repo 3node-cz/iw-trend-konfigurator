@@ -66,11 +66,12 @@ function App() {
     console.log('   Saw Width (CUTTING_KERF):', shopConfig.cuttingConfig?.sawWidth || 'using default: 2', 'mm');
     console.log('   Edge Buffer:', shopConfig.cuttingConfig?.edgeBuffer || 'using default: 30', 'mm');
     console.log('   Board Trim:', shopConfig.cuttingConfig?.boardTrim || 'using default: 15', 'mm');
+    console.log('   Minimum Piece Size:', shopConfig.cuttingConfig?.minPieceSize || 'using default: 10', 'mm');
     console.log('   Transfer Locations:', shopConfig.transferLocations);
     console.log('   Delivery Methods:', shopConfig.deliveryMethods);
     console.log('   Processing Types:', shopConfig.processingTypes);
     console.log('   Full config object:', shopConfig);
-  }, [shopConfig.cuttingConfig?.sawWidth, shopConfig.cuttingConfig?.edgeBuffer, shopConfig.cuttingConfig?.boardTrim]);
+  }, [shopConfig.cuttingConfig?.sawWidth, shopConfig.cuttingConfig?.edgeBuffer, shopConfig.cuttingConfig?.boardTrim, shopConfig.cuttingConfig?.minPieceSize]);
 
   const [selectedMaterials, setSelectedMaterials] = useState<
     MaterialSearchResult[]

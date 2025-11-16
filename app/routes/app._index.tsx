@@ -75,7 +75,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         cuttingConfig: getMetafieldValue("cutting_config", {
           sawWidth: 2,
           edgeBuffer: 30,
-          boardTrim: 15
+          boardTrim: 15,
+          minPieceSize: 10
         }),
         shop: session.shop
       });
@@ -99,7 +100,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         cuttingConfig: {
           sawWidth: 2,
           edgeBuffer: 30,
-          boardTrim: 15
+          boardTrim: 15,
+          minPieceSize: 10
         },
         shop: session.shop
       });
@@ -177,18 +179,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const sawWidth = parseFloat(formData.get("sawWidth") as string);
       const edgeBuffer = parseFloat(formData.get("edgeBuffer") as string);
       const boardTrim = parseFloat(formData.get("boardTrim") as string);
+      const minPieceSize = parseFloat(formData.get("minPieceSize") as string);
 
       if (sawWidth < 1 || sawWidth > 5) {
-        return json({ success: false, error: "Saw width must be between 1-5mm" }, { status: 400 });
+        return json({ success: false, error: "Šírka píly musí byť medzi 1-5mm" }, { status: 400 });
       }
       if (edgeBuffer < 0 || edgeBuffer > 50) {
-        return json({ success: false, error: "Edge buffer must be between 0-50mm" }, { status: 400 });
+        return json({ success: false, error: "Nárazník hrany musí byť medzi 0-50mm" }, { status: 400 });
       }
       if (boardTrim < 0 || boardTrim > 30) {
-        return json({ success: false, error: "Board trim must be between 0-30mm" }, { status: 400 });
+        return json({ success: false, error: "Orez dosky musí byť medzi 0-30mm" }, { status: 400 });
+      }
+      if (minPieceSize < 1 || minPieceSize > 100) {
+        return json({ success: false, error: "Minimálna veľkosť dielca musí byť medzi 1-100mm" }, { status: 400 });
       }
 
-      const config = { sawWidth, edgeBuffer, boardTrim };
+      const config = { sawWidth, edgeBuffer, boardTrim, minPieceSize };
 
       const response = await admin.graphql(`
         mutation metafieldSet($metafields: [MetafieldsSetInput!]!) {
@@ -337,6 +343,7 @@ export default function Index() {
   const [sawWidth, setSawWidth] = useState(cuttingConfig.sawWidth);
   const [edgeBuffer, setEdgeBuffer] = useState(cuttingConfig.edgeBuffer);
   const [boardTrim, setBoardTrim] = useState(cuttingConfig.boardTrim);
+  const [minPieceSize, setMinPieceSize] = useState(cuttingConfig.minPieceSize);
 
   // Order form options state
   const [locations, setLocations] = useState<string[]>(transferLocations);
@@ -360,8 +367,9 @@ export default function Index() {
     formData.append("sawWidth", sawWidth.toString());
     formData.append("edgeBuffer", edgeBuffer.toString());
     formData.append("boardTrim", boardTrim.toString());
+    formData.append("minPieceSize", minPieceSize.toString());
     fetcher.submit(formData, { method: "POST", action: "/app?index" });
-  }, [fetcher, sawWidth, edgeBuffer, boardTrim]);
+  }, [fetcher, sawWidth, edgeBuffer, boardTrim, minPieceSize]);
 
   const handleOrderFormSubmit = useCallback(() => {
     const formData = new FormData();
@@ -380,17 +388,17 @@ export default function Index() {
   if (showSuccess && fetcher.state === "idle") {
     const type = (fetcher.data as any).type;
     if (type === "color") {
-      shopify.toast.show("Widget color updated successfully!");
+      shopify.toast.show("Farba widgetu bola úspešne aktualizovaná!");
     } else if (type === "cutting_config") {
-      shopify.toast.show("Cutting configuration saved successfully!");
+      shopify.toast.show("Konfigurácia rezania bola úspešne uložená!");
     } else if (type === "order_form_options") {
-      shopify.toast.show("Order form options saved successfully!");
+      shopify.toast.show("Možnosti formulára objednávky boli úspešne uložené!");
     }
   }
 
   return (
     <Page>
-      <TitleBar title="IW Trend Konfigurator Settings" />
+      <TitleBar title="IW Trend Konfigurátor - Nastavenia" />
       <Layout>
         <Layout.Section>
           <BlockStack gap="500">
@@ -399,10 +407,10 @@ export default function Index() {
               <BlockStack gap="500">
                 <BlockStack gap="200">
                   <Text as="h2" variant="headingMd">
-                    Widget Color Settings
+                    Nastavenia Farby Widgetu
                   </Text>
                   <Text variant="bodyMd" as="p">
-                    Customize the primary color for your configurator widget.
+                    Prispôsobte primárnu farbu pre váš konfiguračný widget.
                   </Text>
                 </BlockStack>
 
@@ -416,11 +424,11 @@ export default function Index() {
                   <InlineStack gap="400" align="start">
                     <div style={{ flex: 1 }}>
                       <TextField
-                        label="Primary Color"
+                        label="Primárna Farba"
                         type="color"
                         value={colorValue}
                         onChange={handleColorChange}
-                        helpText="Choose a color that matches your brand"
+                        helpText="Vyberte farbu, ktorá zodpovedá vašej značke"
                         autoComplete="off"
                       />
                     </div>
@@ -441,13 +449,13 @@ export default function Index() {
                       loading={isLoading}
                       disabled={colorValue === currentColor}
                     >
-                      Save Color
+                      Uložiť Farbu
                     </Button>
                     <Button
                       onClick={() => setColorValue(currentColor)}
                       disabled={colorValue === currentColor || isLoading}
                     >
-                      Reset
+                      Resetovať
                     </Button>
                   </InlineStack>
                 </BlockStack>
@@ -459,20 +467,20 @@ export default function Index() {
               <BlockStack gap="500">
                 <BlockStack gap="200">
                   <Text as="h2" variant="headingMd">
-                    Cutting Configuration
+                    Konfigurácia Rezania
                   </Text>
                   <Text variant="bodyMd" as="p">
-                    Configure cutting parameters for material processing.
+                    Nastavte parametre rezania pre spracovanie materiálov.
                   </Text>
                 </BlockStack>
 
                 <BlockStack gap="400">
                   <TextField
-                    label="Saw Blade Width (mm)"
+                    label="Šírka píly (mm)"
                     type="number"
                     value={sawWidth.toString()}
                     onChange={(value) => setSawWidth(parseFloat(value) || 2)}
-                    helpText="Spacing between pieces during cutting (1-5mm)"
+                    helpText="Rozostup medzi kusmi počas rezania (1-5mm)"
                     autoComplete="off"
                     min={1}
                     max={5}
@@ -480,11 +488,11 @@ export default function Index() {
                   />
 
                   <TextField
-                    label="Edge Buffer per side (mm)"
+                    label="Nárazník hrany na stranu (mm)"
                     type="number"
                     value={edgeBuffer.toString()}
                     onChange={(value) => setEdgeBuffer(parseFloat(value) || 30)}
-                    helpText="Extra length added to edge material on each side (0-50mm). Example: 500mm edge → 560mm needed (500 + 30 + 30)"
+                    helpText="Extra dĺžka pridaná k materiálu hrany na každú stranu (0-50mm). Príklad: 500mm hrana → 560mm potrebné (500 + 30 + 30)"
                     autoComplete="off"
                     min={0}
                     max={50}
@@ -492,14 +500,26 @@ export default function Index() {
                   />
 
                   <TextField
-                    label="Board Trim per side (mm)"
+                    label="Orez dosky na stranu (mm)"
                     type="number"
                     value={boardTrim.toString()}
                     onChange={(value) => setBoardTrim(parseFloat(value) || 15)}
-                    helpText="Trim from each side of the board before cutting (0-30mm)"
+                    helpText="Orez z každej strany dosky pred rezaním (0-30mm)"
                     autoComplete="off"
                     min={0}
                     max={30}
+                    step={1}
+                  />
+
+                  <TextField
+                    label="Minimálna veľkosť strany dielca (mm)"
+                    type="number"
+                    value={minPieceSize.toString()}
+                    onChange={(value) => setMinPieceSize(parseFloat(value) || 10)}
+                    helpText="Minimálna prípustná dĺžka alebo šírka dielca (1-100mm)"
+                    autoComplete="off"
+                    min={1}
+                    max={100}
                     step={1}
                   />
 
@@ -509,17 +529,18 @@ export default function Index() {
                       onClick={handleCuttingConfigSubmit}
                       loading={isLoading}
                     >
-                      Save Cutting Configuration
+                      Uložiť Konfiguráciu Rezania
                     </Button>
                     <Button
                       onClick={() => {
                         setSawWidth(cuttingConfig.sawWidth);
                         setEdgeBuffer(cuttingConfig.edgeBuffer);
                         setBoardTrim(cuttingConfig.boardTrim);
+                        setMinPieceSize(cuttingConfig.minPieceSize);
                       }}
                       disabled={isLoading}
                     >
-                      Reset
+                      Resetovať
                     </Button>
                   </InlineStack>
                 </BlockStack>

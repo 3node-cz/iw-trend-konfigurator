@@ -32,6 +32,7 @@ interface CuttingConfig {
   sawWidth: number;
   edgeBuffer: number;
   boardTrim: number;
+  minPieceSize: number; // Minimum piece side length in mm
 }
 
 interface ShopifySettings {

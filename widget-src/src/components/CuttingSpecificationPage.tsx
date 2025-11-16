@@ -201,7 +201,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
     removeMaterial,
     isValidPiece,
     markFieldAsTouched,
-  } = useMaterialSpecs(materials, existingSpecifications);
+  } = useMaterialSpecs(materials, existingSpecifications, cuttingConfig);
 
   // Calculate cutting layouts to check for unplaced pieces
   const specifications = generateSpecifications();

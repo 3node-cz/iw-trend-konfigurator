@@ -5,6 +5,7 @@ import type {
   CuttingPiece,
   EdgeMaterial,
 } from '../types/shopify'
+import type { CuttingConfig } from '../main'
 import { searchMaterials } from '../services/shopifyApi'
 import { SHOPIFY_API, DIMENSIONS } from '../constants'
 
@@ -220,7 +221,10 @@ const fetchAllEdges = async (material: MaterialSearchResult): Promise<EdgeMateri
 export const useMaterialSpecs = (
   materials: MaterialSearchResult[],
   existingSpecifications: CuttingSpecification[] = [],
+  cuttingConfig?: CuttingConfig,
 ) => {
+  // Default minimum piece size to 10mm if not provided
+  const minPieceSize = cuttingConfig?.minPieceSize || 10
   const [materialSpecs, setMaterialSpecs] = useState<{
     [materialId: string]: MaterialSpec
   }>(() => {
@@ -503,6 +507,11 @@ export const useMaterialSpecs = (
       return false
     }
 
+    // Check minimum piece size constraint
+    if (piece.length < minPieceSize || piece.width < minPieceSize) {
+      return false
+    }
+
     // Check material dimension constraints if materialId is provided
     if (materialId) {
       const material = materials.find(m => m.id === materialId)
@@ -525,7 +534,7 @@ export const useMaterialSpecs = (
     }
 
     return true
-  }, [materials])
+  }, [materials, minPieceSize])
 
   // Get valid pieces only (filter out empty ones)
   const getValidPieces = useCallback((materialId: string): CuttingPiece[] => {
@@ -674,6 +683,14 @@ export const useMaterialSpecs = (
           pieceErrors.push('Šírka je povinná')
         }
 
+        // Check minimum piece size constraint
+        if (lengthTouched && piece.length > 0 && piece.length < minPieceSize) {
+          pieceErrors.push(`Dĺžka musí byť aspoň ${minPieceSize} mm`)
+        }
+        if (widthTouched && piece.width > 0 && piece.width < minPieceSize) {
+          pieceErrors.push(`Šírka musí byť aspoň ${minPieceSize} mm`)
+        }
+
         // Check material dimension constraints
         if (piece.length > 0 && piece.width > 0) {
           // Check if piece fits in material (consider rotation setting)
@@ -700,7 +717,7 @@ export const useMaterialSpecs = (
     })
 
     return errors
-  }, [materialSpecs, touchedPieces, touchedFields, materials])
+  }, [materialSpecs, touchedPieces, touchedFields, materials, minPieceSize])
 
   const generateSpecifications = useCallback((): CuttingSpecification[] => {
     return materials
