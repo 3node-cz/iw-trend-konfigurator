@@ -61,6 +61,7 @@ interface MaterialTableWrapperProps {
   validationErrors: { [pieceId: string]: string[] };
   onPieceChange: (materialId: string, pieceId: string, updatedPiece: Partial<CuttingPiece>) => void;
   onRemovePiece: (materialId: string, pieceId: string) => void;
+  onCopyPiece: (materialId: string, piece: CuttingPiece) => void;
   onPreviewPiece: (piece: CuttingPiece, material: MaterialSearchResult) => void;
   onFieldBlur: (materialId: string, pieceId: string, fieldName: 'length' | 'width') => void;
 }
@@ -74,6 +75,7 @@ const MaterialTableWrapper = memo<MaterialTableWrapperProps>(({
   validationErrors,
   onPieceChange,
   onRemovePiece,
+  onCopyPiece,
   onPreviewPiece,
   onFieldBlur,
 }) => {
@@ -81,6 +83,7 @@ const MaterialTableWrapper = memo<MaterialTableWrapperProps>(({
   const materialRef = React.useRef(material);
   const onPieceChangeRef = React.useRef(onPieceChange);
   const onRemovePieceRef = React.useRef(onRemovePiece);
+  const onCopyPieceRef = React.useRef(onCopyPiece);
   const onPreviewPieceRef = React.useRef(onPreviewPiece);
   const onFieldBlurRef = React.useRef(onFieldBlur);
 
@@ -89,6 +92,7 @@ const MaterialTableWrapper = memo<MaterialTableWrapperProps>(({
     materialRef.current = material;
     onPieceChangeRef.current = onPieceChange;
     onRemovePieceRef.current = onRemovePiece;
+    onCopyPieceRef.current = onCopyPiece;
     onPreviewPieceRef.current = onPreviewPiece;
     onFieldBlurRef.current = onFieldBlur;
   });
@@ -104,6 +108,13 @@ const MaterialTableWrapper = memo<MaterialTableWrapperProps>(({
   const handleRemovePiece = useCallback(
     (pieceId: string) => {
       onRemovePieceRef.current(materialId, pieceId);
+    },
+    [materialId]
+  );
+
+  const handleCopyPiece = useCallback(
+    (piece: CuttingPiece) => {
+      onCopyPieceRef.current(materialId, piece);
     },
     [materialId]
   );
@@ -129,6 +140,7 @@ const MaterialTableWrapper = memo<MaterialTableWrapperProps>(({
       availableEdges={availableEdges}
       onPieceChange={handlePieceChange}
       onRemovePiece={handleRemovePiece}
+      onCopyPiece={handleCopyPiece}
       onPreviewPiece={handlePreviewPiece}
       onFieldBlur={handleFieldBlur}
       validationErrors={validationErrors}
@@ -175,6 +187,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
     handleEdgeMaterialChange,
     handleGlueTypeChange,
     handleAddPiece,
+    handleCopyPiece,
     handlePieceChange,
     handleRemovePiece,
     clearAllPieces,
@@ -478,6 +491,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
                 availableEdges={materialSpec?.availableEdges || []}
                 onPieceChange={handlePieceChange}
                 onRemovePiece={handleRemovePiece}
+                onCopyPiece={handleCopyPiece}
                 onPreviewPiece={handlePreviewPiece}
                 onFieldBlur={(materialId, pieceId, fieldName) =>
                   markFieldAsTouched(pieceId, fieldName)

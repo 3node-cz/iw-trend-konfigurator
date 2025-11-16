@@ -377,6 +377,22 @@ export const useMaterialSpecs = (
     }))
   }, [])
 
+  const handleCopyPiece = useCallback((materialId: string, pieceToCopy: CuttingPiece) => {
+    const copiedPiece: CuttingPiece = {
+      ...pieceToCopy,
+      id: `piece_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // New unique ID
+      partName: pieceToCopy.partName ? `${pieceToCopy.partName} (kópia)` : '(kópia)',
+    }
+
+    setMaterialSpecs((prev) => ({
+      ...prev,
+      [materialId]: {
+        ...prev[materialId],
+        cuttingPieces: [...prev[materialId].cuttingPieces, copiedPiece],
+      },
+    }))
+  }, [])
+
   const handlePieceChange = useCallback(
     (
       materialId: string,
@@ -748,6 +764,7 @@ export const useMaterialSpecs = (
     handleEdgeMaterialChange,
     handleGlueTypeChange,
     handleAddPiece,
+    handleCopyPiece,
     handlePieceChange,
     handleRemovePiece,
     clearAllPieces,

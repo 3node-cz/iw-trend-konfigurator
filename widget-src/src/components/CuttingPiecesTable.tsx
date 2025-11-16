@@ -23,6 +23,7 @@ import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   Tune as TuneIcon,
+  ContentCopy as ContentCopyIcon,
 } from "@mui/icons-material";
 import type { CuttingPiece, EdgeMaterial } from "../types/shopify";
 import {
@@ -42,6 +43,7 @@ interface CuttingPiecesTableProps {
   availableEdges?: EdgeMaterial[]; // All available edge combinations (3 widths × 2 thicknesses)
   onPieceChange: (pieceId: string, updatedPiece: Partial<CuttingPiece>) => void;
   onRemovePiece: (pieceId: string) => void;
+  onCopyPiece?: (piece: CuttingPiece) => void;
   onPreviewPiece?: (piece: CuttingPiece) => void;
   onFieldBlur?: (pieceId: string, fieldName: 'length' | 'width') => void;
   validationErrors?: { [pieceId: string]: string[] };
@@ -55,6 +57,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   availableEdges = [],
   onPieceChange,
   onRemovePiece,
+  onCopyPiece,
   onPreviewPiece,
   onFieldBlur,
   validationErrors = {},
@@ -220,106 +223,111 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         size: 40,
       }),
 
-      // Part Name and Quantity (side by side)
+      // Part Name (separate)
       columnHelper.display({
-        id: "nameAndQuantity",
-        header: () => (
-          <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
-            <Typography variant="caption" sx={{ fontWeight: 600, flex: 1 }}>
-              Názov
-            </Typography>
-            <Typography variant="caption" sx={{ fontWeight: 600, width: 60 }}>
-              Počet
-            </Typography>
-          </Box>
-        ),
-        size: 220,
+        id: "partName",
+        header: "Názov",
+        size: 150,
         cell: ({ row }) => {
           const piece = row.original;
           return (
-            <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-              <DebouncedTextInput
-                initialValue={piece.partName || ""}
-                onChange={(value) =>
-                  handlePieceChange(row.original.id, { partName: value })
-                }
-                sx={{ flex: 1, minWidth: 100 }}
-                placeholder="Názov"
-              />
-              <DebouncedNumberInput
-                initialValue={piece.quantity}
-                onChange={(value) =>
-                  handlePieceChange(row.original.id, { quantity: value })
-                }
-                sx={{ width: 60 }}
-                min={1}
-                placeholder="Ks"
-              />
-            </Box>
+            <DebouncedTextInput
+              initialValue={piece.partName || ""}
+              onChange={(value) =>
+                handlePieceChange(row.original.id, { partName: value })
+              }
+              sx={{ width: "100%" }}
+              placeholder="Názov"
+            />
           );
         },
       }),
 
-      // Dimensions (Length x Width) - side by side
+      // Length (separate)
       columnHelper.display({
-        id: "dimensions",
-        header: () => (
-          <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
-            <Typography variant="caption" sx={{ fontWeight: 600, width: 80 }}>
-              Dĺžka
-            </Typography>
-            <Typography variant="caption" sx={{ fontWeight: 600, width: 80 }}>
-              Šírka
-            </Typography>
-          </Box>
-        ),
-        size: 170,
+        id: "length",
+        header: "Dĺžka",
+        size: 90,
         cell: ({ row }) => {
           const piece = row.original;
           const errors = validationErrorsRef.current[piece.id] || [];
-          const { hasLengthError, hasWidthError } = getFieldErrors(errors);
+          const { hasLengthError } = getFieldErrors(errors);
 
           return (
-            <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-              <DebouncedNumberInput
-                initialValue={piece.length || 0}
-                onChange={(value) =>
-                  handlePieceChange(row.original.id, { length: value })
-                }
-                onBlur={() => onFieldBlur?.(row.original.id, 'length')}
-                sx={{
-                  width: 80,
-                  "& .MuiOutlinedInput-root": hasLengthError
-                    ? {
-                        borderColor: "error.main",
-                        "&:hover": { borderColor: "error.main" },
-                      }
-                    : {},
-                }}
-                min={0}
-                error={hasLengthError}
-                placeholder="L"
-              />
-              <DebouncedNumberInput
-                initialValue={piece.width || 0}
-                onChange={(value) =>
-                  handlePieceChange(row.original.id, { width: value })
-                }
-                onBlur={() => onFieldBlur?.(row.original.id, 'width')}
-                sx={{
-                  width: 80,
-                  "& .MuiOutlinedInput-root": hasWidthError
-                    ? {
-                        borderColor: "error.main",
-                        "&:hover": { borderColor: "error.main" },
-                      }
-                    : {},
-                }}
-                min={0}
-                error={hasWidthError}
-                placeholder="W"
-              />
-            </Box>
+            <DebouncedNumberInput
+              initialValue={piece.length || 0}
+              onChange={(value) =>
+                handlePieceChange(row.original.id, { length: value })
+              }
+              onBlur={() => onFieldBlur?.(row.original.id, 'length')}
+              sx={{
+                width: "100%",
+                "& .MuiOutlinedInput-root": hasLengthError
+                  ? {
+                      borderColor: "error.main",
+                      "&:hover": { borderColor: "error.main" },
+                    }
+                  : {},
+              }}
+              min={0}
+              error={hasLengthError}
+              placeholder="L"
+            />
+          );
+        },
+      }),
+
+      // Width (separate)
+      columnHelper.display({
+        id: "width",
+        header: "Šírka",
+        size: 90,
+        cell: ({ row }) => {
+          const piece = row.original;
+          const errors = validationErrorsRef.current[piece.id] || [];
+          const { hasWidthError } = getFieldErrors(errors);
+
+          return (
+            <DebouncedNumberInput
+              initialValue={piece.width || 0}
+              onChange={(value) =>
+                handlePieceChange(row.original.id, { width: value })
+              }
+              onBlur={() => onFieldBlur?.(row.original.id, 'width')}
+              sx={{
+                width: "100%",
+                "& .MuiOutlinedInput-root": hasWidthError
+                  ? {
+                      borderColor: "error.main",
+                      "&:hover": { borderColor: "error.main" },
+                    }
+                  : {},
+              }}
+              min={0}
+              error={hasWidthError}
+              placeholder="W"
+            />
+          );
+        },
+      }),
+
+      // Quantity (separate)
+      columnHelper.display({
+        id: "quantity",
+        header: "Počet",
+        size: 75,
+        cell: ({ row }) => {
+          const piece = row.original;
+          return (
+            <DebouncedNumberInput
+              initialValue={piece.quantity}
+              onChange={(value) =>
+                handlePieceChange(row.original.id, { quantity: value })
+              }
+              sx={{ width: "100%" }}
+              min={1}
+              placeholder="Ks"
+            />
           );
         },
       }),
@@ -442,44 +450,6 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                 />
               </Box>
             </Box>
-          );
-        },
-      }),
-
-      // Block column
-      columnHelper.display({
-        id: "block",
-        header: () => (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, justifyContent: "center" }}>
-            <Typography variant="caption" sx={{ fontWeight: 600 }}>
-              Blok
-            </Typography>
-            <HelpTooltip
-              title={
-                <>
-                  Blok označuje skupinu dielcov, ktoré majú byť nadelené z jednej tabule.
-                  <br />
-                  Rôzne bloky budú optimalizované samostatne.
-                </>
-              }
-            />
-          </Box>
-        ),
-        size: 70,
-        cell: ({ row }) => {
-          const piece = row.original;
-          return (
-            <DebouncedNumberInput
-              initialValue={piece.algorithmValue || 0}
-              onChange={(value) =>
-                handlePieceChange(row.original.id, {
-                  algorithmValue: Math.max(0, Math.floor(value)),
-                })
-              }
-              sx={{ width: "100%" }}
-              min={0}
-              step={1}
-            />
           );
         },
       }),
@@ -622,6 +592,44 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         },
       }),
 
+      // Block column (moved after edges)
+      columnHelper.display({
+        id: "block",
+        header: () => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, justifyContent: "center" }}>
+            <Typography variant="caption" sx={{ fontWeight: 600 }}>
+              Blok
+            </Typography>
+            <HelpTooltip
+              title={
+                <>
+                  Blok označuje skupinu dielcov, ktoré majú byť nadelené z jednej tabule.
+                  <br />
+                  Rôzne bloky budú optimalizované samostatne.
+                </>
+              }
+            />
+          </Box>
+        ),
+        size: 70,
+        cell: ({ row }) => {
+          const piece = row.original;
+          return (
+            <DebouncedNumberInput
+              initialValue={piece.algorithmValue || 0}
+              onChange={(value) =>
+                handlePieceChange(row.original.id, {
+                  algorithmValue: Math.max(0, Math.floor(value)),
+                })
+              }
+              sx={{ width: "100%" }}
+              min={0}
+              step={1}
+            />
+          );
+        },
+      }),
+
       // Notes
       columnHelper.accessor("notes", {
         header: "Poznámka",
@@ -662,87 +670,54 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         ),
       }),
 
-      // Preview (moved to end before actions)
+      // Copy Piece Button
       columnHelper.display({
-        id: "preview",
-        header: "Náhľad",
+        id: "copyPiece",
+        header: "Kopírovať",
+        size: 90,
         cell: ({ row }) => {
           const piece = row.original;
-          // Only show preview if piece has valid dimensions
-          if (!piece.length || !piece.width) {
-            return (
-              <Box
-                sx={{
-                  width: 80,
-                  height: 80,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Typography variant="caption" color="text.disabled">
-                  -
-                </Typography>
-              </Box>
-            );
-          }
           return (
-            <Tooltip title={onPreviewPiece ? "Kliknite pre detail náhľadu" : ""} arrow>
-              <Box
-                sx={{
-                  cursor: onPreviewPiece ? "pointer" : "default",
-                  "&:hover": onPreviewPiece
-                    ? {
-                        opacity: 0.8,
-                        transform: "scale(1.05)",
-                      }
-                    : {},
-                  transition: "all 0.2s ease",
-                }}
-                onClick={() => onPreviewPiece && handlePreviewPiece(piece)}
+            <Tooltip title="Kopírovať dielec">
+              <IconButton
+                size="small"
+                color="primary"
+                onClick={() => onCopyPiece?.(piece)}
+                disabled={!onCopyPiece}
               >
-                <PieceShapePreview
-                  piece={piece}
-                  containerSize={80}
-                  showBackground={false}
-                  showRotationIndicator={false}
-                  showEdges={true}
-                />
-              </Box>
+                <ContentCopyIcon fontSize="small" />
+              </IconButton>
             </Tooltip>
           );
         },
-        size: 90,
       }),
 
-      // Actions
+      // Delete Button
       columnHelper.display({
         id: "actions",
-        header: "Akcie",
+        header: "Odstrániť",
+        size: 90,
         cell: ({ row }) => {
           return (
-            <Box sx={{ display: "flex", gap: 0.5 }}>
-              <Tooltip title="Odstrániť dielec">
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => handleRemovePiece(row.original.id)}
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </Tooltip>
-            </Box>
+            <Tooltip title="Odstrániť dielec">
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => handleRemovePiece(row.original.id)}
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Tooltip>
           );
         },
-        size: 80,
       }),
     ],
     [
       edgeMaterial,
+      availableEdges,
       handlePieceChange,
       handleRemovePiece,
-      handlePreviewPiece,
-      onPreviewPiece,
+      onCopyPiece,
       getFieldErrors,
     ],
   );
