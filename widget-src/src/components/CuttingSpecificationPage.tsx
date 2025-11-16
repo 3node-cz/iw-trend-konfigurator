@@ -404,11 +404,6 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
                 >
                   Materiál {index + 1} z {materials.length}
                 </Typography>
-                {validPiecesCount > 0 && (
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    ({validPiecesCount} platných kusov)
-                  </Typography>
-                )}
               </Box>
 
               <IconButton

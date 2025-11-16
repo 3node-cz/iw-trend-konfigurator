@@ -97,7 +97,6 @@ const EdgeThicknessSelect: React.FC<EdgeThicknessSelectProps> = ({
               }}
             >
               {width}
-              {isPlaceholderOption && ' ⚠️'}
             </MenuItem>
           )
         })}
