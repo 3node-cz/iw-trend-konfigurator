@@ -306,14 +306,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
                     url
                     altText
                   }
-                  images(first: 5) {
-                    edges {
-                      node {
-                        url
-                        altText
-                      }
-                    }
-                  }
                   variants(first: 10) {
                     edges {
                       node {
@@ -344,7 +336,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
                         }
                         alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
                           value
-                          references(first: 10) {
+                          references(first: 5) {
                             edges {
                               node {
                                 ... on Product {
@@ -353,15 +345,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
                                   handle
                                 }
                               }
-                            }
-                          }
-                        }
-                        allMetafields: metafields(first: 10) {
-                          edges {
-                            node {
-                              namespace
-                              key
-                              value
                             }
                           }
                         }
@@ -376,7 +359,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
                   }
                   alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
                     value
-                    references(first: 10) {
+                    references(first: 5) {
                       edges {
                         node {
                           ... on Product {
@@ -397,15 +380,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
                   materialThickness: metafield(namespace: "material", key: "thickness") {
                     value
                   }
-                  allMetafields: metafields(first: 10) {
-                    edges {
-                      node {
-                        namespace
-                        key
-                        value
-                      }
-                    }
-                  }
                 }
               }
             }
@@ -415,7 +389,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
       variables = {
         collectionId: collectionGid,
-        first: 250,
+        first: 150,
         after: null
       };
     } else {
@@ -560,7 +534,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       let hasNextPage = true;
       let cursor: string | null = null;
       let pageCount = 0;
-      const maxPages = 12; // Max 3000 products (12 * 250)
+      const maxPages = 20; // Max 3000 products (20 * 150)
 
       while (hasNextPage && allFilteredMaterials.length < limit && pageCount < maxPages) {
         pageCount++;
@@ -568,7 +542,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
         const pageVariables = {
           collectionId: collectionGid,
-          first: 250,
+          first: 150,
           after: cursor
         };
 
@@ -662,18 +636,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     // Transform the results to match our expected format
     const transformToMaterial = (product: any, variant: any) => {
-      // Extract metafields from allMetafields (generic metafields list)
-      const productMetafields = product.allMetafields?.edges?.reduce((acc: any, metafield: any) => {
-        const { namespace, key, value } = metafield.node;
-        acc[`${namespace}.${key}`] = value;
-        return acc;
-      }, {}) || {};
-
-      const variantMetafields = variant?.allMetafields?.edges?.reduce((acc: any, metafield: any) => {
-        const { namespace, key, value } = metafield.node;
-        acc[`${namespace}.${key}`] = value;
-        return acc;
-      }, {}) || {};
+      // Initialize metafields objects (we query specific metafields, not allMetafields)
+      const productMetafields: any = {};
+      const variantMetafields: any = {};
 
       // Add specific metafields that we explicitly queried
       console.log('🔍 [API] Checking product.alternativeProducts:', {
@@ -760,7 +725,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       // Get images - prefer variant image, fallback to product featured image
       const variantImage = variant?.image?.url;
       const productImage = product.featuredImage?.url;
-      const productImages = product.images?.edges?.map((edge: any) => edge.node.url) || [];
+      // Use featured image as the only image in the array for backward compatibility
+      const productImages = productImage ? [productImage] : [];
 
       // Extract dimensions from metafields (use merged metafields)
       let dimensions = undefined;
