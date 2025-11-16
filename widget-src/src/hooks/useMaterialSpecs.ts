@@ -140,23 +140,34 @@ const fetchAllEdges = async (material: MaterialSearchResult): Promise<EdgeMateri
 
         const edge = results[0]
 
+        // Log raw metafield values from Shopify admin for testing
+        console.log(`📋 [Edge Metafields] Product: ${edge.title}`)
+        console.log(`   Raw param.sirka_hrany: "${edge.metafields?.['param.sirka_hrany']}"`)
+        console.log(`   Raw param.hrubka_hrany: "${edge.metafields?.['param.hrubka_hrany']}"`)
+        console.log(`   All metafields:`, edge.metafields)
+
         // Parse edge metafields
         const edgeWidth = parseEdgeWidth(edge.metafields?.['param.sirka_hrany'])
         const boardThickness = parseBoardThickness(edge.metafields?.['param.hrubka_hrany'])
+
+        console.log(`   Parsed edgeWidth: ${edgeWidth}mm`)
+        console.log(`   Parsed boardThickness: ${boardThickness}mm`)
 
         // Warn if metafields are missing or invalid
         if (!edgeWidth || !boardThickness) {
           console.warn(
             `⚠️ Missing or invalid metafields for edge: ${edge.title}`,
             {
-              edgeWidth,
-              boardThickness,
-              metafields: edge.metafields
+              rawSirkaHrany: edge.metafields?.['param.sirka_hrany'],
+              rawHrubkaHrany: edge.metafields?.['param.hrubka_hrany'],
+              parsedEdgeWidth: edgeWidth,
+              parsedBoardThickness: boardThickness,
+              allMetafields: edge.metafields
             }
           )
+        } else {
+          console.log(`✅ Found edge: ${edge.title} | Width: ${edgeWidth}mm | Board: ${boardThickness}mm`)
         }
-
-        console.log(`✅ Found edge: ${edge.title} | Width: ${edgeWidth}mm | Board: ${boardThickness}mm`)
 
         return {
           id: edge.id,
@@ -190,6 +201,13 @@ const fetchAllEdges = async (material: MaterialSearchResult): Promise<EdgeMateri
     const allEdges = [...fetchedEdges, ...placeholders]
 
     console.log(`📦 [fetchAllEdges] Total edges (including ${placeholders.length} placeholders): ${allEdges.length}`)
+
+    // Log complete edge matrix for testing
+    console.log(`📊 [Edge Matrix] Complete edge combinations for ${material.title}:`)
+    allEdges.forEach(edge => {
+      const icon = edge.isPlaceholder ? '⚠️' : '✅'
+      console.log(`   ${icon} ${edge.edgeWidth}mm × ${edge.boardThickness}mm - ${edge.name}`)
+    })
 
     return allEdges
   } catch (error) {

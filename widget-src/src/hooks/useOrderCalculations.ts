@@ -32,6 +32,12 @@ export const useOrderCalculations = (
 ): OrderCalculations => {
 
   const calculations = useMemo(() => {
+    // Log configuration values being used in calculations
+    console.log('💰 [Order Calculations] Using configuration:');
+    console.log('   Edge Buffer:', edgeBuffer, 'mm');
+    console.log('   Cutting Costs:', cuttingCostConfig);
+    console.log('   Processing', specifications.length, 'material specifications');
+
     const edgeConsumption: MaterialEdgeConsumption[] = []
     const cuttingCosts: CuttingCostBreakdown[] = []
 

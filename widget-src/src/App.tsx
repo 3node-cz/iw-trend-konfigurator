@@ -60,6 +60,18 @@ function App() {
 
   const shopConfig = getShopConfig();
 
+  // Log configuration values from Shopify admin for testing
+  useEffect(() => {
+    console.log('⚙️ [Configuration] Shopify Admin Settings loaded:');
+    console.log('   Saw Width (CUTTING_KERF):', shopConfig.cuttingConfig?.sawWidth || 'using default: 2', 'mm');
+    console.log('   Edge Buffer:', shopConfig.cuttingConfig?.edgeBuffer || 'using default: 30', 'mm');
+    console.log('   Board Trim:', shopConfig.cuttingConfig?.boardTrim || 'using default: 15', 'mm');
+    console.log('   Transfer Locations:', shopConfig.transferLocations);
+    console.log('   Delivery Methods:', shopConfig.deliveryMethods);
+    console.log('   Processing Types:', shopConfig.processingTypes);
+    console.log('   Full config object:', shopConfig);
+  }, [shopConfig.cuttingConfig?.sawWidth, shopConfig.cuttingConfig?.edgeBuffer, shopConfig.cuttingConfig?.boardTrim]);
+
   const [selectedMaterials, setSelectedMaterials] = useState<
     MaterialSearchResult[]
   >([]);
