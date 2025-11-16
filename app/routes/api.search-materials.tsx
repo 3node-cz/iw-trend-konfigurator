@@ -275,13 +275,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
       // Use products() search API with optional collection filter
       console.log('🔍 Using products() API for search');
 
-      // Build filters array for collection filtering
-      const filters: any[] = [];
+      // Get collection GID for filtering
+      let collectionGid: string | null = null;
       if (collection && !debugNoFilter) {
         const collectionId = COLLECTION_HANDLE_TO_ID[collection];
         if (collectionId) {
-          const collectionGid = `gid://shopify/Collection/${collectionId}`;
-          filters.push({ collection_id: collectionGid });
+          collectionGid = `gid://shopify/Collection/${collectionId}`;
           console.log('🔍 Applying collection filter:', `${collection} → ${collectionGid}`);
         } else {
           console.warn('⚠️ Unknown collection handle:', collection);
@@ -290,12 +289,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
         console.log('🐛 DEBUG MODE: Collection filter disabled');
       }
 
-      // Determine if we're using filters
-      const useFilters = filters.length > 0;
+      // Determine if we're using collection filter
+      const useCollectionFilter = collectionGid !== null;
 
       graphqlQuery = `
-        query searchProducts($query: String!, $first: Int!${useFilters ? ', $filters: [ProductFilter!]' : ''}) {
-          products(first: $first, query: $query${useFilters ? ', filters: $filters' : ''}) {
+        query searchProducts($query: String!, $first: Int!${useCollectionFilter ? ', $collectionId: ID' : ''}) {
+          products(first: $first, query: $query${useCollectionFilter ? ', collectionId: $collectionId' : ''}) {
             edges {
               node {
                 id
@@ -414,10 +413,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
         }
       `;
 
-      variables = useFilters ? {
+      variables = useCollectionFilter ? {
         query: searchQuery,
         first: Math.min(limit, 250),
-        filters
+        collectionId: collectionGid
       } : {
         query: searchQuery,
         first: Math.min(limit, 250)
