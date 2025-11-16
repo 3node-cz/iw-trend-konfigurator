@@ -25,6 +25,7 @@ import {
   Edit as EditIcon,
   Tune as TuneIcon,
   ContentCopy as ContentCopyIcon,
+  Visibility as VisibilityIcon,
 } from "@mui/icons-material";
 import type { CuttingPiece, EdgeMaterial } from "../types/shopify";
 import {
@@ -669,6 +670,28 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
             </Tooltip>
           </Box>
         ),
+      }),
+
+      // Preview Button
+      columnHelper.display({
+        id: "preview",
+        header: "Náhľad",
+        size: 80,
+        cell: ({ row }) => {
+          const piece = row.original;
+          return (
+            <Tooltip title="Zobraziť náhľad dielca">
+              <IconButton
+                size="small"
+                color="default"
+                onClick={() => handlePreviewPiece(piece)}
+                disabled={!onPreviewPiece}
+              >
+                <VisibilityIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          );
+        },
       }),
 
       // Copy Piece Button

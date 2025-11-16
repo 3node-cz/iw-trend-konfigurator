@@ -584,6 +584,53 @@ export async function loader({ request }: LoaderFunctionArgs) {
         return transformToMaterial(product, variant);
       });
       console.log(`✅ products() API returned ${materials.length} products`);
+
+      // Debug: Log product types and tags for first few results
+      console.log('🔍 [DEBUG] First 5 products returned:');
+      materials.slice(0, 5).forEach((mat: any, idx: number) => {
+        console.log(`   ${idx + 1}. ${mat.title}`);
+        console.log(`      Type: ${mat.productType}`);
+        console.log(`      Tags: ${mat.tags?.join(', ') || 'none'}`);
+      });
+    }
+
+    // POST-FILTER: If collection specified, apply heuristic filtering
+    // Shopify's collection: filter in search doesn't always work reliably
+    if (collection && materials.length > 0) {
+      const beforeFilter = materials.length;
+
+      // Apply collection-specific filters based on product characteristics
+      materials = materials.filter((mat: any) => {
+        // For "hrany-konfigurator" (edges), filter based on productType or specific patterns
+        if (collection.toLowerCase().includes('hran')) {
+          // Edges should have "Hrany" or "Edge" in productType, or specific tags
+          const isEdge =
+            mat.productType?.toLowerCase().includes('hran') ||
+            mat.productType?.toLowerCase().includes('edge') ||
+            mat.tags?.some((tag: string) =>
+              tag.toLowerCase().includes('hran') ||
+              tag.toLowerCase().includes('edge')
+            );
+
+          if (!isEdge) {
+            console.log(`🚫 [FILTER] Removing "${mat.title}" from edge collection - Type: "${mat.productType}"`);
+          }
+          return isEdge;
+        }
+
+        // For material collections (DTD, etc.), exclude edges
+        const isBoard =
+          !mat.productType?.toLowerCase().includes('hran') &&
+          !mat.productType?.toLowerCase().includes('edge');
+
+        if (!isBoard) {
+          console.log(`🚫 [FILTER] Removing "${mat.title}" from material collection - Type: "${mat.productType}"`);
+        }
+        return isBoard;
+      });
+
+      const afterFilter = materials.length;
+      console.log(`🔍 [FILTER] Collection "${collection}": ${beforeFilter} → ${afterFilter} products (removed ${beforeFilter - afterFilter})`);
     }
 
     console.log(`✅ Found ${materials.length} materials`);
