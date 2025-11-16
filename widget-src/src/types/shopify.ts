@@ -124,8 +124,6 @@ export interface EdgeMaterial {
   name: string
   productCode: string
   availability: 'available' | 'unavailable' | 'limited'
-  thickness: number // Current/default thickness in mm
-  availableThicknesses: number[] // Available thickness options in mm (e.g., [0.4, 0.8, 2])
   warehouse: string
   price?: {
     amount: number
@@ -133,6 +131,16 @@ export interface EdgeMaterial {
     perUnit: string
   }
   image?: string // Optional edge material image
+
+  // Edge specification fields
+  edgeWidth: number // Edge width from param.sirka_hrany (0.45, 1, or 2 mm)
+  boardThickness: number // Board thickness from param.hrubka_hrany (18 or 36 mm for dupel)
+  isPlaceholder?: boolean // True if this is a placeholder for missing edge
+  missingSpec?: {
+    width: number
+    boardThickness: number
+    materialName?: string // Material name for order notes when using placeholder
+  } // Details about missing edge specification
 }
 
 export interface CuttingPiece {
@@ -162,6 +170,7 @@ export interface CuttingPiece {
 export interface CuttingSpecification {
   material: MaterialSearchResult
   edgeMaterial: EdgeMaterial | null
+  availableEdges?: EdgeMaterial[] // All available edge combinations for this material
   glueType: string // PUR transparentná/bílá, etc.
   pieces: CuttingPiece[]
 }

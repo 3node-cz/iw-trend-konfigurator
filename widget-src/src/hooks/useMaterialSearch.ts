@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { searchMaterials } from '../services/shopifyApi'
 import type { MaterialSearchResult } from '../types/shopify'
+import { COLLECTIONS } from '../constants'
 
 interface UseMaterialSearchOptions {
   collection?: string
@@ -25,7 +26,7 @@ export const useMaterialSearch = (
   options: UseMaterialSearchOptions = {}
 ): UseMaterialSearchResult => {
   const {
-    collection = 'dekorativne-plosne-materialy',
+    collection = COLLECTIONS.BOARDS,
     defaultAvailableOnly = true
   } = options
 

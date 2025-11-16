@@ -39,6 +39,7 @@ import NotesDialog from "./common/NotesDialog";
 interface CuttingPiecesTableProps {
   pieces: CuttingPiece[];
   edgeMaterial: EdgeMaterial | null;
+  availableEdges?: EdgeMaterial[]; // All available edge combinations (3 widths × 2 thicknesses)
   onPieceChange: (pieceId: string, updatedPiece: Partial<CuttingPiece>) => void;
   onRemovePiece: (pieceId: string) => void;
   onPreviewPiece?: (piece: CuttingPiece) => void;
@@ -51,6 +52,7 @@ const columnHelper = createColumnHelper<CuttingPiece>();
 const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   pieces,
   edgeMaterial,
+  availableEdges = [],
   onPieceChange,
   onRemovePiece,
   onPreviewPiece,
@@ -148,7 +150,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
 
       let finalUpdates = { ...updates };
 
-      // Handle edgeAllAround changes - set all individual edges
+      // Handle edgeAllAround changes - set all individual edges AND clear custom edges
       if ("edgeAllAround" in updates) {
         const edgeAllAroundValue = updates.edgeAllAround;
         finalUpdates = {
@@ -157,7 +159,21 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
           edgeBottom: edgeAllAroundValue,
           edgeLeft: edgeAllAroundValue,
           edgeRight: edgeAllAroundValue,
+          // Clear custom edges when using edgeAllAround
+          customEdgeTop: null,
+          customEdgeBottom: null,
+          customEdgeLeft: null,
+          customEdgeRight: null,
         };
+      }
+      // Handle custom edge changes - clear edgeAllAround
+      else if (
+        ["customEdgeTop", "customEdgeBottom", "customEdgeLeft", "customEdgeRight"].some(
+          (key) => key in updates,
+        )
+      ) {
+        // Clear edgeAllAround when custom edges are set
+        finalUpdates.edgeAllAround = null;
       }
       // Handle individual edge changes - update edgeAllAround reactively
       else if (
@@ -482,6 +498,8 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                 handlePieceChange(row.original.id, { edgeAllAround: value })
               }
               edgeMaterial={edgeMaterial}
+              availableEdges={availableEdges}
+              isDupel={piece.isDupel}
               minWidth={70}
             />
           );
@@ -502,6 +520,8 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                 handlePieceChange(row.original.id, { edgeBottom: value })
               }
               edgeMaterial={piece.customEdgeBottom || edgeMaterial}
+              availableEdges={availableEdges}
+              isDupel={piece.isDupel}
               minWidth={60}
             />
           );
@@ -522,6 +542,8 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                 handlePieceChange(row.original.id, { edgeTop: value })
               }
               edgeMaterial={piece.customEdgeTop || edgeMaterial}
+              availableEdges={availableEdges}
+              isDupel={piece.isDupel}
               minWidth={60}
             />
           );
@@ -542,6 +564,8 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                 handlePieceChange(row.original.id, { edgeLeft: value })
               }
               edgeMaterial={piece.customEdgeLeft || edgeMaterial}
+              availableEdges={availableEdges}
+              isDupel={piece.isDupel}
               minWidth={60}
             />
           );
@@ -562,6 +586,8 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                 handlePieceChange(row.original.id, { edgeRight: value })
               }
               edgeMaterial={piece.customEdgeRight || edgeMaterial}
+              availableEdges={availableEdges}
+              isDupel={piece.isDupel}
               minWidth={60}
             />
           );

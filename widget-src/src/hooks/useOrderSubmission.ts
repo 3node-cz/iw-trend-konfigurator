@@ -184,20 +184,32 @@ export const useOrderSubmission = () => {
                 console.warn(`Using product ID as fallback for edge material: ${edgeMaterialToAdd.name}`);
               }
 
+              // Build attributes array
+              const attributes: Array<{ key: string; value: string }> = [
+                {
+                  key: "_edge_specification",
+                  value: JSON.stringify({
+                    edgeMaterial: edgeMaterialToAdd,
+                    totalEdgeLength: edgeConsumption.totalEdgeLengthMeters,
+                    relatedMaterial: edgeConsumption.materialName,
+                    consumptionByVariant: edgeConsumption.consumptionByVariant,
+                    isPlaceholder: edgeConsumption.isPlaceholder,
+                  }),
+                },
+              ];
+
+              // Add placeholder note if this is a placeholder edge
+              if (edgeConsumption.isPlaceholder && edgeConsumption.placeholderNote) {
+                attributes.push({
+                  key: "_placeholder_edge_note",
+                  value: edgeConsumption.placeholderNote
+                });
+              }
+
               allLineItems.push({
                 variantId: edgeMerchandiseId,
                 quantity: Math.ceil(edgeConsumption.totalEdgeLengthMeters), // Round up to whole meters
-                attributes: [
-                  {
-                    key: "_edge_specification",
-                    value: JSON.stringify({
-                      edgeMaterial: edgeMaterialToAdd,
-                      totalEdgeLength: edgeConsumption.totalEdgeLengthMeters,
-                      relatedMaterial: edgeConsumption.materialName,
-                      consumptionByThickness: edgeConsumption.consumptionByThickness,
-                    }),
-                  },
-                ],
+                attributes,
               });
             }
           }

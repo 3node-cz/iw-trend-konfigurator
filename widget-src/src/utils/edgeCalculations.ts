@@ -1,18 +1,22 @@
-import type { CuttingPiece } from '../types/shopify'
+import type { CuttingPiece, EdgeMaterial } from '../types/shopify'
 
 export interface EdgeConsumption {
-  thickness: number // Edge thickness in mm
+  width: number // Edge width in mm (0.45, 1, 2)
+  boardThickness: number // Board thickness in mm (18 or 36 for dupel)
   totalLength: number // Total length needed in mm
   totalLengthMeters: number // Total length needed in meters
-  pieceCount: number // Number of pieces using this thickness
+  pieceCount: number // Number of pieces using this width/thickness combination
 }
 
 export interface MaterialEdgeConsumption {
   materialName: string
   edgeMaterialName: string
-  consumptionByThickness: EdgeConsumption[]
-  totalEdgeLength: number // Total across all thicknesses in mm
-  totalEdgeLengthMeters: number // Total across all thicknesses in meters
+  edgeMaterial?: EdgeMaterial // The actual edge variant being used
+  consumptionByVariant: EdgeConsumption[] // Consumption grouped by edge variant (width + board thickness)
+  totalEdgeLength: number // Total across all variants in mm
+  totalEdgeLengthMeters: number // Total across all variants in meters
+  isPlaceholder?: boolean // True if this is a placeholder edge
+  placeholderNote?: string // Note for placeholder edge orders
 }
 
 /**
@@ -228,6 +232,122 @@ export const calculateMaterialEdgeConsumptionWithMixedEdges = (
     totalEdgeLength,
     totalEdgeLengthMeters,
   }
+}
+
+/**
+ * Match edge selection to correct edge variant from availableEdges
+ * Considers both edge width and board thickness (isDupel)
+ */
+export const matchEdgeVariant = (
+  edgeWidth: number | null,
+  boardThickness: number,
+  availableEdges: EdgeMaterial[]
+): EdgeMaterial | null => {
+  if (!edgeWidth || edgeWidth <= 0) return null
+
+  // Find edge variant that matches both width and board thickness
+  const matchedEdge = availableEdges.find(
+    edge => edge.edgeWidth === edgeWidth && edge.boardThickness === boardThickness
+  )
+
+  return matchedEdge || null
+}
+
+/**
+ * Calculate edge consumption with correct variant matching
+ * Takes into account edge width and board thickness (dupel)
+ * Generates notes for placeholder edges
+ */
+export const calculateEdgeConsumptionWithVariants = (
+  pieces: CuttingPiece[],
+  materialName: string,
+  availableEdges: EdgeMaterial[],
+  edgeBuffer: number = 30
+): MaterialEdgeConsumption[] => {
+  // Group consumption by unique edge variant (width + board thickness)
+  const variantConsumptionMap = new Map<
+    string, // key: "edgeMaterial.id_width_boardThickness"
+    {
+      edgeMaterial: EdgeMaterial
+      width: number
+      boardThickness: number
+      totalLength: number
+      pieceCount: number
+    }
+  >()
+
+  pieces.forEach((piece) => {
+    const boardThickness = piece.isDupel ? 36 : 18
+
+    // Helper to add edge consumption for one side
+    const addEdge = (edgeWidth: number | null, baseLength: number) => {
+      if (!edgeWidth || edgeWidth <= 0) return
+
+      // Match to correct edge variant
+      const edgeVariant = matchEdgeVariant(edgeWidth, boardThickness, availableEdges)
+      if (!edgeVariant) {
+        console.warn(`No edge variant found for ${edgeWidth}mm width, ${boardThickness}mm board`)
+        return
+      }
+
+      const variantKey = `${edgeVariant.id}_${edgeWidth}_${boardThickness}`
+      const edgeLengthWithBuffer = (baseLength + edgeBuffer * 2) * piece.quantity
+
+      const existing = variantConsumptionMap.get(variantKey)
+      if (existing) {
+        existing.totalLength += edgeLengthWithBuffer
+        existing.pieceCount += piece.quantity
+      } else {
+        variantConsumptionMap.set(variantKey, {
+          edgeMaterial: edgeVariant,
+          width: edgeWidth,
+          boardThickness,
+          totalLength: edgeLengthWithBuffer,
+          pieceCount: piece.quantity
+        })
+      }
+    }
+
+    // Add all four edges
+    addEdge(piece.edgeTop, piece.length)
+    addEdge(piece.edgeBottom, piece.length)
+    addEdge(piece.edgeLeft, piece.width)
+    addEdge(piece.edgeRight, piece.width)
+  })
+
+  // Convert to MaterialEdgeConsumption array
+  const consumptions: MaterialEdgeConsumption[] = []
+
+  variantConsumptionMap.forEach((consumption) => {
+    const { edgeMaterial, width, boardThickness, totalLength, pieceCount } = consumption
+
+    const consumptionByVariant: EdgeConsumption[] = [{
+      width,
+      boardThickness,
+      totalLength,
+      totalLengthMeters: totalLength / 1000,
+      pieceCount
+    }]
+
+    // Generate placeholder note if needed
+    let placeholderNote: string | undefined
+    if (edgeMaterial.isPlaceholder) {
+      placeholderNote = `MISSING EDGE: ${materialName} - ${width}mm width for ${boardThickness}mm board (${(totalLength / 1000).toFixed(2)}m needed)`
+    }
+
+    consumptions.push({
+      materialName,
+      edgeMaterialName: edgeMaterial.name,
+      edgeMaterial,
+      consumptionByVariant,
+      totalEdgeLength: totalLength,
+      totalEdgeLengthMeters: totalLength / 1000,
+      isPlaceholder: edgeMaterial.isPlaceholder,
+      placeholderNote
+    })
+  })
+
+  return consumptions
 }
 
 /**

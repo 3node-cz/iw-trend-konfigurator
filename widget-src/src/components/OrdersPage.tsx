@@ -137,7 +137,6 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
         {/* Tabs for different order types */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3, bgcolor: 'white' }}>
           <Tabs value={activeTab} onChange={handleTabChange} aria-label="order history tabs">
-            <Tab label="Rozpracované" />
             <Tab label="Uložené konfigurácie" />
             <Tab label="Odoslané objednávky" />
           </Tabs>
@@ -145,20 +144,13 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
 
         {/* Tab content */}
         {activeTab === 0 && (
-          <DraftOrdersTable
-            onLoadDraft={handleLoadDraft}
-            onDeleteDraft={handleDeleteDraft}
-            filters={filters}
-          />
-        )}
-        {activeTab === 1 && (
           <OrdersTable
             onLoadConfiguration={onLoadConfiguration}
             onDeleteOrder={handleDeleteOrder}
             filters={filters}
           />
         )}
-        {activeTab === 2 && (
+        {activeTab === 1 && (
           <SubmittedOrdersTable
             onViewOrder={handleViewSubmittedOrder}
             filters={filters}

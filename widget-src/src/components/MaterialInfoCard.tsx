@@ -78,8 +78,6 @@ const MaterialInfoCard: React.FC<MaterialInfoCardProps> = ({
                   Nenašli sa žiadne materiály pre "{searchQuery}"
                 </Typography>
               )}
-
-            <Divider sx={{ my: 2 }} />
           </Box>
         )}
 

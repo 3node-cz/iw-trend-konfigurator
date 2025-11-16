@@ -189,10 +189,6 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
               ),
             }}
           />
-
-          {!selectedEdge && edgeSearchQuery.length === 0 && !isSearching && (
-            <Divider sx={{ my: 2 }} />
-          )}
         </Box>
 
         {/* Edge Search Results */}

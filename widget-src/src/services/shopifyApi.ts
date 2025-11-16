@@ -5,6 +5,7 @@ import type {
   CuttingSpecification,
   CuttingPiece,
 } from "../types/shopify";
+import { COLLECTIONS } from "../constants";
 
 // Admin API calls should go through backend
 
@@ -159,10 +160,10 @@ export const searchEdgeMaterials = async (
   params: MaterialSearchParams,
 ): Promise<MaterialSearchResult[]> => {
   try {
-    // Search directly in the "hrany" collection - much more efficient than complex queries
+    // Search directly in the edges collection - much more efficient than complex queries
     const results = await searchMaterials({
       ...params,
-      collection: "hrany", // Filter to edges collection
+      collection: COLLECTIONS.EDGES, // Filter to edges collection
     });
 
     return results;

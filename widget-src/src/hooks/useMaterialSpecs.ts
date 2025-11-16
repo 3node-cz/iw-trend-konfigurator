@@ -6,131 +6,196 @@ import type {
   EdgeMaterial,
 } from '../types/shopify'
 import { searchMaterials } from '../services/shopifyApi'
+import { SHOPIFY_API, DIMENSIONS } from '../constants'
 
 interface MaterialSpec {
   selectedEdgeMaterial: EdgeMaterial | null
+  availableEdges: EdgeMaterial[] // All edges from alternative_products + placeholders
   glueType: string
   cuttingPieces: CuttingPiece[]
 }
 
-// Helper to fetch first edge from alternative_products metafield (List - Product type)
-const fetchDefaultEdge = async (material: MaterialSearchResult): Promise<EdgeMaterial | null> => {
+// Helper to parse edge width from metafield (param.sirka_hrany)
+const parseEdgeWidth = (value: string | undefined): number | undefined => {
+  if (!value) return undefined
+  const parsed = parseFloat(value)
+  return isNaN(parsed) ? undefined : parsed
+}
+
+// Helper to parse board thickness from metafield (param.hrubka_hrany)
+const parseBoardThickness = (value: string | undefined): number | undefined => {
+  if (!value) return undefined
+  const parsed = parseFloat(value)
+  return isNaN(parsed) ? undefined : parsed
+}
+
+// Generate placeholder edges for missing combinations
+// These reference the actual placeholder product in Shopify
+const generatePlaceholderEdges = (
+  existingEdges: EdgeMaterial[],
+  materialName: string
+): EdgeMaterial[] => {
+  const placeholders: EdgeMaterial[] = []
+  const widths = [...DIMENSIONS.EDGE_WIDTHS] // [0.45, 1, 2]
+  const thicknesses = [...DIMENSIONS.BOARD_THICKNESSES] // [18, 36]
+
+  for (const width of widths) {
+    for (const thickness of thicknesses) {
+      // Check if we already have this combination
+      const exists = existingEdges.some(
+        edge => edge.edgeWidth === width && edge.boardThickness === thickness
+      )
+
+      if (!exists) {
+        // Create placeholder that references the actual placeholder product
+        placeholders.push({
+          id: SHOPIFY_API.PLACEHOLDER_EDGE.PRODUCT_ID,
+          variantId: SHOPIFY_API.PLACEHOLDER_EDGE.VARIANT_ID,
+          code: SHOPIFY_API.PLACEHOLDER_EDGE.SKU,
+          name: `[CHÝBA] ${materialName} - ${width}mm hrana pre ${thickness}mm dosku`,
+          productCode: SHOPIFY_API.PLACEHOLDER_EDGE.SKU,
+          availability: 'available', // Placeholder is always "available" for ordering
+          warehouse: 'Na objednávku',
+          edgeWidth: width,
+          boardThickness: thickness,
+          isPlaceholder: true,
+          missingSpec: {
+            width,
+            boardThickness: thickness,
+            materialName, // Store material name for order notes
+          }
+        })
+      }
+    }
+  }
+
+  return placeholders
+}
+
+// Fetch ALL edges from alternative_products metafield with their metafields
+const fetchAllEdges = async (material: MaterialSearchResult): Promise<EdgeMaterial[]> => {
   try {
     const alternativeProducts = material.metafields?.['custom.alternative_products']
 
-    console.log('🔍 [useMaterialSpecs] Material:', material.title)
-    console.log('🔍 [useMaterialSpecs] Raw metafield value:', alternativeProducts)
-    console.log('🔍 [useMaterialSpecs] Metafield type:', typeof alternativeProducts)
+    console.log('🔍 [fetchAllEdges] Material:', material.title)
+    console.log('🔍 [fetchAllEdges] Raw metafield value:', alternativeProducts)
 
     if (!alternativeProducts) {
-      console.log('⚠️ [useMaterialSpecs] No alternative_products metafield found')
-      return null
+      console.log('⚠️ [fetchAllEdges] No alternative_products metafield found')
+      // Return placeholders only
+      const placeholders = generatePlaceholderEdges([], material.title)
+      console.log(`📦 [fetchAllEdges] Generated ${placeholders.length} placeholder edges`)
+      return placeholders
     }
 
     // Handle List-Product metafield: can be array or JSON string
     let productIds: string[] = []
     if (Array.isArray(alternativeProducts)) {
       productIds = alternativeProducts
-      console.log('🔍 [useMaterialSpecs] Metafield is array:', productIds)
     } else if (typeof alternativeProducts === 'string') {
       try {
         const parsed = JSON.parse(alternativeProducts)
         productIds = Array.isArray(parsed) ? parsed : []
-        console.log('🔍 [useMaterialSpecs] Parsed JSON array:', productIds)
       } catch {
-        // If not JSON, treat as single product ID/handle
         productIds = [alternativeProducts]
-        console.log('🔍 [useMaterialSpecs] Treating as single string value:', productIds)
       }
     }
 
     if (productIds.length === 0) {
-      console.log('⚠️ [useMaterialSpecs] No product IDs extracted from metafield')
-      return null
+      console.log('⚠️ [fetchAllEdges] No product IDs extracted from metafield')
+      const placeholders = generatePlaceholderEdges([], material.title)
+      return placeholders
     }
 
-    // Prepare query - handle both numeric IDs and full GIDs
-    let productId = productIds[0]
-    let isNumericId = false
-    let isGidSearch = false
+    console.log(`🔎 [fetchAllEdges] Fetching ${productIds.length} edge products`)
 
-    // Check if it's a numeric ID (like 15514881327486)
-    if (/^\d+$/.test(productId)) {
-      console.log('🔍 [useMaterialSpecs] Detected numeric product ID:', productId)
-      // Convert numeric ID to full GID
-      productId = `gid://shopify/Product/${productId}`
-      isNumericId = true
-      isGidSearch = true
-    } else if (productId.startsWith('gid://shopify/')) {
-      console.log('🔍 [useMaterialSpecs] Detected full GID:', productId)
-      isGidSearch = true
-    }
+    // Fetch ALL edge products (not just first one)
+    const edgePromises = productIds.map(async (productId) => {
+      let isGidSearch = false
+      let edgeQuery = productId
 
-    // For GID searches, prefix with "id:" for the backend API
-    let edgeQuery = productId
-    if (isGidSearch) {
-      edgeQuery = `id:${productId}`
-    }
+      // Convert numeric ID to GID
+      if (/^\d+$/.test(productId)) {
+        productId = `gid://shopify/Product/${productId}`
+        isGidSearch = true
+      } else if (productId.startsWith('gid://shopify/')) {
+        isGidSearch = true
+      }
 
-    console.log('🔎 [useMaterialSpecs] Searching for edge:', {
-      originalValue: productIds[0],
-      convertedToGid: isNumericId,
-      finalGid: productId,
-      finalQuery: edgeQuery,
-      collection: isGidSearch ? undefined : 'hrany'
+      if (isGidSearch) {
+        edgeQuery = `id:${productId}`
+      }
+
+      try {
+        const results = await searchMaterials({
+          query: edgeQuery,
+          collection: isGidSearch ? undefined : 'hrany',
+          limit: 1,
+        })
+
+        if (results.length === 0) {
+          console.warn(`⚠️ Edge product not found: ${productId}`)
+          return null
+        }
+
+        const edge = results[0]
+
+        // Parse edge metafields
+        const edgeWidth = parseEdgeWidth(edge.metafields?.['param.sirka_hrany'])
+        const boardThickness = parseBoardThickness(edge.metafields?.['param.hrubka_hrany'])
+
+        // Warn if metafields are missing or invalid
+        if (!edgeWidth || !boardThickness) {
+          console.warn(
+            `⚠️ Missing or invalid metafields for edge: ${edge.title}`,
+            {
+              edgeWidth,
+              boardThickness,
+              metafields: edge.metafields
+            }
+          )
+        }
+
+        console.log(`✅ Found edge: ${edge.title} | Width: ${edgeWidth}mm | Board: ${boardThickness}mm`)
+
+        return {
+          id: edge.id,
+          variantId: edge.variant?.id,
+          code: edge.variant?.sku,
+          name: edge.title,
+          productCode: edge.variant?.sku || edge.handle,
+          availability: edge.variant?.availableForSale ? 'available' : 'unavailable',
+          warehouse: 'Default',
+          price: edge.variant?.price ? {
+            amount: parseFloat(edge.variant.price),
+            currency: 'EUR',
+            perUnit: 'm',
+          } : undefined,
+          image: edge.image,
+          edgeWidth: edgeWidth || 1, // Default to 1mm if missing
+          boardThickness: boardThickness || 18, // Default to 18mm if missing
+        }
+      } catch (error) {
+        console.error(`❌ Error fetching edge ${productId}:`, error)
+        return null
+      }
     })
 
-    // Search for first edge product
-    // Note: Don't use collection filter with GID search - backend needs no collection for direct node query
-    const results = await searchMaterials({
-      query: edgeQuery,
-      collection: isGidSearch ? undefined : 'hrany',
-      limit: 1,
-    })
+    const fetchedEdges = (await Promise.all(edgePromises)).filter((e): e is EdgeMaterial => e !== null)
 
-    console.log('📦 [useMaterialSpecs] Search results count:', results.length)
-    if (results.length > 0) {
-      console.log('✅ [useMaterialSpecs] Found edge:', results[0].title, results[0].id)
-    }
+    console.log(`📦 [fetchAllEdges] Fetched ${fetchedEdges.length} valid edges`)
 
-    if (results.length === 0) {
-      // GID search failed - the product doesn't exist or metafield is incorrect
-      console.error(
-        '❌ Edge product not found!',
-        '\n📍 GID from metafield:', productIds[0],
-        '\n📍 Material:', material.title,
-        '\n\n' +
-        '💡 Possible causes:\n' +
-        '   1. Product doesn\'t exist in this store\n' +
-        '   2. GID is from a different store (test vs production)\n' +
-        '   3. Product was deleted and metafield wasn\'t updated\n' +
-        '\n🔧 Solution: Update the "alternative_products" metafield in Shopify Admin\n' +
-        '   to reference the correct edge product for this material.'
-      )
-      return null
-    }
+    // Generate placeholders for missing combinations
+    const placeholders = generatePlaceholderEdges(fetchedEdges, material.title)
+    const allEdges = [...fetchedEdges, ...placeholders]
 
-    const edge = results[0]
-    return {
-      id: edge.id,
-      variantId: edge.variant?.id,
-      code: edge.variant?.sku,
-      name: edge.title,
-      productCode: edge.variant?.sku || edge.handle,
-      availability: edge.variant?.availableForSale ? 'available' : 'unavailable',
-      thickness: 0.8,
-      availableThicknesses: [0.4, 0.8, 2],
-      warehouse: 'Default',
-      price: edge.variant?.price ? {
-        amount: parseFloat(edge.variant.price),
-        currency: 'EUR',
-        perUnit: 'm',
-      } : undefined,
-      image: edge.image,
-    }
+    console.log(`📦 [fetchAllEdges] Total edges (including ${placeholders.length} placeholders): ${allEdges.length}`)
+
+    return allEdges
   } catch (error) {
-    console.error('❌ Error fetching default edge:', error)
-    return null
+    console.error('❌ Error in fetchAllEdges:', error)
+    // Return placeholders on error
+    return generatePlaceholderEdges([], material.title)
   }
 }
 
@@ -148,6 +213,7 @@ export const useMaterialSpecs = (
       )
       specs[material.id] = {
         selectedEdgeMaterial: existingSpec?.edgeMaterial || null,
+        availableEdges: [], // Will be populated asynchronously
         glueType: existingSpec?.glueType || 'PUR transparentná/bílá',
         cuttingPieces: existingSpec?.pieces || [],
       }
@@ -165,9 +231,9 @@ export const useMaterialSpecs = (
   useEffect(() => {
     const updateSpecs = async () => {
       const newSpecs: { [materialId: string]: MaterialSpec } = {}
-      const edgeFetchPromises: { [materialId: string]: Promise<EdgeMaterial | null> } = {}
+      const edgeFetchPromises: { [materialId: string]: Promise<EdgeMaterial[]> } = {}
 
-      // First pass: Set up specs and identify materials that need default edges
+      // First pass: Set up specs and identify materials that need edges
       for (const material of materials) {
         if (materialSpecs[material.id]) {
           // Preserve existing specification if material already exists
@@ -182,26 +248,28 @@ export const useMaterialSpecs = (
             // Use existing edge if available
             newSpecs[material.id] = {
               selectedEdgeMaterial: existingSpec.edgeMaterial,
+              availableEdges: [], // Will be populated below
               glueType: existingSpec.glueType || 'PUR transparentná/bílá',
               cuttingPieces: existingSpec.pieces || [],
             }
           } else {
-            // Try to fetch default edge from alternative_products
+            // Initialize without edge - will fetch all edges
             newSpecs[material.id] = {
               selectedEdgeMaterial: null,
+              availableEdges: [],
               glueType: existingSpec?.glueType || 'PUR transparentná/bílá',
               cuttingPieces: existingSpec?.pieces || [],
             }
-            // Start async fetch
-            edgeFetchPromises[material.id] = fetchDefaultEdge(material)
           }
+          // Start async fetch for ALL edges
+          edgeFetchPromises[material.id] = fetchAllEdges(material)
         }
       }
 
       // Update specs immediately with what we have
       setMaterialSpecs(newSpecs)
 
-      // Wait for edge fetches and update specs with default edges
+      // Wait for edge fetches and update specs with all edges
       const materialIds = Object.keys(edgeFetchPromises)
       if (materialIds.length > 0) {
         const edgeResults = await Promise.all(
@@ -212,11 +280,19 @@ export const useMaterialSpecs = (
         setMaterialSpecs(prevSpecs => {
           const updatedSpecs = { ...prevSpecs }
           materialIds.forEach((materialId, index) => {
-            const defaultEdge = edgeResults[index]
-            if (defaultEdge && updatedSpecs[materialId]) {
+            const allEdges = edgeResults[index]
+            if (allEdges && allEdges.length > 0 && updatedSpecs[materialId]) {
+              // Find default edge: avoid placeholders unless no other option
+              const defaultEdge =
+                allEdges.find(e => !e.isPlaceholder && e.boardThickness === 18) || // Prefer 18mm non-placeholder
+                allEdges.find(e => !e.isPlaceholder) || // Any non-placeholder
+                allEdges.find(e => e.boardThickness === 18) || // Prefer 18mm even if placeholder
+                allEdges[0] // Fallback to any edge (including placeholder)
+
               updatedSpecs[materialId] = {
                 ...updatedSpecs[materialId],
-                selectedEdgeMaterial: defaultEdge,
+                availableEdges: allEdges,
+                selectedEdgeMaterial: updatedSpecs[materialId].selectedEdgeMaterial || defaultEdge,
               }
             }
           })
@@ -598,6 +674,7 @@ export const useMaterialSpecs = (
       .map((material) => ({
         material,
         edgeMaterial: materialSpecs[material.id].selectedEdgeMaterial,
+        availableEdges: materialSpecs[material.id].availableEdges, // Include all edge variants
         glueType: materialSpecs[material.id].glueType,
         pieces: getValidPieces(material.id), // Only include valid pieces
       }))

@@ -33,6 +33,7 @@ import type {
   CuttingSpecification,
   CuttingPiece,
   SelectedMaterial,
+  EdgeMaterial,
 } from "../types/shopify";
 import type { OrderFormData } from "../schemas/orderSchema";
 import type { CuttingConfig } from "../main";
@@ -55,7 +56,8 @@ interface MaterialTableWrapperProps {
   materialId: string;
   material: MaterialSearchResult;
   pieces: CuttingPiece[];
-  edgeMaterial: any;
+  edgeMaterial: EdgeMaterial | null;
+  availableEdges?: EdgeMaterial[]; // All available edge combinations
   validationErrors: { [pieceId: string]: string[] };
   onPieceChange: (materialId: string, pieceId: string, updatedPiece: Partial<CuttingPiece>) => void;
   onRemovePiece: (materialId: string, pieceId: string) => void;
@@ -68,6 +70,7 @@ const MaterialTableWrapper = memo<MaterialTableWrapperProps>(({
   material,
   pieces,
   edgeMaterial,
+  availableEdges = [],
   validationErrors,
   onPieceChange,
   onRemovePiece,
@@ -123,6 +126,7 @@ const MaterialTableWrapper = memo<MaterialTableWrapperProps>(({
     <CuttingPiecesTable
       pieces={pieces}
       edgeMaterial={edgeMaterial}
+      availableEdges={availableEdges}
       onPieceChange={handlePieceChange}
       onRemovePiece={handleRemovePiece}
       onPreviewPiece={handlePreviewPiece}
@@ -471,6 +475,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
                 material={material}
                 pieces={materialSpec?.cuttingPieces || []}
                 edgeMaterial={materialSpec?.selectedEdgeMaterial || null}
+                availableEdges={materialSpec?.availableEdges || []}
                 onPieceChange={handlePieceChange}
                 onRemovePiece={handleRemovePiece}
                 onPreviewPiece={handlePreviewPiece}

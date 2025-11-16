@@ -23,7 +23,8 @@ export const DIMENSIONS = {
     HEIGHT: 2070,
     THICKNESS: 18, // Default thickness in mm
   },
-  EDGE_THICKNESSES: [0.4, 0.8, 1.0, 2.0] as const,
+  EDGE_WIDTHS: [0.45, 1, 2] as const, // Available edge widths in mm
+  BOARD_THICKNESSES: [18, 36] as const, // Board thicknesses: 18mm standard, 36mm dupel
   CUTTING_KERF: 3.2, // Saw blade width in mm
 } as const
 
@@ -47,6 +48,12 @@ export const SEARCH = {
   DEFAULT_LIMIT: 10,
   MAX_RESULTS: 50,
   DEBOUNCE_DELAY: 300,
+} as const
+
+// Shopify Collections
+export const COLLECTIONS = {
+  BOARDS: 'porezove-produkty', // Collection for board materials
+  EDGES: 'hrany-konfigurator', // Collection for edge materials
 } as const
 
 // Edge Material Keywords
@@ -101,6 +108,14 @@ export const SHOPIFY_API = {
     CUTTING_SERVICE_VARIANT_ID: 'gid://shopify/ProductVariant/51514284671317',
     // Fallback product ID for conversion
     CUTTING_SERVICE_PRODUCT_ID: 'gid://shopify/Product/15514687799678',
+  },
+  // Placeholder edge product - used when customer needs unavailable edge combination
+  // TODO: Replace with actual placeholder edge product from Shopify
+  PLACEHOLDER_EDGE: {
+    PRODUCT_ID: 'gid://shopify/Product/PLACEHOLDER_EDGE_TO_BE_CREATED',
+    VARIANT_ID: 'gid://shopify/ProductVariant/PLACEHOLDER_EDGE_VARIANT_TO_BE_CREATED',
+    SKU: 'EDGE-PLACEHOLDER',
+    NAME: 'Hrana na objednávku / Custom Edge Order',
   },
 } as const
 
