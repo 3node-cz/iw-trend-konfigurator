@@ -18,6 +18,7 @@ import {
   Typography,
   Switch,
   Tooltip,
+  Alert,
 } from "@mui/material";
 import {
   Delete as DeleteIcon,
@@ -728,6 +729,21 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
     getCoreRowModel: getCoreRowModel(),
   });
 
+  // Check if any piece has placeholder edges (edges that start with "...")
+  const hasPlaceholderEdges = useMemo(() => {
+    return pieces.some((piece) => {
+      const customEdges = [
+        piece.customEdgeTop,
+        piece.customEdgeBottom,
+        piece.customEdgeLeft,
+        piece.customEdgeRight,
+      ];
+      return customEdges.some(
+        (edge) => edge && edge.title && edge.title.startsWith("...")
+      );
+    });
+  }, [pieces]);
+
   if (pieces.length === 0) {
     return (
       <Box
@@ -866,6 +882,13 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Warning message for placeholder edges */}
+      {hasPlaceholderEdges && (
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          Niektoré hrany nie sú skladom. Prosíme, do poznámky upresnite požadovanú hranu.
+        </Alert>
+      )}
 
       <NotesDialog
         open={notesDialog.open}
