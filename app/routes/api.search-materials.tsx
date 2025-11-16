@@ -275,13 +275,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
       // Use products() search API with optional collection filter
       console.log('🔍 Using products() API for search');
 
-      // Build filters object for collection filtering
-      const filters: any = {};
+      // Build filters array for collection filtering
+      const filters: any[] = [];
       if (collection && !debugNoFilter) {
         const collectionId = COLLECTION_HANDLE_TO_ID[collection];
         if (collectionId) {
           const collectionGid = `gid://shopify/Collection/${collectionId}`;
-          filters.collection_id = collectionGid;
+          filters.push({ collection_id: collectionGid });
           console.log('🔍 Applying collection filter:', `${collection} → ${collectionGid}`);
         } else {
           console.warn('⚠️ Unknown collection handle:', collection);
@@ -291,7 +291,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       }
 
       // Determine if we're using filters
-      const useFilters = Object.keys(filters).length > 0;
+      const useFilters = filters.length > 0;
 
       graphqlQuery = `
         query searchProducts($query: String!, $first: Int!${useFilters ? ', $filters: [ProductFilter!]' : ''}) {
