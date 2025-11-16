@@ -542,11 +542,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const response = await admin.graphql(graphqlQuery, { variables });
     const result = await response.json();
 
-    console.log('📦 Raw GraphQL response (first product):', JSON.stringify(result?.data?.products?.edges?.[0] || result?.data?.node, null, 2));
+    console.log('📦 Raw GraphQL response (first product):', JSON.stringify(result?.data?.products?.edges?.[0] || result?.data?.node || result?.data?.collection?.products?.edges?.[0], null, 2));
 
     if (result.errors) {
-      console.error('❌ GraphQL errors:', result.errors);
+      console.error('❌ GraphQL errors:', JSON.stringify(result.errors, null, 2));
       return json({ error: "GraphQL query failed", details: result.errors }, { status: 400 });
+    }
+
+    // Check for errors in the response body (GraphQL client wrapper errors)
+    if (response.body?.errors) {
+      console.error('❌ GraphQL body errors:', JSON.stringify(response.body.errors, null, 2));
+      // Log the graphQLErrors array specifically
+      if (response.body.errors.graphQLErrors) {
+        console.error('❌ Detailed GraphQL errors:', JSON.stringify(response.body.errors.graphQLErrors, null, 2));
+      }
+      return json({
+        error: "GraphQL query failed",
+        details: response.body.errors.graphQLErrors || response.body.errors
+      }, { status: 400 });
     }
 
     // Transform the results to match our expected format
