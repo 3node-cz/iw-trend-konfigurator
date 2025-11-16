@@ -94,7 +94,7 @@ export async function action({ request }: ActionFunctionArgs) {
             key: '_created_at',
             value: new Date().toISOString()
           }
-        ],
+        ].filter(attr => attr.value != null && attr.value !== 'undefined'), // Filter out null/undefined values
         // Add customer info if provided
         ...(customerInfo.email && {
           email: customerInfo.email
@@ -102,8 +102,9 @@ export async function action({ request }: ActionFunctionArgs) {
         ...(customerInfo.shippingAddress && {
           shippingAddress: customerInfo.shippingAddress
         }),
-        ...(customerInfo.note && {
-          note: customerInfo.note
+        // Use orderAttributes.notes for the draft order note field
+        ...((orderAttributes.notes || customerInfo.note) && {
+          note: orderAttributes.notes || customerInfo.note
         })
       }
     };

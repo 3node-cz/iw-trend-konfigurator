@@ -51,7 +51,7 @@ function App() {
     }
     // Return defaults if not available
     return {
-      cuttingConfig: { sawWidth: 2, edgeBuffer: 30, boardTrim: 15 },
+      cuttingConfig: { sawWidth: 2, edgeBuffer: 30, boardTrim: 15, minPieceSize: 10 },
       transferLocations: ["Bratislava", "Košice", "Žilina"],
       deliveryMethods: ["Doprava", "Osobný odber"],
       processingTypes: ["Zlikvidovať", "Osobný odber odpadu"],

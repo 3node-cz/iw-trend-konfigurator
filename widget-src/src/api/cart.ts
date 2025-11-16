@@ -97,6 +97,7 @@ export const createCartViaBackend = async (
     quantity: number;
     attributes?: Array<{ key: string; value: string }>;
   }>,
+  orderAttributes?: Record<string, any>,
 ): Promise<CartResponse> => {
   try {
     const response = await fetch("/apps/configurator/api/cart-create", {
@@ -108,6 +109,7 @@ export const createCartViaBackend = async (
         items,
         orderAttributes: {
           _order_source: "cutting_configurator",
+          ...orderAttributes,
         },
       }),
     });

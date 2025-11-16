@@ -28,7 +28,7 @@ interface ShopifyShop {
   name: string;
 }
 
-interface CuttingConfig {
+export interface CuttingConfig {
   sawWidth: number;
   edgeBuffer: number;
   boardTrim: number;

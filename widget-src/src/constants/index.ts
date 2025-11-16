@@ -127,7 +127,7 @@ export const FILE_LIMITS = {
 
 // Validation Constants
 export const VALIDATION = {
-  MIN_PIECE_DIMENSION: 10, // Minimum piece size in mm
+  MIN_PIECE_DIMENSION: 10, // Default minimum piece size in mm (actual minimum configured in Shopify admin)
   MAX_PIECE_DIMENSION: 2800, // Maximum piece size in mm (board width)
   MAX_PIECES_PER_SPEC: 100, // Maximum pieces per material specification
   MAX_MATERIALS_PER_ORDER: 20, // Maximum materials per order

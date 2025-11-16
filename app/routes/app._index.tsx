@@ -547,14 +547,14 @@ export default function Index() {
               </BlockStack>
             </Card>
 
-            {/* Order Form Options - Will implement in next update */}
+            {/* Možnosti Objednávkového Formulára - Bude implementované v budúcej aktualizácii */}
             <Card>
               <BlockStack gap="200">
                 <Text as="h3" variant="headingMd">
-                  Order Form Options (Coming Soon)
+                  Možnosti Objednávkového Formulára (Pripravujeme)
                 </Text>
                 <Text as="p" variant="bodyMd">
-                  Configuration for transfer locations, delivery methods, and processing types will be added here.
+                  Konfigurácia pre miesta prenosu, spôsoby dodania a typy spracovania bude pridaná sem.
                 </Text>
               </BlockStack>
             </Card>
@@ -563,13 +563,13 @@ export default function Index() {
             <Card>
               <BlockStack gap="200">
                 <Text as="h3" variant="headingMd">
-                  Theme Extension
+                  Rozšírenie Témy
                 </Text>
                 <Text as="p" variant="bodyMd">
-                  Add the "Universal Konfigurator" block to any page in your theme. All settings above will be applied automatically.
+                  Pridajte blok "Universal Konfigurator" na ľubovoľnú stránku vo vašej téme. Všetky nastavenia vyššie budú aplikované automaticky.
                 </Text>
                 <Text as="p" variant="bodySm" tone="subdued">
-                  Current shop: {shop}
+                  Aktuálny obchod: {shop}
                 </Text>
               </BlockStack>
             </Card>
