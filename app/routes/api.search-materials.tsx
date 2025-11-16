@@ -279,13 +279,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
       // Use collection() API to get products from a specific collection
       console.log('🔍 Using collection() API for collection:', collection);
 
-      graphqlQuery = `
-        query getCollectionProducts($handle: String!, $first: Int!, $query: String) {
+      // Build the collection products query - conditionally include query parameter
+      const hasSearchQuery = searchQuery && searchQuery !== '*';
+
+      graphqlQuery = hasSearchQuery
+        ? `
+        query getCollectionProducts($handle: String!, $first: Int!, $query: String!) {
           collection(handle: $handle) {
             id
             handle
             title
-            products(first: $first, query: $query) {
+            products(first: $first, query: $query) {`
+        : `
+        query getCollectionProducts($handle: String!, $first: Int!) {
+          collection(handle: $handle) {
+            id
+            handle
+            title
+            products(first: $first) {`;
               edges {
                 node {
                   id
@@ -404,11 +415,18 @@ export async function loader({ request }: LoaderFunctionArgs) {
           }
         }
       `;
-      variables = {
-        handle: collection,
-        first: Math.min(limit, 250),
-        query: searchQuery !== '*' ? searchQuery : null
-      };
+
+      // Only include query in variables if we have a search query
+      variables = hasSearchQuery
+        ? {
+            handle: collection,
+            first: Math.min(limit, 250),
+            query: searchQuery
+          }
+        : {
+            handle: collection,
+            first: Math.min(limit, 250)
+          };
     } else {
       // Use products() search API for text searches
       graphqlQuery = `
