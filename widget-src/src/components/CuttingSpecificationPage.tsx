@@ -435,6 +435,8 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
                     onRemoveMaterial?.(material.id);
                     // Then add the new one
                     handleAddMaterialToOrder(newMaterial);
+                    // Clear search results after selection
+                    clearResults();
                   }}
                   selectedMaterialIds={materials.map((m) => m.id)}
                   customerDiscount={customer?.discountPercentage || 0}

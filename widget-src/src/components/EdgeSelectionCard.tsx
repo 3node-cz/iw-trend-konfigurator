@@ -97,6 +97,7 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
     if (product) {
       const edgeMaterial = convertToEdgeMaterial(product)
       onEdgeChange(edgeMaterial)
+      setEdgeSearchResults([])  // Clear search results after selection
     } else {
       onEdgeChange(null)
     }

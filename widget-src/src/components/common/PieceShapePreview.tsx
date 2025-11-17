@@ -100,16 +100,21 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
             height: displayHeight,
             overflow: 'hidden',
             borderRadius: '4px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
           }}
         >
           <img
             src={backgroundImage}
             alt="Material"
             style={{
-              width: '100%',
-              height: '100%',
+              width: displayHeight, // Swap dimensions for 90deg rotation
+              height: displayWidth,
               objectFit: 'cover',
               opacity: backgroundOpacity,
+              transform: 'rotate(90deg)',
+              transformOrigin: 'center center',
             }}
           />
         </Box>

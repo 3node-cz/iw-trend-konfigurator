@@ -25,7 +25,6 @@ import {
   Edit as EditIcon,
   Tune as TuneIcon,
   ContentCopy as ContentCopyIcon,
-  Visibility as VisibilityIcon,
 } from "@mui/icons-material";
 import type { CuttingPiece, EdgeMaterial } from "../types/shopify";
 import {
@@ -672,7 +671,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         ),
       }),
 
-      // Preview Button
+      // Preview Button - Miniature shape
       columnHelper.display({
         id: "preview",
         header: "Náhľad",
@@ -680,15 +679,30 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         cell: ({ row }) => {
           const piece = row.original;
           return (
-            <Tooltip title="Zobraziť náhľad dielca">
-              <IconButton
-                size="small"
-                color="default"
-                onClick={() => handlePreviewPiece(piece)}
-                disabled={!onPreviewPiece}
+            <Tooltip title="Kliknutím zobraziť náhľad dielca">
+              <Box
+                onClick={() => onPreviewPiece?.(piece)}
+                sx={{
+                  cursor: onPreviewPiece ? 'pointer' : 'default',
+                  opacity: onPreviewPiece ? 1 : 0.5,
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                  '&:hover': onPreviewPiece ? {
+                    transform: 'scale(1.1)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  } : {},
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
               >
-                <VisibilityIcon fontSize="small" />
-              </IconButton>
+                <PieceShapePreview
+                  piece={piece}
+                  containerSize={60}
+                  showBackground={false}
+                  showEdges={true}
+                  showRotationIndicator={false}
+                />
+              </Box>
             </Tooltip>
           );
         },
@@ -766,6 +780,27 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       );
     });
   }, [pieces]);
+
+  // Check if any edge thickness is unavailable (placeholder) for current board thickness
+  const hasUnavailableEdgeThicknesses = useMemo(() => {
+    return pieces.some((piece) => {
+      const boardThickness = piece.isDupel ? 36 : 18;
+      const edgeValues = [
+        piece.edgeTop,
+        piece.edgeBottom,
+        piece.edgeLeft,
+        piece.edgeRight,
+        piece.edgeAllAround,
+      ].filter((val) => val !== null);
+
+      return edgeValues.some((edgeWidth) => {
+        const edge = availableEdges?.find(
+          (e) => e.edgeWidth === edgeWidth && e.boardThickness === boardThickness
+        );
+        return edge?.isPlaceholder || false;
+      });
+    });
+  }, [pieces, availableEdges]);
 
   if (pieces.length === 0) {
     return (
@@ -905,6 +940,14 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Warning message for unavailable edge thicknesses */}
+      {hasUnavailableEdgeThicknesses && (
+        <Alert severity="info" sx={{ mt: 2 }}>
+          <strong>Hrany označené oranžovou farbou</strong> nie sú dostupné pre vybranú hrúbku dosky (18mm alebo 36mm pri dupeli).
+          Môžete ich vybrať, ale prosíme uveďte do poznámky alternatívu alebo potvrďte voľbu.
+        </Alert>
+      )}
 
       {/* Warning message for placeholder edges */}
       {hasPlaceholderEdges && (
