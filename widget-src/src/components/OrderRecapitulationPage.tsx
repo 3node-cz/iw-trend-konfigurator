@@ -237,14 +237,6 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
           >
             Späť
           </Button>
-          <Button
-            variant="outlined"
-            startIcon={<PrintIcon />}
-            onClick={handlePrint}
-            disabled={isSubmitting}
-          >
-            Tlačiť / PDF
-          </Button>
           <Typography
             variant="h2"
             component="h1"
@@ -254,33 +246,43 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
           </Typography>
         </Box>
 
-        {customer && (
-          <SaveOrderButton
-            currentStep="recapitulation"
-            orderData={order}
-            selectedMaterials={specifications.map((spec) => ({
-              id: spec.material.id,
-              code: spec.material.variant?.sku || spec.material.handle,
-              name: spec.material.title,
-              quantity: calculateTotalPieces([spec]),
-              price: parseFloat(spec.material.variant?.price || "0"),
-              totalPrice:
-                parseFloat(spec.material.variant?.price || "0") *
-                calculateTotalPieces([spec]),
-              variantId: spec.material.variant?.id || spec.material.id,
-              image: spec.material.image || spec.material.images?.[0],
-            }))}
-            cuttingSpecifications={specifications}
-            customerId={customer.id}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<PrintIcon />}
+            onClick={handlePrint}
             disabled={isSubmitting}
-            onSaveSuccess={() => {
-              // Could show a success message
-            }}
-            onSaveError={(error) => {
-              console.error("Save error:", error);
-            }}
-          />
-        )}
+          >
+            Tlačiť / PDF
+          </Button>
+          {customer && (
+            <SaveOrderButton
+              currentStep="recapitulation"
+              orderData={order}
+              selectedMaterials={specifications.map((spec) => ({
+                id: spec.material.id,
+                code: spec.material.variant?.sku || spec.material.handle,
+                name: spec.material.title,
+                quantity: calculateTotalPieces([spec]),
+                price: parseFloat(spec.material.variant?.price || "0"),
+                totalPrice:
+                  parseFloat(spec.material.variant?.price || "0") *
+                  calculateTotalPieces([spec]),
+                variantId: spec.material.variant?.id || spec.material.id,
+                image: spec.material.image || spec.material.images?.[0],
+              }))}
+              cuttingSpecifications={specifications}
+              customerId={customer.id}
+              disabled={isSubmitting}
+              onSaveSuccess={() => {
+                // Could show a success message
+              }}
+              onSaveError={(error) => {
+                console.error("Save error:", error);
+              }}
+            />
+          )}
+        </Box>
       </Box>
 
       <Grid container spacing={3}>

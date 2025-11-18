@@ -80,6 +80,9 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
       piece.edgeLeft !== null ? piece.edgeLeft : piece.edgeAllAround || null,
   }
 
+  // Unique ID for clipPath (needed when multiple previews on same page)
+  const clipPathId = `piece-clip-${React.useId()}`
+
   return (
     <Box
       sx={{
@@ -89,38 +92,6 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
         mx: 'auto',
       }}
     >
-      {/* Background image layer */}
-      {showBackground && backgroundImage && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: offsetY,
-            left: offsetX,
-            width: displayWidth,
-            height: displayHeight,
-            overflow: 'hidden',
-            borderRadius: '4px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <img
-            src={backgroundImage}
-            alt="Material"
-            style={{
-              // Make image large enough to cover after rotation
-              width: `${Math.sqrt(displayWidth ** 2 + displayHeight ** 2)}px`,
-              height: `${Math.sqrt(displayWidth ** 2 + displayHeight ** 2)}px`,
-              objectFit: 'cover',
-              opacity: backgroundOpacity,
-              transform: 'rotate(90deg)',
-              transformOrigin: 'center center',
-            }}
-          />
-        </Box>
-      )}
-
       <svg
         width={actualWidth}
         height={actualHeight}
@@ -131,8 +102,30 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
           left: 0,
         }}
       >
+        <defs>
+          {/* Define clipPath using the piece shape */}
+          <clipPath id={clipPathId}>
+            <path d={piecePath} />
+          </clipPath>
+        </defs>
+
         <g transform={`translate(${offsetX}, ${offsetY})`}>
-          {/* Main piece shape */}
+          {/* Background image - rotated 90deg and clipped to piece shape */}
+          {showBackground && backgroundImage && (
+            <image
+              href={backgroundImage}
+              x={0}
+              y={0}
+              width={displayWidth}
+              height={displayHeight}
+              opacity={backgroundOpacity}
+              clipPath={`url(#${clipPathId})`}
+              preserveAspectRatio="xMidYMid slice"
+              transform={`rotate(90, ${displayWidth / 2}, ${displayHeight / 2})`}
+            />
+          )}
+
+          {/* Main piece shape outline */}
           <path
             d={piecePath}
             fill="none"

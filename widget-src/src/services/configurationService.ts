@@ -86,8 +86,10 @@ export class ConfigurationService {
       if (widgetConfigs) {
         const firstBlockId = Object.keys(widgetConfigs)[0];
         const config = widgetConfigs[firstBlockId];
-        const currentValue = config?.customer?.metafields?.saved_configurations;
+        // Access metafield with full namespace.key format as stored in liquid template
+        const currentValue = config?.customer?.metafields?.['custom.saved_configurations'];
 
+        console.log('📖 Loading saved configurations:', currentValue ? 'found' : 'not found');
         return parseCustomerConfigurations(currentValue);
       }
 
