@@ -58,7 +58,11 @@
     "cuttingConfig": {% if cutting_config %}{{ cutting_config }}{% else %}{"sawWidth":2,"edgeBuffer":30,"boardTrim":15,"minPieceSize":10}{% endif %},
     "transferLocations": {% if transfer_locations %}{{ transfer_locations }}{% else %}["Bratislava","Košice","Žilina"]{% endif %},
     "deliveryMethods": {% if delivery_methods %}{{ delivery_methods }}{% else %}["Doprava","Osobný odber"]{% endif %},
-    "processingTypes": {% if processing_types %}{{ processing_types }}{% else %}["Zlikvidovať","Osobný odber odpadu"]{% endif %}
+    "processingTypes": {% if processing_types %}{{ processing_types }}{% else %}["Zlikvidovať","Osobný odber odpadu"]{% endif %},
+    "messages": {
+      "unavailableEdges": "{{ block.settings.msg_unavailable_edges | default: 'Hrany označené oranžovou farbou nie sú dostupné pre vybranú hrúbku dosky (18mm alebo 36mm pri dupeli). Môžete ich vybrať, ale prosíme uveďte do poznámky alternatívu alebo potvrďte voľbu.' }}",
+      "placeholderEdges": "{{ block.settings.msg_placeholder_edges | default: 'Vybrané hrany sú len náhradné hodnoty. Prosím, aktualizujte ich na skutočné hrany pred odoslaním.' }}"
+    }
   },
   "blockId": "{{ block.id }}"
 }
@@ -438,6 +442,24 @@
       "label": "Show All Metafields (Debug)",
       "default": false,
       "info": "Show all customer metafields for debugging purposes"
+    },
+    {
+      "type": "header",
+      "content": "Error Messages"
+    },
+    {
+      "type": "textarea",
+      "id": "msg_unavailable_edges",
+      "label": "Unavailable Edge Thickness Message",
+      "default": "Hrany označené oranžovou farbou nie sú dostupné pre vybranú hrúbku dosky (18mm alebo 36mm pri dupeli). Môžete ich vybrať, ale prosíme uveďte do poznámky alternatívu alebo potvrďte voľbu.",
+      "info": "Message shown when selected edge thickness is not available for the board thickness"
+    },
+    {
+      "type": "textarea",
+      "id": "msg_placeholder_edges",
+      "label": "Placeholder Edges Warning Message",
+      "default": "Vybrané hrany sú len náhradné hodnoty. Prosím, aktualizujte ich na skutočné hrany pred odoslaním.",
+      "info": "Message shown when placeholder edges are used in the specification"
     }
   ]
 }

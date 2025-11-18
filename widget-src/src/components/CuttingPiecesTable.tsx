@@ -63,6 +63,27 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   onFieldBlur,
   validationErrors = {},
 }) => {
+  // Get messages from settings
+  const messages = useMemo(() => {
+    try {
+      const widgetConfigs = (window as any).ConfiguratorConfig;
+      if (widgetConfigs) {
+        const firstBlockId = Object.keys(widgetConfigs)[0];
+        const config = widgetConfigs[firstBlockId];
+        return config?.settings?.messages || {
+          unavailableEdges: 'Hrany označené oranžovou farbou nie sú dostupné pre vybranú hrúbku dosky (18mm alebo 36mm pri dupeli). Môžete ich vybrať, ale prosíme uveďte do poznámky alternatívu alebo potvrďte voľbu.',
+          placeholderEdges: 'Vybrané hrany sú len náhradné hodnoty. Prosím, aktualizujte ich na skutočné hrany pred odoslaním.'
+        };
+      }
+    } catch (error) {
+      console.error('Error loading messages from settings:', error);
+    }
+    return {
+      unavailableEdges: 'Hrany označené oranžovou farbou nie sú dostupné pre vybranú hrúbku dosky (18mm alebo 36mm pri dupeli). Môžete ich vybrať, ale prosíme uveďte do poznámky alternatívu alebo potvrďte voľbu.',
+      placeholderEdges: 'Vybrané hrany sú len náhradné hodnoty. Prosím, aktualizujte ich na skutočné hrany pred odoslaním.'
+    };
+  }, []);
+
   // Use refs to store current values to avoid recreating callbacks
   const piecesRef = useRef(pieces);
   const validationErrorsRef = useRef(validationErrors);
@@ -944,15 +965,14 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       {/* Warning message for unavailable edge thicknesses */}
       {hasUnavailableEdgeThicknesses && (
         <Alert severity="info" sx={{ mt: 2 }}>
-          <strong>Hrany označené oranžovou farbou</strong> nie sú dostupné pre vybranú hrúbku dosky (18mm alebo 36mm pri dupeli).
-          Môžete ich vybrať, ale prosíme uveďte do poznámky alternatívu alebo potvrďte voľbu.
+          {messages.unavailableEdges}
         </Alert>
       )}
 
       {/* Warning message for placeholder edges */}
       {hasPlaceholderEdges && (
         <Alert severity="warning" sx={{ mt: 2 }}>
-          Niektoré hrany nie sú skladom. Prosíme, do poznámky upresnite požadovanú hranu.
+          {messages.placeholderEdges}
         </Alert>
       )}
 

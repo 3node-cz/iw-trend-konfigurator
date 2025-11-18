@@ -24,11 +24,11 @@ interface PieceShapePreviewProps {
 const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
   piece,
   geometry: customGeometry,
-  containerSize = 400,
+  containerSize = 500,
   containerWidth,
   containerHeight,
   backgroundImage,
-  backgroundOpacity = 0.8,
+  backgroundOpacity = 1,
   showBackground = true,
   showEdges = true,
   showRotationIndicator = true,
@@ -36,95 +36,114 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
   // Use custom geometry or create default from piece
   const geometry = customGeometry || createGeometryFromPiece(piece)
 
-  // Determine actual container dimensions
+  // Fixed container size for large previews (dialogs), or use provided size for thumbnails
+  const CONTAINER_SIZE = 500
   const actualWidth = containerWidth || containerSize
   const actualHeight = containerHeight || containerSize
+  const isLargePreview = actualWidth >= CONTAINER_SIZE || actualHeight >= CONTAINER_SIZE
 
-  // Calculate scale to fit container with padding
-  const padding = 10
-  const maxDimension = Math.max(geometry.width, geometry.height)
-  const availableWidth = actualWidth - padding * 2
-  const availableHeight = actualHeight - padding * 2
-  const scaleX = availableWidth / geometry.width
-  const scaleY = availableHeight / geometry.height
-  const scale = Math.min(
-    scaleX,
-    scaleY,
-    availableWidth / maxDimension,
-    availableHeight / maxDimension,
-  )
+  // For large previews, always use fixed 500x500
+  const finalWidth = isLargePreview ? CONTAINER_SIZE : actualWidth
+  const finalHeight = isLargePreview ? CONTAINER_SIZE : actualHeight
 
-  // Calculate actual display dimensions
-  const displayWidth = geometry.width * scale
-  const displayHeight = geometry.height * scale
+  // Calculate scale to fit the longer dimension to container
+  const aspectRatio = geometry.width / geometry.height
+  let svgWidth, svgHeight
 
-  // Center the piece in the container
-  const offsetX = (actualWidth - displayWidth) / 2
-  const offsetY = (actualHeight - displayHeight) / 2
+  if (aspectRatio > 1) {
+    // Wider than tall - width fills the container
+    svgWidth = finalWidth
+    svgHeight = finalWidth / aspectRatio
+  } else {
+    // Taller than wide - height fills the container
+    svgHeight = finalHeight
+    svgWidth = finalHeight * aspectRatio
+  }
 
-  // Generate SVG path
+  // Center the SVG in the container
+  const offsetX = (finalWidth - svgWidth) / 2
+  const offsetY = (finalHeight - svgHeight) / 2
+
+  // Scale to map piece dimensions to SVG dimensions
+  const scale = svgWidth / geometry.width
+
+  // Generate SVG path for the shape
   const pathGenerator = new SVGPathGenerator(geometry, scale)
   const piecePath = pathGenerator.generatePath()
 
-  // Extract individual edge thicknesses (numbers, not strings)
-  // Priority: individual edge first, then edgeAllAround as fallback, then null
+  // Extract individual edge thicknesses
   const edgeThicknesses = {
     top: piece.edgeTop !== null ? piece.edgeTop : piece.edgeAllAround || null,
-    right:
-      piece.edgeRight !== null ? piece.edgeRight : piece.edgeAllAround || null,
-    bottom:
-      piece.edgeBottom !== null
-        ? piece.edgeBottom
-        : piece.edgeAllAround || null,
-    left:
-      piece.edgeLeft !== null ? piece.edgeLeft : piece.edgeAllAround || null,
+    right: piece.edgeRight !== null ? piece.edgeRight : piece.edgeAllAround || null,
+    bottom: piece.edgeBottom !== null ? piece.edgeBottom : piece.edgeAllAround || null,
+    left: piece.edgeLeft !== null ? piece.edgeLeft : piece.edgeAllAround || null,
   }
 
-  // Unique ID for clipPath (needed when multiple previews on same page)
-  const clipPathId = `piece-clip-${React.useId()}`
+  // Unique ID for mask
+  const maskId = `piece-mask-${React.useId()}`
 
   return (
     <Box
       sx={{
-        width: actualWidth,
-        height: actualHeight,
+        width: finalWidth,
+        height: finalHeight,
         position: 'relative',
         mx: 'auto',
+        overflow: 'hidden',
       }}
     >
+      {/* Material background image - rotated 90deg, masked by SVG shape */}
+      {showBackground && backgroundImage && isLargePreview && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: finalWidth,
+            height: finalHeight,
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            transform: 'rotate(90deg)',
+            transformOrigin: 'center center',
+            opacity: backgroundOpacity,
+            maskImage: `url("data:image/svg+xml,${encodeURIComponent(`
+              <svg width="${finalWidth}" height="${finalHeight}" viewBox="0 0 ${finalWidth} ${finalHeight}" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(${offsetX}, ${offsetY})">
+                  <path d="${piecePath}" fill="white"/>
+                </g>
+              </svg>
+            `)}")`,
+            maskSize: `${finalWidth}px ${finalHeight}px`,
+            maskPosition: 'center',
+            maskRepeat: 'no-repeat',
+            WebkitMaskImage: `url("data:image/svg+xml,${encodeURIComponent(`
+              <svg width="${finalWidth}" height="${finalHeight}" viewBox="0 0 ${finalWidth} ${finalHeight}" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(${offsetX}, ${offsetY})">
+                  <path d="${piecePath}" fill="white"/>
+                </g>
+              </svg>
+            `)}")`,
+            WebkitMaskSize: `${finalWidth}px ${finalHeight}px`,
+            WebkitMaskPosition: 'center',
+            WebkitMaskRepeat: 'no-repeat',
+          }}
+        />
+      )}
+
+      {/* SVG shape overlay */}
       <svg
-        width={actualWidth}
-        height={actualHeight}
-        viewBox={`0 0 ${actualWidth} ${actualHeight}`}
+        width={finalWidth}
+        height={finalHeight}
+        viewBox={`0 0 ${finalWidth} ${finalHeight}`}
         style={{
           position: 'absolute',
           top: 0,
           left: 0,
         }}
       >
-        <defs>
-          {/* Define clipPath using the piece shape */}
-          <clipPath id={clipPathId}>
-            <path d={piecePath} />
-          </clipPath>
-        </defs>
-
         <g transform={`translate(${offsetX}, ${offsetY})`}>
-          {/* Background image - rotated 90deg and clipped to piece shape */}
-          {showBackground && backgroundImage && (
-            <image
-              href={backgroundImage}
-              x={0}
-              y={0}
-              width={displayWidth}
-              height={displayHeight}
-              opacity={backgroundOpacity}
-              clipPath={`url(#${clipPathId})`}
-              preserveAspectRatio="xMidYMid slice"
-              transform={`rotate(90, ${displayWidth / 2}, ${displayHeight / 2})`}
-            />
-          )}
-
           {/* Main piece shape outline */}
           <path
             d={piecePath}
@@ -144,7 +163,7 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
                 <line
                   x1={0}
                   y1={-6}
-                  x2={displayWidth}
+                  x2={svgWidth}
                   y2={-6}
                   stroke={getEdgeColor(edgeThicknesses.top)}
                   strokeWidth={getEdgeStrokeWidth(edgeThicknesses.top)}
@@ -155,10 +174,10 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
               {/* Right edge */}
               {edgeThicknesses.right && (
                 <line
-                  x1={displayWidth + 6}
+                  x1={svgWidth + 6}
                   y1={0}
-                  x2={displayWidth + 6}
-                  y2={displayHeight}
+                  x2={svgWidth + 6}
+                  y2={svgHeight}
                   stroke={getEdgeColor(edgeThicknesses.right)}
                   strokeWidth={getEdgeStrokeWidth(edgeThicknesses.right)}
                   strokeLinecap="round"
@@ -169,9 +188,9 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
               {edgeThicknesses.bottom && (
                 <line
                   x1={0}
-                  y1={displayHeight + 6}
-                  x2={displayWidth}
-                  y2={displayHeight + 6}
+                  y1={svgHeight + 6}
+                  x2={svgWidth}
+                  y2={svgHeight + 6}
                   stroke={getEdgeColor(edgeThicknesses.bottom)}
                   strokeWidth={getEdgeStrokeWidth(edgeThicknesses.bottom)}
                   strokeLinecap="round"
@@ -184,7 +203,7 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
                   x1={-6}
                   y1={0}
                   x2={-6}
-                  y2={displayHeight}
+                  y2={svgHeight}
                   stroke={getEdgeColor(edgeThicknesses.left)}
                   strokeWidth={getEdgeStrokeWidth(edgeThicknesses.left)}
                   strokeLinecap="round"

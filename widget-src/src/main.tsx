@@ -46,6 +46,10 @@ interface ShopifySettings {
   transferLocations: string[];
   deliveryMethods: string[];
   processingTypes: string[];
+  messages: {
+    unavailableEdges: string;
+    placeholderEdges: string;
+  };
 }
 
 interface ShopifyWidgetConfig {
@@ -97,6 +101,28 @@ const ShopifyConfiguratorWidget: React.FC<{
 
 // Initialize widgets when DOM is ready
 function initializeConfigurators() {
+  // Inject global print styles to show only configurator content
+  if (!document.getElementById("configurator-global-print-styles")) {
+    const globalPrintStyles = document.createElement("style");
+    globalPrintStyles.id = "configurator-global-print-styles";
+    globalPrintStyles.textContent = `
+      @media print {
+        /* Hide everything except: configurator itself, its content, and its ancestors */
+        *:not(:is(.universal-configurator, .universal-configurator *, :has(.universal-configurator))) {
+          display: none !important;
+        }
+
+        /* Clean up configurator container for print */
+        .universal-configurator {
+          border: none !important;
+          margin: 0 !important;
+          padding: 20px !important;
+        }
+      }
+    `;
+    document.head.appendChild(globalPrintStyles);
+  }
+
   Object.keys(window.ConfiguratorConfig || {}).forEach((blockId) => {
     const config = window.ConfiguratorConfig[blockId];
     const container = document.getElementById(`react-root-${blockId}`);
