@@ -20,6 +20,7 @@ import {
   ArrowBack as ArrowBackIcon,
   Send as SendIcon,
   CheckCircle as CheckCircleIcon,
+  Print as PrintIcon,
 } from "@mui/icons-material";
 import Grid from "@mui/system/Grid";
 import type {
@@ -164,6 +165,11 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
 
   const totalPieces = calculateTotalPieces(specifications);
 
+  // Print handler
+  const handlePrint = () => {
+    window.print();
+  };
+
   // Calculate discounted cutting cost
   const rawCuttingCost = orderCalculations.totals.totalCuttingCost;
   const discountedCuttingCost =
@@ -202,6 +208,16 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
 
   return (
     <Container maxWidth={false} sx={{ maxWidth: "1920px", mx: "auto", py: 3 }}>
+      {/* Print-only title */}
+      <Box className="print-only" sx={{ mb: 3, textAlign: "center" }}>
+        <Typography variant="h4" sx={{ fontWeight: 600, color: "primary.main" }}>
+          {order.orderName} - Rekapitulácia zákazky
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Vytvorené: {new Date().toLocaleDateString("sk-SK")}
+        </Typography>
+      </Box>
+
       {/* Header */}
       <Box
         sx={{
@@ -210,6 +226,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
           justifyContent: "space-between",
           mb: 3,
         }}
+        className="no-print"
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Button
@@ -219,6 +236,14 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
             disabled={isSubmitting}
           >
             Späť
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<PrintIcon />}
+            onClick={handlePrint}
+            disabled={isSubmitting}
+          >
+            Tlačiť / PDF
           </Button>
           <Typography
             variant="h2"
@@ -593,6 +618,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
 
       {/* Action Buttons */}
       <Paper
+        className="no-print"
         sx={{
           p: 3,
           display: "flex",

@@ -1,0 +1,110 @@
+/* Print Styles for Configuration PDF Export */
+
+/* Hide elements when printing */
+@media print {
+  /* Hide navigation, buttons, and interactive elements */
+  .no-print {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .print-only {
+    display: block !important;
+  }
+
+  /* General print styles */
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+    color: black;
+    font-size: 12pt;
+  }
+
+  /* Page setup */
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  /* Avoid page breaks inside important elements */
+  .MuiPaper-root,
+  .MuiTableRow-root,
+  .MuiBox-root {
+    page-break-inside: avoid;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    page-break-inside: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  /* Remove shadows and backgrounds for cleaner print */
+  .MuiPaper-root {
+    box-shadow: none !important;
+    border: 1px solid #ddd;
+  }
+
+  /* Make sure tables are visible */
+  .MuiTableContainer-root {
+    overflow: visible !important;
+  }
+
+  /* Cutting diagrams - scale down if needed */
+  svg {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Typography adjustments */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Alert boxes */
+  .MuiAlert-root {
+    border: 1px solid #ccc;
+    border-left: 4px solid #2196f3;
+    padding: 8px;
+    margin: 8px 0;
+  }
+
+  /* Chips and badges */
+  .MuiChip-root {
+    border: 1px solid currentColor;
+  }
+
+  /* Hide overflow scrolls */
+  * {
+    overflow: visible !important;
+  }
+
+  /* Links */
+  a[href]:after {
+    content: none !important;
+  }
+
+  /* Grid adjustments */
+  .MuiGrid-container {
+    page-break-inside: avoid;
+  }
+}
+
+/* Default state - hide print-only elements */
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}

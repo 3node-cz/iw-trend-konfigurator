@@ -10,6 +10,7 @@ import App from "./App";
 import type { EmotionCache } from "@emotion/cache";
 import { CacheProvider } from "@emotion/react";
 import createCache from "@emotion/cache";
+import "./styles/print.css";
 
 // Shopify widget integration types
 interface ShopifyCustomer {

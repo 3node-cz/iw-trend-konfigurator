@@ -19,9 +19,10 @@ export async function action({ request }: ActionFunctionArgs) {
 
     // Parse request body
     const body = await request.json();
-    const { items = [], customerInfo = {}, orderAttributes = {} } = body;
+    const { items = [], customerInfo = {}, orderAttributes = {}, tags = [] } = body;
 
     console.log('🛒 Creating draft order with items:', items);
+    console.log('🏷️ Tags:', tags);
 
     // Create draft order using Admin API - better for B2B scenarios
     const draftOrderCreateMutation = `
@@ -32,6 +33,7 @@ export async function action({ request }: ActionFunctionArgs) {
             name
             invoiceUrl
             totalPrice
+            tags
             lineItems(first: 100) {
               edges {
                 node {
@@ -78,6 +80,9 @@ export async function action({ request }: ActionFunctionArgs) {
       })
     }));
 
+    // Build tags array - always include 'konfigurator' tag + any custom tags
+    const draftOrderTags = ['konfigurator', ...tags].filter(Boolean);
+
     const variables = {
       input: {
         lineItems,
@@ -95,6 +100,8 @@ export async function action({ request }: ActionFunctionArgs) {
             value: new Date().toISOString()
           }
         ].filter(attr => attr.value != null && attr.value !== 'undefined'), // Filter out null/undefined values
+        // Add tags
+        tags: draftOrderTags,
         // Add customer info if provided
         ...(customerInfo.email && {
           email: customerInfo.email
@@ -135,6 +142,7 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     console.log('✅ Draft order created successfully:', draftOrderData.draftOrder.id);
+    console.log('🏷️ Tags applied:', draftOrderData.draftOrder.tags);
 
     return json({
       draftOrder: {
@@ -143,6 +151,7 @@ export async function action({ request }: ActionFunctionArgs) {
         checkoutUrl: draftOrderData.draftOrder.invoiceUrl, // Use invoiceUrl for customer checkout
         invoiceUrl: draftOrderData.draftOrder.invoiceUrl, // For sending invoices
         totalPrice: draftOrderData.draftOrder.totalPrice,
+        tags: draftOrderData.draftOrder.tags,
         lineItems: draftOrderData.draftOrder.lineItems.edges.map((edge: any) => edge.node)
       }
     });

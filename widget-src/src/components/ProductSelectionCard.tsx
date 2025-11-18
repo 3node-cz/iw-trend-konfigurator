@@ -255,10 +255,18 @@ const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
                 <Typography
                   variant="body2"
                   color="primary"
-                  sx={{ fontWeight: 500 }}
+                  sx={{ fontWeight: 500, mb: 1 }}
                 >
                   {selectedProduct.variant?.sku || selectedProduct.handle || '[No SKU/Handle]'}
                 </Typography>
+
+                {/* Availability chip without label */}
+                {selectedProduct.variant?.inventoryQuantity !== undefined && (
+                  <AvailabilityChip
+                    availability={calculateAvailability(selectedProduct)}
+                    size="small"
+                  />
+                )}
               </Box>
 
               {showDeleteButton && (
@@ -272,27 +280,6 @@ const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
                       <DeleteIcon />
                     </IconButton>
                   </Tooltip>
-                </Box>
-              )}
-            </Box>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {/* Availability */}
-              {selectedProduct.variant?.inventoryQuantity !== undefined && (
-                <Box>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: 'block', mb: 0.5 }}
-                  >
-                    Dostupnosť
-                  </Typography>
-                  <AvailabilityChip
-                    availability={calculateAvailability(selectedProduct)}
-                    size="small"
-                  />
                 </Box>
               )}
             </Box>

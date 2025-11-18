@@ -109,8 +109,9 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
             src={backgroundImage}
             alt="Material"
             style={{
-              width: displayHeight, // Swap dimensions for 90deg rotation
-              height: displayWidth,
+              // Make image large enough to cover after rotation
+              width: `${Math.sqrt(displayWidth ** 2 + displayHeight ** 2)}px`,
+              height: `${Math.sqrt(displayWidth ** 2 + displayHeight ** 2)}px`,
               objectFit: 'cover',
               opacity: backgroundOpacity,
               transform: 'rotate(90deg)',
