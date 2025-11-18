@@ -10,7 +10,6 @@ import App from "./App";
 import type { EmotionCache } from "@emotion/cache";
 import { CacheProvider } from "@emotion/react";
 import createCache from "@emotion/cache";
-import "./styles/print.css";
 
 // Shopify widget integration types
 interface ShopifyCustomer {
@@ -154,6 +153,184 @@ function initializeConfigurators() {
         }
       `;
       shadowRoot.appendChild(style);
+
+      // Add print styles to shadow root
+      const printStyles = document.createElement("style");
+      printStyles.textContent = `
+        /* Print Styles for Configuration PDF Export */
+        @media print {
+          /* Hide navigation, buttons, and interactive elements */
+          .no-print {
+            display: none !important;
+          }
+
+          /* Hide helper messages */
+          .print-hide-message {
+            display: none !important;
+          }
+
+          /* Show print-only elements */
+          .print-only {
+            display: block !important;
+          }
+
+          /* General print styles - smaller font for better PDF layout */
+          * {
+            font-size: 9pt;
+          }
+
+          /* Page setup */
+          @page {
+            size: A4;
+            margin: 15mm;
+          }
+
+          /* Remove container padding for print */
+          .MuiContainer-root {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            padding-top: 0 !important;
+          }
+
+          /* Remove section top margin (Shopify sections) */
+          .shopify-section,
+          .cc-main-page,
+          .section,
+          .section--template {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+          }
+
+          /* Avoid page breaks inside important elements */
+          .MuiPaper-root,
+          .MuiTableRow-root,
+          .MuiBox-root {
+            page-break-inside: avoid;
+          }
+
+          /* Tables */
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            page-break-inside: auto;
+          }
+
+          thead {
+            display: table-header-group;
+          }
+
+          tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+          }
+
+          /* Remove shadows and backgrounds for cleaner print */
+          .MuiPaper-root {
+            box-shadow: none !important;
+            border: 1px solid #ddd;
+          }
+
+          /* Make sure tables are visible */
+          .MuiTableContainer-root {
+            overflow: visible !important;
+          }
+
+          /* Cutting diagrams - scale down if needed */
+          svg {
+            max-width: 100% !important;
+            height: auto !important;
+          }
+
+          /* Typography adjustments - smaller fonts for print */
+          h1, h2, h3, h4, h5, h6 {
+            page-break-after: avoid;
+            page-break-inside: avoid;
+          }
+
+          h1, .MuiTypography-h1 {
+            font-size: 18pt !important;
+          }
+
+          h2, .MuiTypography-h2 {
+            font-size: 16pt !important;
+          }
+
+          h3, .MuiTypography-h3 {
+            font-size: 14pt !important;
+          }
+
+          h4, .MuiTypography-h4 {
+            font-size: 12pt !important;
+          }
+
+          h5, .MuiTypography-h5 {
+            font-size: 11pt !important;
+          }
+
+          h6, .MuiTypography-h6 {
+            font-size: 10pt !important;
+          }
+
+          .MuiTypography-body1 {
+            font-size: 9pt !important;
+          }
+
+          .MuiTypography-body2 {
+            font-size: 8pt !important;
+          }
+
+          .MuiTypography-caption {
+            font-size: 7pt !important;
+          }
+
+          /* Smaller table text */
+          .MuiTableCell-root {
+            font-size: 8pt !important;
+            padding: 4px 8px !important;
+          }
+
+          .MuiTableCell-head {
+            font-size: 8.5pt !important;
+            font-weight: 600 !important;
+          }
+
+          /* Alert boxes */
+          .MuiAlert-root {
+            border: 1px solid #ccc;
+            border-left: 4px solid #2196f3;
+            padding: 8px;
+            margin: 8px 0;
+          }
+
+          /* Chips and badges */
+          .MuiChip-root {
+            border: 1px solid currentColor;
+          }
+
+          /* Hide overflow scrolls */
+          * {
+            overflow: visible !important;
+          }
+
+          /* Links */
+          a[href]:after {
+            content: none !important;
+          }
+
+          /* Grid adjustments */
+          .MuiGrid-container {
+            page-break-inside: avoid;
+          }
+        }
+
+        /* Default state - hide print-only elements */
+        @media screen {
+          .print-only {
+            display: none !important;
+          }
+        }
+      `;
+      shadowRoot.appendChild(printStyles);
 
       // Create a div inside shadow root for React to mount to
       const shadowContainer = document.createElement("div");
