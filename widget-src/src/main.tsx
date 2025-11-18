@@ -10,6 +10,7 @@ import App from "./App";
 import type { EmotionCache } from "@emotion/cache";
 import { CacheProvider } from "@emotion/react";
 import createCache from "@emotion/cache";
+import printStyles from "./styles/print.css?raw";
 
 // Shopify widget integration types
 interface ShopifyCustomer {
@@ -102,24 +103,10 @@ const ShopifyConfiguratorWidget: React.FC<{
 function initializeConfigurators() {
   // Inject global print styles to show only configurator content
   if (!document.getElementById("configurator-global-print-styles")) {
-    const globalPrintStyles = document.createElement("style");
-    globalPrintStyles.id = "configurator-global-print-styles";
-    globalPrintStyles.textContent = `
-      @media print {
-        /* Hide everything except: configurator itself, its content, and its ancestors */
-        *:not(:is(.universal-configurator, .universal-configurator *, :has(.universal-configurator))) {
-          display: none !important;
-        }
-
-        /* Clean up configurator container for print */
-        .universal-configurator {
-          border: none !important;
-          margin: 0 !important;
-          padding: 20px !important;
-        }
-      }
-    `;
-    document.head.appendChild(globalPrintStyles);
+    const globalPrintStylesElement = document.createElement("style");
+    globalPrintStylesElement.id = "configurator-global-print-styles";
+    globalPrintStylesElement.textContent = printStyles;
+    document.head.appendChild(globalPrintStylesElement);
   }
 
   Object.keys(window.ConfiguratorConfig || {}).forEach((blockId) => {
@@ -154,10 +141,10 @@ function initializeConfigurators() {
       `;
       shadowRoot.appendChild(style);
 
-      // Add print styles to shadow root
-      const printStyles = document.createElement("style");
-      printStyles.textContent = `
-        /* Print Styles for Configuration PDF Export */
+      // Add print styles directly to shadow root
+      const printStyleElement = document.createElement("style");
+      printStyleElement.id = "configurator-print-styles";
+      printStyleElement.textContent = `
         @media print {
           /* Hide navigation, buttons, and interactive elements */
           .no-print {
@@ -174,15 +161,15 @@ function initializeConfigurators() {
             display: block !important;
           }
 
-          /* General print styles - smaller font for better PDF layout */
-          * {
-            font-size: 9pt;
-          }
-
           /* Page setup */
           @page {
             size: A4;
             margin: 15mm;
+          }
+
+          /* General print styles - smaller font for better PDF layout */
+          * {
+            font-size: 9pt;
           }
 
           /* Remove container padding for print */
@@ -190,55 +177,6 @@ function initializeConfigurators() {
             padding-left: 0 !important;
             padding-right: 0 !important;
             padding-top: 0 !important;
-          }
-
-          /* Remove section top margin (Shopify sections) */
-          .shopify-section,
-          .cc-main-page,
-          .section,
-          .section--template {
-            margin-top: 0 !important;
-            padding-top: 0 !important;
-          }
-
-          /* Avoid page breaks inside important elements */
-          .MuiPaper-root,
-          .MuiTableRow-root,
-          .MuiBox-root {
-            page-break-inside: avoid;
-          }
-
-          /* Tables */
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            page-break-inside: auto;
-          }
-
-          thead {
-            display: table-header-group;
-          }
-
-          tr {
-            page-break-inside: avoid;
-            page-break-after: auto;
-          }
-
-          /* Remove shadows and backgrounds for cleaner print */
-          .MuiPaper-root {
-            box-shadow: none !important;
-            border: 1px solid #ddd;
-          }
-
-          /* Make sure tables are visible */
-          .MuiTableContainer-root {
-            overflow: visible !important;
-          }
-
-          /* Cutting diagrams - scale down if needed */
-          svg {
-            max-width: 100% !important;
-            height: auto !important;
           }
 
           /* Typography adjustments - smaller fonts for print */
@@ -294,6 +232,17 @@ function initializeConfigurators() {
             font-weight: 600 !important;
           }
 
+          /* Remove shadows and backgrounds for cleaner print */
+          .MuiPaper-root {
+            box-shadow: none !important;
+            border: 1px solid #ddd;
+          }
+
+          /* Make sure tables are visible */
+          .MuiTableContainer-root {
+            overflow: visible !important;
+          }
+
           /* Alert boxes */
           .MuiAlert-root {
             border: 1px solid #ccc;
@@ -307,6 +256,12 @@ function initializeConfigurators() {
             border: 1px solid currentColor;
           }
 
+          /* Cutting diagrams - scale down if needed */
+          svg {
+            max-width: 100% !important;
+            height: auto !important;
+          }
+
           /* Hide overflow scrolls */
           * {
             overflow: visible !important;
@@ -317,9 +272,61 @@ function initializeConfigurators() {
             content: none !important;
           }
 
-          /* Grid adjustments */
-          .MuiGrid-container {
+          /* Page break control - keep sections together */
+
+          /* Paper components (main section blocks) - never break inside */
+          .MuiPaper-root {
             page-break-inside: avoid;
+            break-inside: avoid;
+            page-break-before: auto;
+            page-break-after: auto;
+          }
+
+          /* Grid items - keep together */
+          .MuiGrid-root[class*="MuiGrid-item"] {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+
+          /* Grid containers - allow breaks between items */
+          .MuiGrid-container {
+            page-break-inside: auto;
+            break-inside: auto;
+          }
+
+          /* Alert boxes - keep together */
+          .MuiAlert-root {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+
+          /* Table rows - keep together */
+          .MuiTableRow-root {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+
+          /* Tables - allow breaks between rows if needed */
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            page-break-inside: auto;
+          }
+
+          thead {
+            display: table-header-group;
+          }
+
+          tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+            page-break-after: auto;
+          }
+
+          /* Box components - allow breaks */
+          .MuiBox-root {
+            page-break-inside: auto;
+            page-break-before: auto;
           }
         }
 
@@ -330,7 +337,7 @@ function initializeConfigurators() {
           }
         }
       `;
-      shadowRoot.appendChild(printStyles);
+      shadowRoot.appendChild(printStyleElement);
 
       // Create a div inside shadow root for React to mount to
       const shadowContainer = document.createElement("div");

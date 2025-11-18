@@ -1,29 +1,34 @@
 /* Print Styles for Configuration PDF Export */
+/* These styles are injected into document head with .universal-configurator prefix */
 
-/* Hide elements when printing */
 @media print {
+  /* Hide everything except configurator */
+  *:not(:is(.universal-configurator, .universal-configurator *, :has(.universal-configurator))) {
+    display: none !important;
+  }
+
+  /* Clean up configurator container for print - override Liquid template styles */
+  .universal-configurator {
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    background: white !important;
+  }
+
   /* Hide navigation, buttons, and interactive elements */
-  .no-print {
+  .universal-configurator .no-print {
     display: none !important;
   }
 
   /* Hide helper messages */
-  .print-hide-message {
+  .universal-configurator .print-hide-message {
     display: none !important;
   }
 
   /* Show print-only elements */
-  .print-only {
+  .universal-configurator .print-only {
     display: block !important;
-  }
-
-  /* General print styles - smaller font for better PDF layout */
-  body {
-    margin: 0;
-    padding: 0;
-    background: white;
-    color: black;
-    font-size: 9pt;
   }
 
   /* Page setup */
@@ -32,117 +37,146 @@
     margin: 15mm;
   }
 
+  /* Remove body/html margins and padding */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  /* Remove Shopify section spacing (outside Shadow DOM) */
+  .shopify-section,
+  .cc-main-page,
+  .section,
+  .section--template,
+  .main-content,
+  .page-width {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Remove spacing from all parent containers */
+  .universal-configurator,
+  .universal-configurator::before,
+  .universal-configurator::after {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Remove spacing from any divs that might wrap the configurator */
+  div:has(.universal-configurator) {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Nuclear option: remove ALL spacing from visible elements */
+  *:is(.universal-configurator, :has(.universal-configurator)) {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Target the direct React root container */
+  #react-root-configurator,
+  [id^="react-root-"] {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Remove ALL margin and padding from everything visible */
+  body > *:not(script):not(style) {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* General print styles - smaller font for better PDF layout */
+  .universal-configurator * {
+    font-size: 9pt;
+  }
+
   /* Remove container padding for print */
-  .MuiContainer-root {
+  .universal-configurator .MuiContainer-root {
     padding-left: 0 !important;
     padding-right: 0 !important;
     padding-top: 0 !important;
   }
 
-  /* Remove section top margin (Shopify sections) */
-  .shopify-section,
-  .cc-main-page,
-  .section,
-  .section--template {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-  }
-
-  /* Avoid page breaks inside important elements */
-  .MuiPaper-root,
-  .MuiTableRow-root,
-  .MuiBox-root {
+  /* Typography adjustments - smaller fonts for print */
+  .universal-configurator h1,
+  .universal-configurator h2,
+  .universal-configurator h3,
+  .universal-configurator h4,
+  .universal-configurator h5,
+  .universal-configurator h6 {
+    page-break-after: avoid;
     page-break-inside: avoid;
   }
 
-  /* Tables */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    page-break-inside: auto;
+  .universal-configurator h1,
+  .universal-configurator .MuiTypography-h1 {
+    font-size: 18pt !important;
   }
 
-  thead {
-    display: table-header-group;
+  .universal-configurator h2,
+  .universal-configurator .MuiTypography-h2 {
+    font-size: 16pt !important;
   }
 
-  tr {
-    page-break-inside: avoid;
-    page-break-after: auto;
+  .universal-configurator h3,
+  .universal-configurator .MuiTypography-h3 {
+    font-size: 14pt !important;
+  }
+
+  .universal-configurator h4,
+  .universal-configurator .MuiTypography-h4 {
+    font-size: 12pt !important;
+  }
+
+  .universal-configurator h5,
+  .universal-configurator .MuiTypography-h5 {
+    font-size: 11pt !important;
+  }
+
+  .universal-configurator h6,
+  .universal-configurator .MuiTypography-h6 {
+    font-size: 10pt !important;
+  }
+
+  .universal-configurator .MuiTypography-body1 {
+    font-size: 9pt !important;
+  }
+
+  .universal-configurator .MuiTypography-body2 {
+    font-size: 8pt !important;
+  }
+
+  .universal-configurator .MuiTypography-caption {
+    font-size: 7pt !important;
+  }
+
+  /* Smaller table text */
+  .universal-configurator .MuiTableCell-root {
+    font-size: 8pt !important;
+    padding: 4px 8px !important;
+  }
+
+  .universal-configurator .MuiTableCell-head {
+    font-size: 8.5pt !important;
+    font-weight: 600 !important;
   }
 
   /* Remove shadows and backgrounds for cleaner print */
-  .MuiPaper-root {
+  .universal-configurator .MuiPaper-root {
     box-shadow: none !important;
     border: 1px solid #ddd;
   }
 
   /* Make sure tables are visible */
-  .MuiTableContainer-root {
+  .universal-configurator .MuiTableContainer-root {
     overflow: visible !important;
   }
 
-  /* Cutting diagrams - scale down if needed */
-  svg {
-    max-width: 100% !important;
-    height: auto !important;
-  }
-
-  /* Typography adjustments - smaller fonts for print */
-  h1, h2, h3, h4, h5, h6 {
-    page-break-after: avoid;
-    page-break-inside: avoid;
-  }
-
-  h1, .MuiTypography-h1 {
-    font-size: 18pt !important;
-  }
-
-  h2, .MuiTypography-h2 {
-    font-size: 16pt !important;
-  }
-
-  h3, .MuiTypography-h3 {
-    font-size: 14pt !important;
-  }
-
-  h4, .MuiTypography-h4 {
-    font-size: 12pt !important;
-  }
-
-  h5, .MuiTypography-h5 {
-    font-size: 11pt !important;
-  }
-
-  h6, .MuiTypography-h6 {
-    font-size: 10pt !important;
-  }
-
-  .MuiTypography-body1 {
-    font-size: 9pt !important;
-  }
-
-  .MuiTypography-body2 {
-    font-size: 8pt !important;
-  }
-
-  .MuiTypography-caption {
-    font-size: 7pt !important;
-  }
-
-  /* Smaller table text */
-  .MuiTableCell-root {
-    font-size: 8pt !important;
-    padding: 4px 8px !important;
-  }
-
-  .MuiTableCell-head {
-    font-size: 8.5pt !important;
-    font-weight: 600 !important;
-  }
-
   /* Alert boxes */
-  .MuiAlert-root {
+  .universal-configurator .MuiAlert-root {
     border: 1px solid #ccc;
     border-left: 4px solid #2196f3;
     padding: 8px;
@@ -150,29 +184,87 @@
   }
 
   /* Chips and badges */
-  .MuiChip-root {
+  .universal-configurator .MuiChip-root {
     border: 1px solid currentColor;
   }
 
+  /* Cutting diagrams - scale down if needed */
+  .universal-configurator svg {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
   /* Hide overflow scrolls */
-  * {
+  .universal-configurator * {
     overflow: visible !important;
   }
 
   /* Links */
-  a[href]:after {
+  .universal-configurator a[href]:after {
     content: none !important;
   }
 
-  /* Grid adjustments */
-  .MuiGrid-container {
+  /* Page break control - keep sections together */
+
+  /* Paper components (main section blocks) - never break inside */
+  .universal-configurator .MuiPaper-root {
     page-break-inside: avoid;
+    break-inside: avoid;
+    page-break-before: auto;
+    page-break-after: auto;
+  }
+
+  /* Grid items - keep together */
+  .universal-configurator .MuiGrid-root[class*="MuiGrid-item"] {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Grid containers - allow breaks between items */
+  .universal-configurator .MuiGrid-container {
+    page-break-inside: auto;
+    break-inside: auto;
+  }
+
+  /* Alert boxes - keep together */
+  .universal-configurator .MuiAlert-root {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Table rows - keep together */
+  .universal-configurator .MuiTableRow-root {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Tables - allow breaks between rows if needed */
+  .universal-configurator table {
+    width: 100%;
+    border-collapse: collapse;
+    page-break-inside: auto;
+  }
+
+  .universal-configurator thead {
+    display: table-header-group;
+  }
+
+  .universal-configurator tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  /* Box components - allow breaks */
+  .universal-configurator .MuiBox-root {
+    page-break-inside: auto;
+    page-break-before: auto;
   }
 }
 
 /* Default state - hide print-only elements */
 @media screen {
-  .print-only {
+  .universal-configurator .print-only {
     display: none !important;
   }
 }
