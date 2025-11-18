@@ -394,6 +394,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
                   variant="body2"
                   color="text.secondary"
                   sx={{ mb: 3 }}
+                  className="print-hide-message"
                 >
                   {totalDiagrams !== uniqueDiagrams
                     ? "Identické plány sú zoskupené s počítadlom. Kliknite na diagram pre detail."
