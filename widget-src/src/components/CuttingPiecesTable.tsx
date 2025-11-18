@@ -804,7 +804,18 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
 
   // Check if any edge thickness is unavailable (placeholder) for current board thickness
   const hasUnavailableEdgeThicknesses = useMemo(() => {
-    return pieces.some((piece) => {
+    console.log('🔍 [hasUnavailableEdgeThicknesses] Checking pieces:', pieces.length)
+    console.log('🔍 [hasUnavailableEdgeThicknesses] Available edges:', availableEdges?.length || 0)
+
+    if (availableEdges && availableEdges.length > 0) {
+      console.log('🔍 [hasUnavailableEdgeThicknesses] Edge matrix:')
+      availableEdges.forEach(edge => {
+        const icon = edge.isPlaceholder ? '⚠️' : '✅'
+        console.log(`   ${icon} ${edge.edgeWidth}mm × ${edge.boardThickness}mm - ${edge.name}`)
+      })
+    }
+
+    const result = pieces.some((piece) => {
       const boardThickness = piece.isDupel ? 36 : 18;
       const edgeValues = [
         piece.edgeTop,
@@ -814,13 +825,35 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         piece.edgeAllAround,
       ].filter((val) => val !== null);
 
-      return edgeValues.some((edgeWidth) => {
+      console.log(`🔍 [Piece ${piece.partName || piece.id}]:`, {
+        isDupel: piece.isDupel,
+        boardThickness,
+        edgeValues
+      })
+
+      const hasPlaceholder = edgeValues.some((edgeWidth) => {
         const edge = availableEdges?.find(
           (e) => e.edgeWidth === edgeWidth && e.boardThickness === boardThickness
         );
+
+        console.log(`   🔍 Looking for edge: ${edgeWidth}mm × ${boardThickness}mm →`, {
+          found: !!edge,
+          edgeName: edge?.name,
+          isPlaceholder: edge?.isPlaceholder || false
+        })
+
         return edge?.isPlaceholder || false;
       });
+
+      if (hasPlaceholder) {
+        console.log(`   ⚠️ Piece has placeholder edges!`)
+      }
+
+      return hasPlaceholder
     });
+
+    console.log('🔍 [hasUnavailableEdgeThicknesses] Final result:', result)
+    return result
   }, [pieces, availableEdges]);
 
   if (pieces.length === 0) {

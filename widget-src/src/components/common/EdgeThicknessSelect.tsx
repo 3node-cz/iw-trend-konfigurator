@@ -25,32 +25,63 @@ const EdgeThicknessSelect: React.FC<EdgeThicknessSelectProps> = ({
   // Determine which widths to show - SHOW ALL OPTIONS REGARDLESS OF isDupel
   let widthOptions: number[] = []
 
+  const boardThickness = isDupel ? 36 : 18
+
+  console.log('🎯 [EdgeThicknessSelect] Rendering', {
+    value,
+    boardThickness,
+    isDupel,
+    edgeMaterialName: edgeMaterial?.name,
+    availableEdgesCount: availableEdges.length
+  })
+
   if (availableEdges && availableEdges.length > 0) {
     // Extract ALL unique widths from all edges (both 18mm and 36mm)
     const widths = availableEdges
       .map((edge) => edge.edgeWidth)
     widthOptions = [...new Set(widths)].sort((a, b) => a - b)
 
+    console.log('🎯 [EdgeThicknessSelect] Available widths:', widthOptions)
+    console.log('🎯 [EdgeThicknessSelect] Edges for this board thickness:',
+      availableEdges.filter(e => e.boardThickness === boardThickness).map(e => ({
+        width: e.edgeWidth,
+        name: e.name,
+        isPlaceholder: e.isPlaceholder
+      }))
+    )
+
     // If no widths found, show standard edge widths as fallback
     if (widthOptions.length === 0) {
       widthOptions = [...DIMENSIONS.EDGE_WIDTHS]
+      console.log('⚠️ [EdgeThicknessSelect] No widths found, using defaults:', widthOptions)
     }
   } else {
     // Default fallback to standard edge widths
     widthOptions = [...DIMENSIONS.EDGE_WIDTHS]
+    console.log('⚠️ [EdgeThicknessSelect] No available edges, using defaults:', widthOptions)
   }
 
   // Disable when no edge material selected or explicitly disabled
   const isDisabled = disabled || !edgeMaterial
 
   // Check if selected value corresponds to a placeholder edge for this board thickness
-  const boardThickness = isDupel ? 36 : 18
   const selectedEdge = availableEdges?.find(
     (edge) =>
       edge.edgeWidth === value &&
       edge.boardThickness === boardThickness
   )
   const isPlaceholder = selectedEdge?.isPlaceholder || false
+
+  console.log('🎯 [EdgeThicknessSelect] Selected edge:', {
+    value,
+    selectedEdge: selectedEdge ? {
+      name: selectedEdge.name,
+      width: selectedEdge.edgeWidth,
+      thickness: selectedEdge.boardThickness,
+      isPlaceholder: selectedEdge.isPlaceholder
+    } : 'NOT FOUND',
+    isPlaceholder
+  })
 
   return (
     <FormControl sx={{ minWidth }}>
