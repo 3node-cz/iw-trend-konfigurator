@@ -2,6 +2,10 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { authenticate } from "~/shopify.server";
 import { COLLECTION_HANDLE_TO_ID } from "~/constants";
+import {
+  GET_NODE_BY_ID,
+  SEARCH_PRODUCTS,
+} from "~/graphql/queries";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const DEBUG = process.env.NODE_ENV === 'development';
@@ -70,6 +74,25 @@ export async function loader({ request }: LoaderFunctionArgs) {
       searchQuery = '*';
     }
 
+    // Add collection filter to search query if specified
+    if (collection && !debugNoFilter) {
+      const collectionId = COLLECTION_HANDLE_TO_ID[collection];
+      if (!collectionId) {
+        console.warn('⚠️ Unknown collection handle:', collection);
+        return json({ error: "Unknown collection" }, { status: 400 });
+      }
+
+      // Add collection_id filter to search query
+      // Use AND to combine with existing search terms
+      if (searchQuery && searchQuery !== '*') {
+        searchQuery = `${searchQuery} AND collection_id:${collectionId}`;
+      } else {
+        searchQuery = `collection_id:${collectionId}`;
+      }
+
+      console.log('🔍 Added collection filter:', `${collection} → ${collectionId}`);
+    }
+
     console.log('🔍 Final search query:', searchQuery);
 
     // Determine which API to use
@@ -84,440 +107,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
       const gid = query.replace('id:', '').trim();
       console.log('🔍 Using node() API for direct GID lookup:', gid);
 
-      graphqlQuery = `
-        query getNode($id: ID!) {
-          node(id: $id) {
-            ... on Product {
-              id
-                title
-                handle
-                vendor
-                productType
-                tags
-                featuredImage {
-                  url
-                  altText
-                }
-                images(first: 5) {
-                  edges {
-                    node {
-                      url
-                      altText
-                    }
-                  }
-                }
-                variants(first: 10) {
-                  edges {
-                    node {
-                      id
-                      title
-                      sku
-                      price
-                      inventoryQuantity
-                      availableForSale
-                      image {
-                        url
-                        altText
-                      }
-                      localWarehouseStock: metafield(namespace: "custom", key: "local_warehouse_stock") {
-                        value
-                      }
-                      centralWarehouseStock: metafield(namespace: "custom", key: "central_warehouse_stock") {
-                        value
-                      }
-                      materialHeight: metafield(namespace: "material", key: "height") {
-                        value
-                      }
-                      materialWidth: metafield(namespace: "material", key: "width") {
-                        value
-                      }
-                      materialThickness: metafield(namespace: "material", key: "thickness") {
-                        value
-                      }
-                      alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
-                        value
-                        references(first: 10) {
-                          edges {
-                            node {
-                              ... on Product {
-                                id
-                                title
-                                handle
-                              }
-                            }
-                          }
-                        }
-                      }
-                      allMetafields: metafields(first: 10) {
-                        edges {
-                          node {
-                            namespace
-                            key
-                            value
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-                localWarehouseStock: metafield(namespace: "custom", key: "local_warehouse_stock") {
-                  value
-                }
-                centralWarehouseStock: metafield(namespace: "custom", key: "central_warehouse_stock") {
-                  value
-                }
-                alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
-                  value
-                  references(first: 10) {
-                    edges {
-                      node {
-                        ... on Product {
-                          id
-                          title
-                          handle
-                        }
-                      }
-                    }
-                  }
-                }
-                materialHeight: metafield(namespace: "material", key: "height") {
-                  value
-                }
-                materialWidth: metafield(namespace: "material", key: "width") {
-                  value
-                }
-                materialThickness: metafield(namespace: "material", key: "thickness") {
-                  value
-                }
-                allMetafields: metafields(first: 10) {
-                  edges {
-                    node {
-                      namespace
-                      key
-                      value
-                    }
-                  }
-                }
-            }
-            ... on ProductVariant {
-              id
-              title
-              sku
-              price
-              inventoryQuantity
-              availableForSale
-              image {
-                url
-                altText
-              }
-              localWarehouseStock: metafield(namespace: "custom", key: "local_warehouse_stock") {
-                value
-              }
-              remoteWarehouseStock: metafield(namespace: "custom", key: "remote_warehouse_stock") {
-                value
-              }
-              alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
-                value
-                references(first: 10) {
-                  edges {
-                    node {
-                      ... on ProductVariant {
-                        id
-                      }
-                    }
-                  }
-                }
-              }
-              materialHeight: metafield(namespace: "material", key: "height") {
-                value
-              }
-              materialWidth: metafield(namespace: "material", key: "width") {
-                value
-              }
-              materialThickness: metafield(namespace: "material", key: "thickness") {
-                value
-              }
-              product {
-                id
-                title
-                handle
-                vendor
-                productType
-                tags
-                featuredImage {
-                  url
-                  altText
-                }
-                images(first: 5) {
-                  edges {
-                    node {
-                      url
-                      altText
-                    }
-                  }
-                }
-                allMetafields: metafields(first: 10) {
-                  edges {
-                    node {
-                      namespace
-                      key
-                      value
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      `;
+      graphqlQuery = GET_NODE_BY_ID;
       variables = {
         id: gid
       };
-    } else if (collection && !debugNoFilter) {
-      // Use collection() API and filter in JavaScript (collection.products doesn't support query parameter)
-      const collectionId = COLLECTION_HANDLE_TO_ID[collection];
-      if (!collectionId) {
-        console.warn('⚠️ Unknown collection handle:', collection);
-        return json({ error: "Unknown collection" }, { status: 400 });
-      }
-
-      const collectionGid = `gid://shopify/Collection/${collectionId}`;
-      console.log('🔍 Using collection() API with JS filtering:', `${collection} → ${collectionGid}`);
-      console.log('🔍 Will paginate through collection to find matches for:', searchQuery);
-
-      graphqlQuery = `
-        query getCollectionProducts($collectionId: ID!, $first: Int!, $after: String) {
-          collection(id: $collectionId) {
-            id
-            title
-            handle
-            products(first: $first, after: $after) {
-              pageInfo {
-                hasNextPage
-                endCursor
-              }
-              edges {
-                node {
-                  id
-                  title
-                  handle
-                  vendor
-                  productType
-                  tags
-                  featuredImage {
-                    url
-                    altText
-                  }
-                  variants(first: 10) {
-                    edges {
-                      node {
-                        id
-                        title
-                        sku
-                        price
-                        inventoryQuantity
-                        availableForSale
-                        image {
-                          url
-                          altText
-                        }
-                        localWarehouseStock: metafield(namespace: "custom", key: "local_warehouse_stock") {
-                          value
-                        }
-                        centralWarehouseStock: metafield(namespace: "custom", key: "central_warehouse_stock") {
-                          value
-                        }
-                        materialHeight: metafield(namespace: "material", key: "height") {
-                          value
-                        }
-                        materialWidth: metafield(namespace: "material", key: "width") {
-                          value
-                        }
-                        materialThickness: metafield(namespace: "material", key: "thickness") {
-                          value
-                        }
-                        alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
-                          value
-                          references(first: 5) {
-                            edges {
-                              node {
-                                ... on Product {
-                                  id
-                                  title
-                                  handle
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                  localWarehouseStock: metafield(namespace: "custom", key: "local_warehouse_stock") {
-                    value
-                  }
-                  centralWarehouseStock: metafield(namespace: "custom", key: "central_warehouse_stock") {
-                    value
-                  }
-                  alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
-                    value
-                    references(first: 5) {
-                      edges {
-                        node {
-                          ... on Product {
-                            id
-                            title
-                            handle
-                          }
-                        }
-                      }
-                    }
-                  }
-                  materialHeight: metafield(namespace: "material", key: "height") {
-                    value
-                  }
-                  materialWidth: metafield(namespace: "material", key: "width") {
-                    value
-                  }
-                  materialThickness: metafield(namespace: "material", key: "thickness") {
-                    value
-                  }
-                }
-              }
-            }
-          }
-        }
-      `;
-
-      variables = {
-        collectionId: collectionGid,
-        first: 150,
-        after: null
-      };
     } else {
-      // Use products() search API for global text searches (no collection filter)
-      console.log('🔍 Using products() API for global search');
+      // Use products() search API - supports both collection filtering and text search in one query!
+      console.log('🔍 Using products() API with query:', searchQuery);
 
-      graphqlQuery = `
-        query searchProducts($query: String!, $first: Int!) {
-          products(first: $first, query: $query) {
-            edges {
-              node {
-                id
-                title
-                handle
-                vendor
-                productType
-                tags
-                featuredImage {
-                  url
-                  altText
-                }
-                images(first: 5) {
-                  edges {
-                    node {
-                      url
-                      altText
-                    }
-                  }
-                }
-                variants(first: 10) {
-                  edges {
-                    node {
-                      id
-                      title
-                      sku
-                      price
-                      inventoryQuantity
-                      availableForSale
-                      image {
-                        url
-                        altText
-                      }
-                      localWarehouseStock: metafield(namespace: "custom", key: "local_warehouse_stock") {
-                        value
-                      }
-                      centralWarehouseStock: metafield(namespace: "custom", key: "central_warehouse_stock") {
-                        value
-                      }
-                      materialHeight: metafield(namespace: "material", key: "height") {
-                        value
-                      }
-                      materialWidth: metafield(namespace: "material", key: "width") {
-                        value
-                      }
-                      materialThickness: metafield(namespace: "material", key: "thickness") {
-                        value
-                      }
-                      alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
-                        value
-                        references(first: 10) {
-                          edges {
-                            node {
-                              ... on Product {
-                                id
-                                title
-                                handle
-                              }
-                            }
-                          }
-                        }
-                      }
-                      allMetafields: metafields(first: 10) {
-                        edges {
-                          node {
-                            namespace
-                            key
-                            value
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-                localWarehouseStock: metafield(namespace: "custom", key: "local_warehouse_stock") {
-                  value
-                }
-                centralWarehouseStock: metafield(namespace: "custom", key: "central_warehouse_stock") {
-                  value
-                }
-                alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
-                  value
-                  references(first: 10) {
-                    edges {
-                      node {
-                        ... on Product {
-                          id
-                          title
-                          handle
-                        }
-                      }
-                    }
-                  }
-                }
-                materialHeight: metafield(namespace: "material", key: "height") {
-                  value
-                }
-                materialWidth: metafield(namespace: "material", key: "width") {
-                  value
-                }
-                materialThickness: metafield(namespace: "material", key: "thickness") {
-                  value
-                }
-                allMetafields: metafields(first: 10) {
-                  edges {
-                    node {
-                      namespace
-                      key
-                      value
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      `;
+      graphqlQuery = SEARCH_PRODUCTS;
 
       variables = {
         query: searchQuery,
@@ -651,113 +249,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
       };
     };
 
-    // For collection filtering with JS, we need to paginate and filter
-    if (collection && !debugNoFilter) {
-      const collectionId = COLLECTION_HANDLE_TO_ID[collection];
-      const collectionGid = `gid://shopify/Collection/${collectionId}`;
-
-      let allFilteredMaterials: any[] = [];
-      let hasNextPage = true;
-      let cursor: string | null = null;
-      let pageCount = 0;
-      const maxPages = 20; // Max 3000 products (20 * 150)
-
-      while (hasNextPage && allFilteredMaterials.length < limit && pageCount < maxPages) {
-        pageCount++;
-        if (DEBUG) console.log(`📄 Fetching page ${pageCount} (cursor: ${cursor || 'start'})...`);
-
-        const pageVariables = {
-          collectionId: collectionGid,
-          first: 150,
-          after: cursor
-        };
-
-        const response = await admin.graphql(graphqlQuery, { variables: pageVariables });
-        const result = await response.json();
-
-        if (result.errors) {
-          console.error('❌ GraphQL errors:', JSON.stringify(result.errors, null, 2));
-          return json({ error: "GraphQL query failed", details: result.errors }, { status: 400 });
-        }
-
-        if (response.body?.errors) {
-          console.error('❌ GraphQL body errors:', JSON.stringify(response.body.errors, null, 2));
-          return json({
-            error: "GraphQL query failed",
-            details: response.body.errors.graphQLErrors || response.body.errors
-          }, { status: 400 });
-        }
-
-        if (!result.data?.collection) {
-          console.error('❌ No collection data in response');
-          break;
-        }
-
-        const collection = result.data.collection;
-        const products = collection.products.edges;
-        hasNextPage = collection.products.pageInfo.hasNextPage;
-        cursor = collection.products.pageInfo.endCursor;
-
-        if (DEBUG) console.log(`✅ Fetched ${products.length} products from page ${pageCount}, hasNextPage: ${hasNextPage}`);
-
-        // Transform and filter products
-        for (const edge of products) {
-          const product = edge.node;
-          const variant = product.variants.edges[0]?.node;
-          const material = transformToMaterial(product, variant);
-
-          // Filter by search query
-          if (query && query.trim() && !query.startsWith('id:')) {
-            const searchTerms = query.toLowerCase().trim();
-            const searchableText = [
-              material.title,
-              material.vendor,
-              material.productType,
-              ...(material.tags || []),
-              material.variant?.sku,
-            ].filter(Boolean).join(' ').toLowerCase();
-
-            if (!searchableText.includes(searchTerms)) {
-              continue; // Skip this product
-            }
-          }
-
-          allFilteredMaterials.push(material);
-
-          // Stop if we have enough results
-          if (allFilteredMaterials.length >= limit) {
-            hasNextPage = false;
-            break;
-          }
-        }
-      }
-
-      console.log(`✅ Found ${allFilteredMaterials.length} matching products after ${pageCount} pages`);
-      return json(allFilteredMaterials);
-    }
-
-    // For non-collection searches (or debug mode), execute single query
+    // Execute GraphQL query (single request for all searches now!)
     const response = await admin.graphql(graphqlQuery, { variables });
-    const result = await response.json();
+    const result: any = await response.json();
 
     console.log('📦 Raw GraphQL response (first product):', JSON.stringify(result?.data?.products?.edges?.[0] || result?.data?.node, null, 2));
 
     if (result.errors) {
       console.error('❌ GraphQL errors:', JSON.stringify(result.errors, null, 2));
       return json({ error: "GraphQL query failed", details: result.errors }, { status: 400 });
-    }
-
-    // Check for errors in the response body (GraphQL client wrapper errors)
-    if (response.body?.errors) {
-      console.error('❌ GraphQL body errors:', JSON.stringify(response.body.errors, null, 2));
-      // Log the graphQLErrors array specifically
-      if (response.body.errors.graphQLErrors) {
-        console.error('❌ Detailed GraphQL errors:', JSON.stringify(response.body.errors.graphQLErrors, null, 2));
-      }
-      return json({
-        error: "GraphQL query failed",
-        details: response.body.errors.graphQLErrors || response.body.errors
-      }, { status: 400 });
     }
 
     // Handle different API response types
