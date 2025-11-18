@@ -101,13 +101,9 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
             left: 0,
             width: finalWidth,
             height: finalHeight,
-            backgroundImage: `url(${backgroundImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            transform: 'rotate(90deg)',
-            transformOrigin: 'center center',
             opacity: backgroundOpacity,
+            overflow: 'hidden',
+            // Apply mask to outer container
             maskImage: `url("data:image/svg+xml,${encodeURIComponent(`
               <svg width="${finalWidth}" height="${finalHeight}" viewBox="0 0 ${finalWidth} ${finalHeight}" xmlns="http://www.w3.org/2000/svg">
                 <g transform="translate(${offsetX}, ${offsetY})">
@@ -129,7 +125,23 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
             WebkitMaskPosition: 'center',
             WebkitMaskRepeat: 'no-repeat',
           }}
-        />
+        >
+          {/* Rotated img element */}
+          <Box
+            component="img"
+            src={backgroundImage}
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transform: 'translate(-50%, -50%) rotate(90deg)',
+              transformOrigin: 'center center',
+            }}
+          />
+        </Box>
       )}
 
       {/* SVG shape overlay */}
