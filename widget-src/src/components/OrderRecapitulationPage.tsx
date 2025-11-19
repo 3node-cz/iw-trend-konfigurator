@@ -416,9 +416,9 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
         order={order}
       />
 
-      {/* Configuration Tables - Readonly view of cutting pieces */}
+      {/* Configuration Tables - Readonly view of cutting pieces (print only) */}
       {specifications.map((spec, index) => (
-        <Paper key={index} sx={{ p: 3, mt: 3, mb: 3 }}>
+        <Paper key={index} sx={{ p: 3, mt: 3, mb: 3 }} className="print-only">
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
             Konfigurácia - {spec.material.title}
           </Typography>

@@ -7,11 +7,9 @@
  */
 export const getEdgeColor = (thickness: number): string => {
   const colors = {
-    0.4: '#e91e63', // Pink for 0.4mm
-    0.8: '#2196f3', // Blue for 0.8mm
-    1: '#4caf50', // Green for 1mm
-    2: '#ff9800', // Orange for 2mm
-    3: '#9c27b0', // Purple for 3mm (if needed)
+    0.45: '#2196f3', // Blue for 0.45mm
+    1: '#4caf50',    // Green for 1mm
+    2: '#ff9800',    // Orange for 2mm
   }
   return colors[thickness as keyof typeof colors] || '#757575' // Gray for unknown
 }
@@ -28,11 +26,9 @@ export const getEdgeStrokeWidth = (thickness: number): number => {
  * Edge thickness to color mapping for legends and UI
  */
 export const EDGE_THICKNESS_COLORS = {
-  0.4: '#e91e63',
-  0.8: '#2196f3',
-  1: '#4caf50',
-  2: '#ff9800',
-  3: '#9c27b0',
+  0.45: '#2196f3', // Blue
+  1: '#4caf50',    // Green
+  2: '#ff9800',    // Orange
 } as const
 
 /**
