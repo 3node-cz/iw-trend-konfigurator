@@ -144,6 +144,56 @@ export async function action({ request }: ActionFunctionArgs) {
     console.log('✅ Draft order created successfully:', draftOrderData.draftOrder.id);
     console.log('🏷️ Tags applied:', draftOrderData.draftOrder.tags);
 
+    // Add metafields to draft order if configuration data is provided
+    if (body.configurationData) {
+      console.log('📝 Adding configuration metafields to draft order...');
+
+      const metafieldsSetMutation = `
+        mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) {
+          metafieldsSet(metafields: $metafields) {
+            metafields {
+              id
+              namespace
+              key
+              value
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      const metafieldVariables = {
+        metafields: [
+          {
+            ownerId: draftOrderData.draftOrder.id,
+            namespace: "custom",
+            key: "order_configuration",
+            type: "json",
+            value: JSON.stringify(body.configurationData)
+          }
+        ]
+      };
+
+      try {
+        const metafieldResponse = await admin.graphql(metafieldsSetMutation, {
+          variables: metafieldVariables
+        });
+        const metafieldResult = await metafieldResponse.json();
+
+        if (metafieldResult.data?.metafieldsSet?.userErrors?.length > 0) {
+          console.error('⚠️ Metafield creation errors:', metafieldResult.data.metafieldsSet.userErrors);
+        } else {
+          console.log('✅ Configuration metafield added successfully');
+        }
+      } catch (metafieldError) {
+        console.error('⚠️ Failed to add metafield (non-critical):', metafieldError);
+        // Don't fail the order creation if metafield fails
+      }
+    }
+
     return json({
       draftOrder: {
         id: draftOrderData.draftOrder.id,

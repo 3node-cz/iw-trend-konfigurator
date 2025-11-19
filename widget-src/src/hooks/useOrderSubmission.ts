@@ -221,25 +221,94 @@ export const useOrderSubmission = () => {
 
         // 3. Create cart/draft order via backend API (recommended approach)
         // Pass all order form data as custom attributes
-        const result = await createCartViaBackend(allLineItems, {
-          orderName: completeOrder.order.orderName,
-          deliveryDate: completeOrder.order.deliveryDate?.toISOString(),
-          transferLocation: completeOrder.order.transferLocation,
-          costCenter: completeOrder.order.costCenter,
-          cuttingCenter: completeOrder.order.cuttingCenter,
-          deliveryMethod: completeOrder.order.deliveryMethod,
-          processingType: completeOrder.order.processingType,
-          customerName: completeOrder.order.customerName,
-          company: completeOrder.order.company,
-          notes: completeOrder.order.notes,
-          discountPercentage: completeOrder.order.discountPercentage?.toString(),
-          totalPieces: completeOrder.specifications.reduce(
-            (sum, spec) => sum + spec.pieces.reduce((ps, p) => ps + p.quantity, 0),
-            0
-          ).toString(),
-          totalBoards: (completeOrder.cuttingLayouts?.length || 0).toString(),
-          materialNames: completeOrder.specifications.map(s => s.material.title).join(', '),
-        });
+        const result = await createCartViaBackend(
+          allLineItems,
+          {
+            orderName: completeOrder.order.orderName,
+            deliveryDate: completeOrder.order.deliveryDate?.toISOString(),
+            transferLocation: completeOrder.order.transferLocation,
+            costCenter: completeOrder.order.costCenter,
+            cuttingCenter: completeOrder.order.cuttingCenter,
+            deliveryMethod: completeOrder.order.deliveryMethod,
+            processingType: completeOrder.order.processingType,
+            customerName: completeOrder.order.customerName,
+            company: completeOrder.order.company,
+            notes: completeOrder.order.notes,
+            discountPercentage: completeOrder.order.discountPercentage?.toString(),
+            totalPieces: completeOrder.specifications.reduce(
+              (sum, spec) => sum + spec.pieces.reduce((ps, p) => ps + p.quantity, 0),
+              0
+            ).toString(),
+            totalBoards: (completeOrder.cuttingLayouts?.length || 0).toString(),
+            materialNames: completeOrder.specifications.map(s => s.material.title).join(', '),
+          },
+          {
+            // Configuration data to be stored in metafield
+            order: completeOrder.order,
+            specifications: completeOrder.specifications.map(spec => ({
+              material: {
+                id: spec.material.id,
+                title: spec.material.title,
+                handle: spec.material.handle,
+              },
+              edgeMaterial: spec.edgeMaterial ? {
+                id: spec.edgeMaterial.id,
+                name: spec.edgeMaterial.name,
+                edgeWidth: spec.edgeMaterial.edgeWidth,
+              } : null,
+              glueType: spec.glueType,
+              pieces: spec.pieces.map(piece => ({
+                id: piece.id,
+                partName: piece.partName,
+                length: piece.length,
+                width: piece.width,
+                quantity: piece.quantity,
+                allowRotation: piece.allowRotation,
+                withoutEdge: piece.withoutEdge,
+                isDupel: piece.isDupel,
+                edgeTop: piece.edgeTop,
+                edgeBottom: piece.edgeBottom,
+                edgeLeft: piece.edgeLeft,
+                edgeRight: piece.edgeRight,
+                edgeAllAround: piece.edgeAllAround,
+                algorithmValue: piece.algorithmValue,
+                notes: piece.notes,
+                customEdgeTop: piece.customEdgeTop ? {
+                  id: piece.customEdgeTop.id,
+                  name: piece.customEdgeTop.name,
+                  edgeWidth: piece.customEdgeTop.edgeWidth,
+                } : null,
+                customEdgeBottom: piece.customEdgeBottom ? {
+                  id: piece.customEdgeBottom.id,
+                  name: piece.customEdgeBottom.name,
+                  edgeWidth: piece.customEdgeBottom.edgeWidth,
+                } : null,
+                customEdgeLeft: piece.customEdgeLeft ? {
+                  id: piece.customEdgeLeft.id,
+                  name: piece.customEdgeLeft.name,
+                  edgeWidth: piece.customEdgeLeft.edgeWidth,
+                } : null,
+                customEdgeRight: piece.customEdgeRight ? {
+                  id: piece.customEdgeRight.id,
+                  name: piece.customEdgeRight.name,
+                  edgeWidth: piece.customEdgeRight.edgeWidth,
+                } : null,
+              })),
+            })),
+            cuttingLayouts: completeOrder.cuttingLayouts?.map(layout => ({
+              materialIndex: layout.materialIndex,
+              boardNumber: layout.boardNumber,
+              materialName: layout.materialName,
+              totalPieces: layout.totalPieces,
+              efficiency: layout.efficiency,
+            })),
+            orderCalculations: completeOrder.orderCalculations ? {
+              totals: completeOrder.orderCalculations.totals,
+              edgeConsumption: completeOrder.orderCalculations.edgeConsumption,
+            } : null,
+            timestamp: new Date().toISOString(),
+          }
+        );
 
         // Alternative: Use Storefront API (requires manual token setup)
         // const result = await createCartStorefront(allLineItems)

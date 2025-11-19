@@ -38,6 +38,7 @@ import {
   SaveOrderButton,
 } from "./common";
 import OrderInvoiceTable from "./OrderInvoiceTable";
+import CuttingPiecesTable from "./CuttingPiecesTable";
 import { useCuttingLayouts, useOrderCalculations } from "../hooks";
 import { useOrderSubmission } from "../hooks/useOrderSubmission";
 import { useCustomer } from "../hooks/useCustomer";
@@ -357,6 +358,23 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
         orderCalculations={orderCalculations}
         order={order}
       />
+
+      {/* Configuration Tables - Readonly view of cutting pieces */}
+      {specifications.map((spec, index) => (
+        <Paper key={index} sx={{ p: 3, mt: 3, mb: 3 }}>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+            Konfigurácia - {spec.material.title}
+          </Typography>
+          <CuttingPiecesTable
+            pieces={spec.pieces}
+            edgeMaterial={spec.edgeMaterial}
+            availableEdges={spec.availableEdges}
+            onPieceChange={() => {}} // No-op in readonly mode
+            onRemovePiece={() => {}} // No-op in readonly mode
+            readonly={true}
+          />
+        </Paper>
+      ))}
 
       {/* Cutting Layout Diagrams - Grouped Thumbnail View */}
       {cuttingLayouts.length > 0 ? (

@@ -48,6 +48,7 @@ interface CuttingPiecesTableProps {
   onPreviewPiece?: (piece: CuttingPiece) => void;
   onFieldBlur?: (pieceId: string, fieldName: 'length' | 'width') => void;
   validationErrors?: { [pieceId: string]: string[] };
+  readonly?: boolean; // If true, show static text instead of editable inputs
 }
 
 const columnHelper = createColumnHelper<CuttingPiece>();
@@ -62,6 +63,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   onPreviewPiece,
   onFieldBlur,
   validationErrors = {},
+  readonly = false,
 }) => {
   // Get messages from settings
   const messages = useMemo(() => {
@@ -166,6 +168,12 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
     [],
   );
 
+  // Helper function to get edge display text for readonly mode
+  const getEdgeDisplayText = useCallback((edgeWidth: number | null): string => {
+    if (edgeWidth === null) return "-";
+    return `${edgeWidth}mm`;
+  }, []);
+
   // Enhanced change handler with reactive edge logic
   // Use ref to access pieces without adding it to dependencies
   const handlePieceChange = useCallback(
@@ -252,7 +260,9 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         size: 150,
         cell: ({ row }) => {
           const piece = row.original;
-          return (
+          return readonly ? (
+            <Typography variant="body2">{piece.partName || "-"}</Typography>
+          ) : (
             <DebouncedTextInput
               initialValue={piece.partName || ""}
               onChange={(value) =>
@@ -275,7 +285,9 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
           const errors = validationErrorsRef.current[piece.id] || [];
           const { hasLengthError } = getFieldErrors(errors);
 
-          return (
+          return readonly ? (
+            <Typography variant="body2">{piece.length || 0}mm</Typography>
+          ) : (
             <DebouncedNumberInput
               initialValue={piece.length || 0}
               onChange={(value) =>
@@ -309,7 +321,9 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
           const errors = validationErrorsRef.current[piece.id] || [];
           const { hasWidthError } = getFieldErrors(errors);
 
-          return (
+          return readonly ? (
+            <Typography variant="body2">{piece.width || 0}mm</Typography>
+          ) : (
             <DebouncedNumberInput
               initialValue={piece.width || 0}
               onChange={(value) =>
@@ -340,7 +354,9 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         size: 75,
         cell: ({ row }) => {
           const piece = row.original;
-          return (
+          return readonly ? (
+            <Typography variant="body2">{piece.quantity}ks</Typography>
+          ) : (
             <DebouncedNumberInput
               initialValue={piece.quantity}
               onChange={(value) =>
@@ -361,6 +377,20 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         size: 150,
         cell: ({ row }) => {
           const piece = row.original;
+
+          if (readonly) {
+            const options = [];
+            if (piece.allowRotation) options.push("Rotácia");
+            if (piece.withoutEdge) options.push("Bez orezu");
+            if (piece.isDupel) options.push("Dupel");
+
+            return (
+              <Typography variant="body2">
+                {options.length > 0 ? options.join(", ") : "-"}
+              </Typography>
+            );
+          }
+
           return (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
               <Box
@@ -483,7 +513,9 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         size: 80,
         cell: ({ row }) => {
           const piece = row.original;
-          return (
+          return readonly ? (
+            <Typography variant="body2">{getEdgeDisplayText(piece.edgeAllAround)}</Typography>
+          ) : (
             <EdgeThicknessSelect
               value={piece.edgeAllAround}
               onChange={(value) =>
@@ -505,7 +537,9 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         size: 70,
         cell: ({ row }) => {
           const piece = row.original;
-          return (
+          return readonly ? (
+            <Typography variant="body2">{getEdgeDisplayText(piece.edgeBottom)}</Typography>
+          ) : (
             <EdgeThicknessSelect
               value={piece.edgeBottom}
               onChange={(value) =>
@@ -527,7 +561,9 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         size: 70,
         cell: ({ row }) => {
           const piece = row.original;
-          return (
+          return readonly ? (
+            <Typography variant="body2">{getEdgeDisplayText(piece.edgeTop)}</Typography>
+          ) : (
             <EdgeThicknessSelect
               value={piece.edgeTop}
               onChange={(value) =>
@@ -549,7 +585,9 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         size: 70,
         cell: ({ row }) => {
           const piece = row.original;
-          return (
+          return readonly ? (
+            <Typography variant="body2">{getEdgeDisplayText(piece.edgeLeft)}</Typography>
+          ) : (
             <EdgeThicknessSelect
               value={piece.edgeLeft}
               onChange={(value) =>
@@ -571,7 +609,9 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         size: 70,
         cell: ({ row }) => {
           const piece = row.original;
-          return (
+          return readonly ? (
+            <Typography variant="body2">{getEdgeDisplayText(piece.edgeRight)}</Typography>
+          ) : (
             <EdgeThicknessSelect
               value={piece.edgeRight}
               onChange={(value) =>
@@ -586,8 +626,8 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         },
       }),
 
-      // Custom Edge Button column
-      columnHelper.display({
+      // Custom Edge Button column - hide in readonly mode
+      ...(!readonly ? [columnHelper.display({
         id: "customEdgeButton",
         header: "",
         size: 50,
@@ -612,7 +652,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
             </Tooltip>
           ) : null;
         },
-      }),
+      })] : []),
 
       // Block column (moved after edges)
       columnHelper.display({
@@ -622,7 +662,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
             <Typography variant="caption" sx={{ fontWeight: 600 }}>
               Blok
             </Typography>
-            <HelpTooltip
+            {!readonly && <HelpTooltip
               title={
                 <>
                   Blok označuje skupinu dielcov, ktoré majú byť nadelené z jednej tabule.
@@ -630,13 +670,15 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
                   Rôzne bloky budú optimalizované samostatne.
                 </>
               }
-            />
+            />}
           </Box>
         ),
         size: 70,
         cell: ({ row }) => {
           const piece = row.original;
-          return (
+          return readonly ? (
+            <Typography variant="body2">{piece.algorithmValue || 0}</Typography>
+          ) : (
             <DebouncedNumberInput
               initialValue={piece.algorithmValue || 0}
               onChange={(value) =>
@@ -656,7 +698,15 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       columnHelper.accessor("notes", {
         header: "Poznámka",
         size: 200,
-        cell: ({ row, getValue }) => (
+        cell: ({ row, getValue }) => readonly ? (
+          <Typography variant="body2" sx={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap"
+          }}>
+            {getValue() || "-"}
+          </Typography>
+        ) : (
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             <DebouncedTextInput
               initialValue={getValue() || ""}
@@ -692,7 +742,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         ),
       }),
 
-      // Preview Button - Miniature shape
+      // Preview Button - Miniature shape (keep in readonly for visual reference)
       columnHelper.display({
         id: "preview",
         header: "Náhľad",
@@ -700,14 +750,14 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         cell: ({ row }) => {
           const piece = row.original;
           return (
-            <Tooltip title="Kliknutím zobraziť náhľad dielca">
+            <Tooltip title={readonly ? "Náhľad dielca" : "Kliknutím zobraziť náhľad dielca"}>
               <Box
-                onClick={() => onPreviewPiece?.(piece)}
+                onClick={() => !readonly && onPreviewPiece?.(piece)}
                 sx={{
-                  cursor: onPreviewPiece ? 'pointer' : 'default',
-                  opacity: onPreviewPiece ? 1 : 0.5,
+                  cursor: !readonly && onPreviewPiece ? 'pointer' : 'default',
+                  opacity: 1,
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                  '&:hover': onPreviewPiece ? {
+                  '&:hover': !readonly && onPreviewPiece ? {
                     transform: 'scale(1.1)',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                   } : {},
@@ -729,8 +779,8 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
         },
       }),
 
-      // Copy Piece Button
-      columnHelper.display({
+      // Copy Piece Button - hide in readonly mode
+      ...(!readonly ? [columnHelper.display({
         id: "copyPiece",
         header: "Kopírovať",
         size: 90,
@@ -749,10 +799,10 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
             </Tooltip>
           );
         },
-      }),
+      })] : []),
 
-      // Delete Button
-      columnHelper.display({
+      // Delete Button - hide in readonly mode
+      ...(!readonly ? [columnHelper.display({
         id: "actions",
         header: "Odstrániť",
         size: 90,
@@ -769,7 +819,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
             </Tooltip>
           );
         },
-      }),
+      })] : []),
     ],
     [
       edgeMaterial,
@@ -778,6 +828,8 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       handleRemovePiece,
       onCopyPiece,
       getFieldErrors,
+      readonly,
+      getEdgeDisplayText,
     ],
   );
 
