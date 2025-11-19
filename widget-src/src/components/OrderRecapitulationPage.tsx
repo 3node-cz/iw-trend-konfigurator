@@ -21,6 +21,7 @@ import {
   Send as SendIcon,
   CheckCircle as CheckCircleIcon,
   Print as PrintIcon,
+  Download as DownloadIcon,
 } from "@mui/icons-material";
 import Grid from "@mui/system/Grid";
 import type {
@@ -51,6 +52,7 @@ import {
 } from "../utils/layoutGrouping";
 import { createDraftOrderService } from "../services/draftOrderService";
 import { createSavedOrder } from "../types/savedOrder";
+import { exportOrderToCsv } from "../services/csvExportService";
 
 interface OrderRecapitulationPageProps {
   order: OrderFormData;
@@ -171,6 +173,37 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     window.print();
   };
 
+  // CSV Export handlers
+  const handleExportMens = () => {
+    const completeOrder: CompleteOrder = {
+      order,
+      specifications,
+      cuttingLayouts,
+      orderCalculations,
+    };
+    exportOrderToCsv(completeOrder, 'MENS');
+  };
+
+  const handleExportStandard = () => {
+    const completeOrder: CompleteOrder = {
+      order,
+      specifications,
+      cuttingLayouts,
+      orderCalculations,
+    };
+    exportOrderToCsv(completeOrder, 'STANDARD');
+  };
+
+  const handleExportBicorn = () => {
+    const completeOrder: CompleteOrder = {
+      order,
+      specifications,
+      cuttingLayouts,
+      orderCalculations,
+    };
+    exportOrderToCsv(completeOrder, 'BICORN');
+  };
+
   // Calculate discounted cutting cost
   const rawCuttingCost = orderCalculations.totals.totalCuttingCost;
   const discountedCuttingCost =
@@ -255,6 +288,30 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
             disabled={isSubmitting}
           >
             Tlačiť / PDF
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={handleExportMens}
+            disabled={isSubmitting}
+          >
+            CSV MENS
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={handleExportStandard}
+            disabled={isSubmitting}
+          >
+            CSV Standard
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={handleExportBicorn}
+            disabled={isSubmitting}
+          >
+            CSV BICORN
           </Button>
           {customer && (
             <SaveOrderButton

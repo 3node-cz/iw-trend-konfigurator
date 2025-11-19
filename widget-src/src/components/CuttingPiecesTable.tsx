@@ -509,7 +509,12 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       // Edge All Around column
       columnHelper.display({
         id: "edgeAllAround",
-        header: "Hrana dookola",
+        header: () => (
+          <>
+            <span data-full-text="true">Hrana dookola</span>
+            <span data-abbr-text="true" style={{ display: 'none' }}>Dok.</span>
+          </>
+        ),
         size: 80,
         cell: ({ row }) => {
           const piece = row.original;
@@ -533,7 +538,12 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       // Bottom Edge column
       columnHelper.display({
         id: "edgeBottom",
-        header: "Spodná",
+        header: () => (
+          <>
+            <span data-full-text="true">Spodná</span>
+            <span data-abbr-text="true" style={{ display: 'none' }}>S</span>
+          </>
+        ),
         size: 70,
         cell: ({ row }) => {
           const piece = row.original;
@@ -557,7 +567,12 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       // Top Edge column
       columnHelper.display({
         id: "edgeTop",
-        header: "Vrchná",
+        header: () => (
+          <>
+            <span data-full-text="true">Vrchná</span>
+            <span data-abbr-text="true" style={{ display: 'none' }}>V</span>
+          </>
+        ),
         size: 70,
         cell: ({ row }) => {
           const piece = row.original;
@@ -581,7 +596,12 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       // Left Edge column
       columnHelper.display({
         id: "edgeLeft",
-        header: "Ľavá",
+        header: () => (
+          <>
+            <span data-full-text="true">Ľavá</span>
+            <span data-abbr-text="true" style={{ display: 'none' }}>Ľ</span>
+          </>
+        ),
         size: 70,
         cell: ({ row }) => {
           const piece = row.original;
@@ -605,7 +625,12 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
       // Right Edge column
       columnHelper.display({
         id: "edgeRight",
-        header: "Pravá",
+        header: () => (
+          <>
+            <span data-full-text="true">Pravá</span>
+            <span data-abbr-text="true" style={{ display: 'none' }}>P</span>
+          </>
+        ),
         size: 70,
         cell: ({ row }) => {
           const piece = row.original;
@@ -930,7 +955,7 @@ const CuttingPiecesTable: React.FC<CuttingPiecesTableProps> = ({
   return (
     <>
       <TableContainer sx={{ overflowX: "auto" }}>
-        <Table stickyHeader size="small">
+        <Table stickyHeader size="small" data-table="cutting-pieces">
           <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>

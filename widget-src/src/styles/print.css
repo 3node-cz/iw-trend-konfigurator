@@ -260,6 +260,99 @@
     page-break-inside: auto;
     page-break-before: auto;
   }
+
+  /* Cutting Pieces Table - Compact Print View */
+
+  /* Hide less critical columns in print */
+  .universal-configurator table th:has([data-print-hide="true"]),
+  .universal-configurator table td:has([data-print-hide="true"]) {
+    display: none !important;
+  }
+
+  /* More compact table cells for cutting pieces table */
+  .universal-configurator .MuiTableCell-root {
+    padding: 2px 4px !important;
+    font-size: 7pt !important;
+    white-space: nowrap;
+  }
+
+  .universal-configurator .MuiTableCell-head {
+    padding: 3px 4px !important;
+    font-size: 7.5pt !important;
+  }
+
+  /* Compact column widths for print */
+  .universal-configurator table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  /* Specific column widths for cutting pieces table */
+  .universal-configurator table[data-table="cutting-pieces"] th:nth-child(1),
+  .universal-configurator table[data-table="cutting-pieces"] td:nth-child(1) {
+    width: 15%; /* Part Name */
+  }
+
+  .universal-configurator table[data-table="cutting-pieces"] th:nth-child(2),
+  .universal-configurator table[data-table="cutting-pieces"] td:nth-child(2) {
+    width: 8%; /* Length */
+  }
+
+  .universal-configurator table[data-table="cutting-pieces"] th:nth-child(3),
+  .universal-configurator table[data-table="cutting-pieces"] td:nth-child(3) {
+    width: 8%; /* Width */
+  }
+
+  .universal-configurator table[data-table="cutting-pieces"] th:nth-child(4),
+  .universal-configurator table[data-table="cutting-pieces"] td:nth-child(4) {
+    width: 6%; /* Quantity */
+  }
+
+  .universal-configurator table[data-table="cutting-pieces"] th:nth-child(5),
+  .universal-configurator table[data-table="cutting-pieces"] td:nth-child(5) {
+    width: 12%; /* Options */
+  }
+
+  /* Edge columns - very compact */
+  .universal-configurator table[data-table="cutting-pieces"] th:nth-child(6),
+  .universal-configurator table[data-table="cutting-pieces"] td:nth-child(6),
+  .universal-configurator table[data-table="cutting-pieces"] th:nth-child(7),
+  .universal-configurator table[data-table="cutting-pieces"] td:nth-child(7),
+  .universal-configurator table[data-table="cutting-pieces"] th:nth-child(8),
+  .universal-configurator table[data-table="cutting-pieces"] td:nth-child(8),
+  .universal-configurator table[data-table="cutting-pieces"] th:nth-child(9),
+  .universal-configurator table[data-table="cutting-pieces"] td:nth-child(9),
+  .universal-configurator table[data-table="cutting-pieces"] th:nth-child(10),
+  .universal-configurator table[data-table="cutting-pieces"] td:nth-child(10) {
+    width: 5%; /* Each edge column */
+  }
+
+  .universal-configurator table[data-table="cutting-pieces"] th:nth-child(11),
+  .universal-configurator table[data-table="cutting-pieces"] td:nth-child(11) {
+    width: 6%; /* Block */
+  }
+
+  .universal-configurator table[data-table="cutting-pieces"] th:nth-child(12),
+  .universal-configurator table[data-table="cutting-pieces"] td:nth-child(12) {
+    width: 20%; /* Notes */
+    white-space: normal !important;
+    word-wrap: break-word;
+  }
+
+  /* Hide preview column in print */
+  .universal-configurator table[data-table="cutting-pieces"] th:nth-last-child(1),
+  .universal-configurator table[data-table="cutting-pieces"] td:nth-last-child(1) {
+    display: none !important;
+  }
+
+  /* Abbreviate edge column headers for print */
+  .universal-configurator table[data-table="cutting-pieces"] th span[data-full-text] {
+    display: none;
+  }
+
+  .universal-configurator table[data-table="cutting-pieces"] th span[data-abbr-text] {
+    display: inline;
+  }
 }
 
 /* Default state - hide print-only elements */
