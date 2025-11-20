@@ -82,6 +82,10 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
   // Unique ID for mask
   const maskId = `piece-mask-${React.useId()}`
 
+  // Adjust edge indicator positioning and size for small vs large previews
+  const edgeOffset = isLargePreview ? 6 : 4 // Smaller offset for thumbnails
+  const edgeStrokeWidth = isLargePreview ? 3 : 4 // Thicker stroke for thumbnails
+
   return (
     <Box
       sx={{
@@ -89,7 +93,9 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
         height: finalHeight,
         position: 'relative',
         mx: 'auto',
-        overflow: 'hidden',
+        // Allow overflow for small thumbnails so edge indicators are visible
+        // For large previews, keep hidden to clip the background image
+        overflow: isLargePreview ? 'hidden' : 'visible',
       }}
     >
       {/* Material background image - rotated 90deg, masked by SVG shape */}
@@ -174,11 +180,11 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
               {edgeThicknesses.top && (
                 <line
                   x1={0}
-                  y1={-6}
+                  y1={-edgeOffset}
                   x2={svgWidth}
-                  y2={-6}
+                  y2={-edgeOffset}
                   stroke={getEdgeColor(edgeThicknesses.top)}
-                  strokeWidth={getEdgeStrokeWidth(edgeThicknesses.top)}
+                  strokeWidth={edgeStrokeWidth}
                   strokeLinecap="round"
                 />
               )}
@@ -186,12 +192,12 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
               {/* Right edge */}
               {edgeThicknesses.right && (
                 <line
-                  x1={svgWidth + 6}
+                  x1={svgWidth + edgeOffset}
                   y1={0}
-                  x2={svgWidth + 6}
+                  x2={svgWidth + edgeOffset}
                   y2={svgHeight}
                   stroke={getEdgeColor(edgeThicknesses.right)}
-                  strokeWidth={getEdgeStrokeWidth(edgeThicknesses.right)}
+                  strokeWidth={edgeStrokeWidth}
                   strokeLinecap="round"
                 />
               )}
@@ -200,11 +206,11 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
               {edgeThicknesses.bottom && (
                 <line
                   x1={0}
-                  y1={svgHeight + 6}
+                  y1={svgHeight + edgeOffset}
                   x2={svgWidth}
-                  y2={svgHeight + 6}
+                  y2={svgHeight + edgeOffset}
                   stroke={getEdgeColor(edgeThicknesses.bottom)}
-                  strokeWidth={getEdgeStrokeWidth(edgeThicknesses.bottom)}
+                  strokeWidth={edgeStrokeWidth}
                   strokeLinecap="round"
                 />
               )}
@@ -212,12 +218,12 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
               {/* Left edge */}
               {edgeThicknesses.left && (
                 <line
-                  x1={-6}
+                  x1={-edgeOffset}
                   y1={0}
-                  x2={-6}
+                  x2={-edgeOffset}
                   y2={svgHeight}
                   stroke={getEdgeColor(edgeThicknesses.left)}
-                  strokeWidth={getEdgeStrokeWidth(edgeThicknesses.left)}
+                  strokeWidth={edgeStrokeWidth}
                   strokeLinecap="round"
                 />
               )}

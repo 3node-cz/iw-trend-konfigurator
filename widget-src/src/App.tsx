@@ -215,24 +215,9 @@ function App() {
       };
       setCurrentOrder(fixedOrderInfo);
 
-      setSelectedMaterials(
-        specifications.map((spec, index) => {
-          try {
-            const quantity = spec.pieces.reduce(
-              (sum, piece) => sum + piece.quantity,
-              0,
-            );
-            return transformToSelectedMaterial(spec.material, quantity);
-          } catch (err) {
-            console.error(
-              `Error processing spec ${index}:`,
-              err,
-              spec.material,
-            );
-            throw err;
-          }
-        }),
-      );
+      // Keep the full MaterialSearchResult objects (don't transform to SelectedMaterial)
+      // This preserves all fields needed by ProductSelectionCard (title, handle, variant, etc.)
+      setSelectedMaterials(specifications.map((spec) => spec.material));
       setCuttingSpecifications(specifications);
 
       // Navigate to the step where the order was saved, or recapitulation as fallback

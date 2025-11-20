@@ -271,18 +271,38 @@
 
   /* More compact table cells for cutting pieces table */
   .universal-configurator .MuiTableCell-root {
-    padding: 2px 4px !important;
+    padding: 1px 2px !important;
     font-size: 7pt !important;
     white-space: nowrap;
+    line-height: 1.2 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    vertical-align: middle !important;
+  }
+
+  /* Override the 80px height from CuttingPiecesTable component */
+  .universal-configurator table[data-table="cutting-pieces"] td {
+    height: auto !important;
+    padding: 1px 2px !important;
   }
 
   .universal-configurator .MuiTableCell-head {
-    padding: 3px 4px !important;
+    padding: 2px 2px !important;
     font-size: 7.5pt !important;
+    line-height: 1.2 !important;
+    height: auto !important;
   }
 
-  /* Compact column widths for print */
+  /* Make table rows more compact */
+  .universal-configurator .MuiTableRow-root {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  /* Compact table layout - remove spacing and set widths */
   .universal-configurator table {
+    border-spacing: 0 !important;
+    border-collapse: collapse !important;
     table-layout: fixed;
     width: 100%;
   }
