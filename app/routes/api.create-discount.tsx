@@ -152,12 +152,40 @@ export async function action({ request }: ActionFunctionArgs) {
     const response = await admin.graphql(mutation, { variables });
     const result = await response.json();
 
+    // Log the full response for debugging
+    console.log('📦 GraphQL Response:', JSON.stringify(result, null, 2));
+
+    // Check for GraphQL errors (cast to any to avoid TS error)
+    const resultData = result as any;
+    if (resultData.errors) {
+      console.error('❌ GraphQL errors:', JSON.stringify(resultData.errors, null, 2));
+      return json({
+        success: false,
+        error: "GraphQL error",
+        details: resultData.errors
+      }, {
+        status: 400,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      });
+    }
+
     if (result.data?.discountCodeBasicCreate?.userErrors?.length > 0) {
-      console.error('❌ GraphQL errors:', result.data.discountCodeBasicCreate.userErrors);
+      console.error('❌ User errors:', JSON.stringify(result.data.discountCodeBasicCreate.userErrors, null, 2));
       return json({
         success: false,
         error: "Failed to create discount",
         details: result.data.discountCodeBasicCreate.userErrors
+      }, {
+        status: 400,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      });
+    }
+
+    if (!result.data?.discountCodeBasicCreate?.codeDiscountNode) {
+      console.error('❌ No discount node returned:', JSON.stringify(result, null, 2));
+      return json({
+        success: false,
+        error: "Discount creation returned null"
       }, {
         status: 400,
         headers: { "Access-Control-Allow-Origin": "*" }
