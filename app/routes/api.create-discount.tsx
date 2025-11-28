@@ -1,12 +1,32 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { authenticate } from "~/shopify.server";
+
+// Handle CORS preflight
+export async function loader({ request }: LoaderFunctionArgs) {
+  if (request.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+    });
+  }
+  return json({ error: "Method not allowed" }, { status: 405 });
+}
 
 export async function action({ request }: ActionFunctionArgs) {
   console.log('🎯 Create discount endpoint hit');
 
   if (request.method !== "POST") {
-    return json({ error: "Method not allowed" }, { status: 405 });
+    return json({ error: "Method not allowed" }, {
+      status: 405,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+      }
+    });
   }
 
   try {
@@ -14,11 +34,17 @@ export async function action({ request }: ActionFunctionArgs) {
     const { session, admin } = await authenticate.public.appProxy(request);
 
     if (!session?.shop) {
-      return json({ error: "No shop session found" }, { status: 401 });
+      return json({ error: "No shop session found" }, {
+        status: 401,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      });
     }
 
     if (!admin) {
-      return json({ error: "Admin API not available" }, { status: 401 });
+      return json({ error: "Admin API not available" }, {
+        status: 401,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      });
     }
 
     // Parse request body
@@ -27,7 +53,10 @@ export async function action({ request }: ActionFunctionArgs) {
     if (!customerId || !discountAmount) {
       return json({
         error: "Missing required fields: customerId, discountAmount"
-      }, { status: 400 });
+      }, {
+        status: 400,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      });
     }
 
     console.log('💰 Creating discount:', {
@@ -129,7 +158,10 @@ export async function action({ request }: ActionFunctionArgs) {
         success: false,
         error: "Failed to create discount",
         details: result.data.discountCodeBasicCreate.userErrors
-      }, { status: 400 });
+      }, {
+        status: 400,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      });
     }
 
     console.log('✅ Discount created successfully:', discountCode);
@@ -138,6 +170,10 @@ export async function action({ request }: ActionFunctionArgs) {
       success: true,
       discountCode: discountCode,
       message: "Discount code created successfully"
+    }, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+      }
     });
 
   } catch (error) {
@@ -146,6 +182,11 @@ export async function action({ request }: ActionFunctionArgs) {
     return json({
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred"
-    }, { status: 500 });
+    }, {
+      status: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+      }
+    });
   }
 }
