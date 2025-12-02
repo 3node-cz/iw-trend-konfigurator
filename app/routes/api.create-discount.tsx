@@ -66,7 +66,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     // Generate unique discount code
     const timestamp = Date.now();
-    const discountCode = `CUSTOM-${customerId}-${timestamp}`;
+    const discountCode = `ZLAVA-${customerId}-${timestamp}`;
 
     // Create discount code using GraphQL Admin API
     const mutation = `
