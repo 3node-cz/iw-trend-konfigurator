@@ -111,11 +111,19 @@ export async function action({ request }: ActionFunctionArgs) {
       });
     }
 
+    // Normalize phone number - Shopify requires space after country code
+    let normalizedPhone = phone;
+    if (phone) {
+      // If phone starts with + and has no space after country code, add it
+      // Example: +421123456789 -> +421 123456789
+      normalizedPhone = phone.replace(/^(\+\d{1,3})(\d)/, '$1 $2');
+    }
+
     console.log('📝 Creating customer:', {
       firstName,
       lastName,
       email,
-      phone,
+      phone: normalizedPhone,
       companyName,
       ico,
       dic,
@@ -134,7 +142,7 @@ export async function action({ request }: ActionFunctionArgs) {
     if (companyName) {
       metafields.push({
         namespace: "custom",
-        key: "company_name",
+        key: "nazov_firmy",
         value: companyName,
         type: "single_line_text_field"
       });
@@ -206,7 +214,7 @@ export async function action({ request }: ActionFunctionArgs) {
       firstName,
       lastName,
       email,
-      ...(phone && { phone }),
+      ...(normalizedPhone && { phone: normalizedPhone }),
       ...(note && { note }),
       ...(metafields.length > 0 && { metafields }),
     };
