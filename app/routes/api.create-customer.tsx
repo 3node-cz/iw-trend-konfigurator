@@ -2,6 +2,96 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { authenticate } from "~/shopify.server";
 
+// Types for structured error responses
+interface FieldError {
+  field: string;
+  message: string;
+}
+
+interface ErrorResponse {
+  success: false;
+  error: string;
+  fieldErrors?: FieldError[];
+  details?: any;
+}
+
+// Validation functions
+function validateEmail(email: string): string | null {
+  if (!email || !email.trim()) {
+    return "E-mailová adresa je povinná";
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return "Zadajte platnú e-mailovú adresu";
+  }
+  return null;
+}
+
+function validateRequired(value: string, fieldName: string): string | null {
+  if (!value || !value.trim()) {
+    return `${fieldName} je povinné`;
+  }
+  return null;
+}
+
+function validatePhone(phone: string): string | null {
+  if (!phone) return null; // Phone is optional
+
+  // Remove spaces and check if it's a valid format
+  const cleanPhone = phone.replace(/\s/g, '');
+
+  // Must start with + and contain only digits after that
+  if (!/^\+\d{10,15}$/.test(cleanPhone)) {
+    return "Telefónne číslo musí byť vo formáte +421123456789";
+  }
+
+  return null;
+}
+
+// Map Shopify GraphQL field names to our form field names
+function mapShopifyFieldToFormField(shopifyField: string[]): string {
+  if (!shopifyField || shopifyField.length === 0) return 'general';
+
+  const field = shopifyField[shopifyField.length - 1];
+
+  const fieldMap: Record<string, string> = {
+    'firstName': 'firstName',
+    'lastName': 'lastName',
+    'email': 'email',
+    'phone': 'phone',
+    'first_name': 'firstName',
+    'last_name': 'lastName',
+  };
+
+  return fieldMap[field] || 'general';
+}
+
+// Translate common Shopify error messages to Slovak
+function translateShopifyError(message: string): string {
+  const translations: Record<string, string> = {
+    'Email has already been taken': 'Tento e-mail je už zaregistrovaný',
+    'Email is invalid': 'E-mailová adresa nie je platná',
+    'Phone is invalid': 'Telefónne číslo nie je platné',
+    'First name can\'t be blank': 'Meno je povinné',
+    'Last name can\'t be blank': 'Priezvisko je povinné',
+    'Email can\'t be blank': 'E-mailová adresa je povinná',
+  };
+
+  // Check for exact match
+  if (translations[message]) {
+    return translations[message];
+  }
+
+  // Check for partial matches
+  for (const [key, value] of Object.entries(translations)) {
+    if (message.includes(key)) {
+      return value;
+    }
+  }
+
+  return message;
+}
+
 // Handle CORS preflight
 export async function loader({ request }: LoaderFunctionArgs) {
   if (request.method === "OPTIONS") {
@@ -101,10 +191,37 @@ export async function action({ request }: ActionFunctionArgs) {
 
     console.log('✅ Session loaded for shop:', shop);
 
+    // Validate all fields
+    const fieldErrors: FieldError[] = [];
+
     // Validate required fields
-    if (!firstName || !lastName || !email) {
+    const firstNameError = validateRequired(firstName, "Meno");
+    if (firstNameError) {
+      fieldErrors.push({ field: 'firstName', message: firstNameError });
+    }
+
+    const lastNameError = validateRequired(lastName, "Priezvisko");
+    if (lastNameError) {
+      fieldErrors.push({ field: 'lastName', message: lastNameError });
+    }
+
+    const emailError = validateEmail(email);
+    if (emailError) {
+      fieldErrors.push({ field: 'email', message: emailError });
+    }
+
+    // Validate optional fields
+    const phoneError = validatePhone(phone);
+    if (phoneError) {
+      fieldErrors.push({ field: 'phone', message: phoneError });
+    }
+
+    // Return validation errors if any
+    if (fieldErrors.length > 0) {
       return json({
-        error: "Missing required fields: firstName, lastName, email"
+        success: false,
+        error: "Prosím opravte chyby vo formulári",
+        fieldErrors
       }, {
         status: 400,
         headers: { "Access-Control-Allow-Origin": "*" }
@@ -244,7 +361,7 @@ export async function action({ request }: ActionFunctionArgs) {
       console.error('❌ GraphQL errors:', JSON.stringify(resultData.errors, null, 2));
       return json({
         success: false,
-        error: "GraphQL error",
+        error: "Nastala chyba pri komunikácii so serverom. Prosím skúste to znova.",
         details: resultData.errors
       }, {
         status: 400,
@@ -254,9 +371,27 @@ export async function action({ request }: ActionFunctionArgs) {
 
     if (result.data?.customerCreate?.userErrors?.length > 0) {
       console.error('❌ User errors:', JSON.stringify(result.data.customerCreate.userErrors, null, 2));
+
+      // Map Shopify userErrors to our field-level errors
+      const mappedFieldErrors: FieldError[] = result.data.customerCreate.userErrors.map((error: any) => {
+        const field = mapShopifyFieldToFormField(error.field || []);
+        const translatedMessage = translateShopifyError(error.message);
+        return {
+          field,
+          message: translatedMessage
+        };
+      });
+
+      // Separate general errors from field-specific errors
+      const fieldSpecificErrors = mappedFieldErrors.filter(e => e.field !== 'general');
+      const generalErrors = mappedFieldErrors.filter(e => e.field === 'general');
+
       return json({
         success: false,
-        error: "Failed to create customer",
+        error: generalErrors.length > 0
+          ? generalErrors.map(e => e.message).join('; ')
+          : "Nepodarilo sa vytvoriť účet. Prosím skontrolujte zadané údaje.",
+        fieldErrors: fieldSpecificErrors.length > 0 ? fieldSpecificErrors : undefined,
         details: result.data.customerCreate.userErrors
       }, {
         status: 400,
