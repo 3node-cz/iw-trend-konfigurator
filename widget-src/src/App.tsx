@@ -20,13 +20,11 @@ import type {
   CuttingSpecification,
   CompleteOrder,
   MaterialSearchResult,
-  OrderCalculations,
 } from "./types/shopify";
 import type {
   SavedConfiguration,
   AppView,
 } from "./types/optimized-saved-config";
-import type { CuttingLayout } from "./utils/guillotineCutting";
 import { useCustomer } from "./hooks/useCustomer";
 import { useScrollIntoView } from "./hooks/useScrollIntoView";
 
@@ -84,13 +82,6 @@ function App() {
   const [checkoutUrl, setCheckoutUrl] = useState<string>("");
   const [loadingConfiguration, setLoadingConfiguration] = useState(false);
 
-  // View mode: 'create' for normal flow, 'view' for viewing existing orders
-  const [viewMode, setViewMode] = useState<'create' | 'view'>('create');
-  const [viewingOrderId, setViewingOrderId] = useState<string | null>(null);
-  const [savedCuttingLayouts, setSavedCuttingLayouts] = useState<CuttingLayout[] | null>(null);
-  const [savedOrderCalculations, setSavedOrderCalculations] = useState<OrderCalculations | null>(null);
-  const [orderCreatedDate, setOrderCreatedDate] = useState<string | null>(null);
-
   // Scroll functionality
   const { scrollToWidget } = useScrollIntoView({
     behavior: "smooth",
@@ -108,19 +99,6 @@ function App() {
       return () => clearTimeout(timer);
     }
   }, [currentView, scrollToWidget]);
-
-  // Check for orderId parameter in URL on mount
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const orderId = urlParams.get('orderId');
-
-    if (orderId) {
-      console.log('🔍 Order ID detected in URL:', orderId);
-      setViewingOrderId(orderId);
-      setViewMode('view');
-      loadOrderConfigurationById(orderId);
-    }
-  }, []); // Run once on mount
 
   const handleOrderCreated = (orderData: OrderFormData) => {
     setCurrentOrder(orderData);
@@ -147,11 +125,6 @@ function App() {
   };
 
   const handleBackToCuttingSpecification = () => {
-    // Ensure selectedMaterials is in sync with cuttingSpecifications
-    // This prevents materials from being missing when navigating back
-    if (cuttingSpecifications.length > 0) {
-      setSelectedMaterials(cuttingSpecifications.map((spec) => spec.material));
-    }
     setCurrentView("cutting-specification");
   };
 
@@ -258,247 +231,8 @@ function App() {
     }
   };
 
-  const loadOrderConfigurationById = async (orderId: string) => {
-    setLoadingConfiguration(true);
-    try {
-      console.log('🔍 Loading order configuration by ID:', orderId);
-
-      const response = await fetch(
-        `/apps/configurator/api/order-configuration?orderId=${orderId}`
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || errorData.error || 'Failed to fetch order');
-      }
-
-      const data = await response.json();
-
-      if (!data.success || !data.configuration) {
-        throw new Error('Invalid response from server');
-      }
-
-      console.log('✅ Order configuration loaded:', data);
-
-      const config = data.configuration;
-
-      // Re-fetch materials and edges to get complete data (prices, images, etc.)
-      // The metafield only stores IDs, titles, handles - we need full MaterialSearchResult objects
-      const { searchMaterials, searchEdgeMaterials } = await import('./services/shopifyApi');
-
-      // Collect unique material IDs
-      const materialIds = [...new Set(config.specifications.map((spec: any) => spec.material.id))];
-      console.log('📦 Re-fetching materials:', materialIds);
-
-      // Collect unique edge IDs
-      const edgeIds = new Set<string>();
-      config.specifications.forEach((spec: any) => {
-        if (spec.edgeMaterial?.id) edgeIds.add(spec.edgeMaterial.id);
-        spec.pieces?.forEach((piece: any) => {
-          if (piece.customEdgeTop?.id) edgeIds.add(piece.customEdgeTop.id);
-          if (piece.customEdgeBottom?.id) edgeIds.add(piece.customEdgeBottom.id);
-          if (piece.customEdgeLeft?.id) edgeIds.add(piece.customEdgeLeft.id);
-          if (piece.customEdgeRight?.id) edgeIds.add(piece.customEdgeRight.id);
-        });
-      });
-      console.log('🔲 Re-fetching edges:', Array.from(edgeIds));
-
-      // Re-fetch all materials
-      const materialCache = new Map();
-      await Promise.all(
-        materialIds.map(async (materialId: string) => {
-          try {
-            // Try numeric search first (same as orderLoader.ts)
-            let numericId = materialId;
-            if (materialId.includes('gid://shopify/')) {
-              numericId = materialId.replace(/^gid:\/\/shopify\/(Product|ProductVariant)\//, '');
-            }
-
-            const results = await searchMaterials({ query: numericId, limit: 5 });
-            if (results.length > 0) {
-              materialCache.set(materialId, results[0]);
-              console.log('✅ Material re-fetched:', materialId, results[0].title);
-            } else {
-              console.warn('⚠️ Material not found in Shopify:', materialId);
-            }
-          } catch (error) {
-            console.error('❌ Failed to re-fetch material:', materialId, error);
-          }
-        })
-      );
-
-      // Re-fetch all edge materials
-      const edgeCache = new Map();
-      await Promise.all(
-        Array.from(edgeIds).map(async (edgeId: string) => {
-          try {
-            let numericId = edgeId;
-            if (edgeId.includes('gid://shopify/')) {
-              numericId = edgeId.replace(/^gid:\/\/shopify\/(Product|ProductVariant)\//, '');
-            }
-
-            const results = await searchEdgeMaterials({ query: numericId, limit: 5 });
-            if (results.length > 0) {
-              const result = results[0];
-              edgeCache.set(edgeId, {
-                id: result.id,
-                variantId: result.variant?.id,
-                code: result.variant?.sku || result.handle,
-                name: result.title,
-                productCode: result.variant?.sku || result.handle,
-                availability: 'available',
-                edgeWidth: 0.8, // Default, will be overridden by saved value
-                boardThickness: 18,
-                warehouse: 'default',
-                price: result.variant?.price ? {
-                  amount: parseFloat(result.variant.price),
-                  currency: 'EUR',
-                  perUnit: 'm'
-                } : undefined,
-                image: result.image,
-              });
-            }
-          } catch (error) {
-            console.error('❌ Failed to re-fetch edge:', edgeId, error);
-          }
-        })
-      );
-
-      // Reconstruct specifications with complete data
-      const reconstructedSpecs: CuttingSpecification[] = [];
-      for (const savedSpec of config.specifications) {
-        const material = materialCache.get(savedSpec.material.id);
-        if (!material) {
-          console.warn(`⚠️ Material ${savedSpec.material.id} not available - using fallback`);
-          // Use fallback with saved data
-          reconstructedSpecs.push({
-            material: {
-              id: savedSpec.material.id,
-              title: savedSpec.material.title || '[Materiál nedostupný]',
-              handle: savedSpec.material.handle || 'unavailable',
-              vendor: '',
-              productType: '',
-              tags: [],
-            },
-            edgeMaterial: null,
-            glueType: savedSpec.glueType,
-            pieces: savedSpec.pieces || [],
-          });
-          continue;
-        }
-
-        // Get edge material and preserve saved edgeWidth
-        let edgeMaterial = savedSpec.edgeMaterial?.id
-          ? edgeCache.get(savedSpec.edgeMaterial.id) || null
-          : null;
-
-        // Preserve the saved edgeWidth value
-        if (edgeMaterial && savedSpec.edgeMaterial?.edgeWidth) {
-          edgeMaterial = {
-            ...edgeMaterial,
-            edgeWidth: savedSpec.edgeMaterial.edgeWidth,
-          };
-        }
-
-        // Reconstruct pieces with custom edges, preserving their edgeWidths
-        const pieces = savedSpec.pieces.map((piece: any) => {
-          const reconstructedPiece = { ...piece };
-
-          // Reconstruct custom edges with preserved edgeWidth values
-          if (piece.customEdgeTop?.id) {
-            const edge = edgeCache.get(piece.customEdgeTop.id);
-            reconstructedPiece.customEdgeTop = edge ? {
-              ...edge,
-              edgeWidth: piece.customEdgeTop.edgeWidth || edge.edgeWidth,
-            } : null;
-          }
-
-          if (piece.customEdgeBottom?.id) {
-            const edge = edgeCache.get(piece.customEdgeBottom.id);
-            reconstructedPiece.customEdgeBottom = edge ? {
-              ...edge,
-              edgeWidth: piece.customEdgeBottom.edgeWidth || edge.edgeWidth,
-            } : null;
-          }
-
-          if (piece.customEdgeLeft?.id) {
-            const edge = edgeCache.get(piece.customEdgeLeft.id);
-            reconstructedPiece.customEdgeLeft = edge ? {
-              ...edge,
-              edgeWidth: piece.customEdgeLeft.edgeWidth || edge.edgeWidth,
-            } : null;
-          }
-
-          if (piece.customEdgeRight?.id) {
-            const edge = edgeCache.get(piece.customEdgeRight.id);
-            reconstructedPiece.customEdgeRight = edge ? {
-              ...edge,
-              edgeWidth: piece.customEdgeRight.edgeWidth || edge.edgeWidth,
-            } : null;
-          }
-
-          return reconstructedPiece;
-        });
-
-        reconstructedSpecs.push({
-          material,
-          edgeMaterial,
-          glueType: savedSpec.glueType,
-          pieces,
-        });
-      }
-
-      console.log('✅ Specifications reconstructed with complete data:', reconstructedSpecs.length);
-
-      // Extract saved layouts and calculations from metafield
-      // These represent the actual order as it was submitted (with original prices)
-      const savedLayouts = config.cuttingLayouts || null;
-      const savedCalculations = config.orderCalculations || null;
-      const createdDate = data.order?.createdAt || config.timestamp || null;
-
-      console.log('📊 Saved cutting layouts:', savedLayouts?.length || 0);
-      console.log('💰 Saved calculations:', savedCalculations ? 'available' : 'not available');
-      console.log('📅 Order created:', createdDate);
-
-      // Set the configuration into app state
-      setCurrentOrder({
-        ...config.order,
-        deliveryDate: new Date(config.order.deliveryDate),
-      });
-
-      setSelectedMaterials(reconstructedSpecs.map((spec) => spec.material));
-      setCuttingSpecifications(reconstructedSpecs);
-
-      // Store saved data for view mode
-      setSavedCuttingLayouts(savedLayouts);
-      setSavedOrderCalculations(savedCalculations);
-      setOrderCreatedDate(createdDate);
-
-      // Navigate directly to recapitulation view (read-only)
-      setCurrentView('recapitulation');
-
-    } catch (error) {
-      console.error('❌ Error loading order configuration:', error);
-      alert(
-        `Nepodarilo sa načítať konfiguráciu objednávky.\n\n` +
-        `Chyba: ${error instanceof Error ? error.message : 'Neznáma chyba'}`
-      );
-      // Reset to normal mode if loading fails
-      setViewMode('create');
-      setViewingOrderId(null);
-      setSavedCuttingLayouts(null);
-      setSavedOrderCalculations(null);
-      setOrderCreatedDate(null);
-    } finally {
-      setLoadingConfiguration(false);
-    }
-  };
-
-  const [draftOrderId, setDraftOrderId] = useState<string>("");
-
-  const handleOrderSuccess = (url: string, orderName: string, draftOrderId: string) => {
+  const handleOrderSuccess = (url: string, orderName: string) => {
     setCheckoutUrl(url);
-    setDraftOrderId(draftOrderId);
     setCurrentView("success");
   };
 
@@ -630,18 +364,12 @@ function App() {
               onSubmitOrder={handleOrderSubmit}
               onOrderSuccess={handleOrderSuccess}
               cuttingConfig={shopConfig.cuttingConfig}
-              viewMode={viewMode}
-              viewingOrderId={viewingOrderId}
-              savedCuttingLayouts={savedCuttingLayouts}
-              savedOrderCalculations={savedOrderCalculations}
-              orderCreatedDate={orderCreatedDate}
             />
           )}
         {currentView === "success" && currentOrder && checkoutUrl && (
           <OrderSuccessPage
             checkoutUrl={checkoutUrl}
             orderName={currentOrder.orderName}
-            draftOrderId={draftOrderId}
             orderInfo={currentOrder}
             materials={selectedMaterials}
             specifications={cuttingSpecifications}

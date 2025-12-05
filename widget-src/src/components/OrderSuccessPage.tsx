@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Container,
@@ -11,28 +11,22 @@ import {
   DialogContent,
   DialogActions,
   Alert,
-  CircularProgress,
-  LinearProgress,
 } from "@mui/material";
 import {
   CheckCircle as CheckCircleIcon,
   ShoppingCart as ShoppingCartIcon,
   Refresh as RefreshIcon,
   Save as SaveIcon,
-  PictureAsPdf as PdfIcon,
 } from "@mui/icons-material";
 import type { OrderFormData } from "../schemas/orderSchema";
 import type { CuttingSpecification } from "../types/shopify";
 import { formatPriceNumber } from "../utils/formatting";
 import { createConfigurationService } from "../services/configurationService";
 import { useCustomer } from "../hooks/useCustomer";
-import { generateOrderPDF } from "../services/pdfGenerator";
-import { generateAndUploadOrderPDF } from "../services/pdfUploadService";
 
 interface OrderSuccessPageProps {
   checkoutUrl: string;
   orderName: string;
-  draftOrderId: string;
   orderInfo?: OrderFormData;
   materials?: Array<{
     id: string;
@@ -48,7 +42,6 @@ interface OrderSuccessPageProps {
 const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
   checkoutUrl,
   orderName,
-  draftOrderId,
   orderInfo,
   materials,
   specifications,
@@ -62,50 +55,6 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
     type: "success" | "error";
     text: string;
   } | null>(null);
-
-  // PDF generation state
-  const [pdfGenerating, setPdfGenerating] = useState(false);
-  const [pdfSuccess, setPdfSuccess] = useState(false);
-  const [pdfError, setPdfError] = useState<string | null>(null);
-
-  // Automatically generate and upload PDF after order success
-  useEffect(() => {
-    const generatePDF = async () => {
-      if (!draftOrderId || !orderName) {
-        console.log('⚠️ Skipping PDF generation: Missing draftOrderId or orderName');
-        return;
-      }
-
-      setPdfGenerating(true);
-      setPdfError(null);
-
-      try {
-        console.log('📄 Generating PDF for order:', orderName);
-
-        const result = await generateAndUploadOrderPDF(
-          draftOrderId,
-          orderName,
-          () => generateOrderPDF(orderName)
-        );
-
-        if (result.success) {
-          console.log('✅ PDF generated and uploaded successfully:', result);
-          setPdfSuccess(true);
-        } else {
-          console.warn('⚠️ PDF upload failed (non-critical):', result.error);
-          setPdfError(result.error || 'PDF generation failed');
-        }
-      } catch (error) {
-        console.error('❌ PDF generation error:', error);
-        setPdfError(error instanceof Error ? error.message : 'Unknown error');
-      } finally {
-        setPdfGenerating(false);
-      }
-    };
-
-    // Trigger PDF generation automatically
-    generatePDF();
-  }, [draftOrderId, orderName]); // Only run when these values are available
 
   const canSaveConfiguration =
     isLoggedIn && customer && orderInfo && materials && specifications;
@@ -183,38 +132,6 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
         <Typography variant="h6" sx={{ mb: 4, fontWeight: 500 }}>
           "{orderName}"
         </Typography>
-
-        {/* PDF Generation Status */}
-        {pdfGenerating && (
-          <Alert severity="info" sx={{ mb: 3, maxWidth: 600, mx: "auto" }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <CircularProgress size={20} />
-              <Typography variant="body2">
-                Generujem PDF konfiguráciu...
-              </Typography>
-            </Box>
-            <LinearProgress sx={{ mt: 1 }} />
-          </Alert>
-        )}
-
-        {pdfSuccess && (
-          <Alert severity="success" icon={<PdfIcon />} sx={{ mb: 3, maxWidth: 600, mx: "auto" }}>
-            <Typography variant="body2">
-              ✅ PDF konfigurácia bola úspešne vygenerovaná a pripojená k objednávke
-            </Typography>
-          </Alert>
-        )}
-
-        {pdfError && (
-          <Alert severity="warning" sx={{ mb: 3, maxWidth: 600, mx: "auto" }}>
-            <Typography variant="body2">
-              ⚠️ PDF konfigurácia sa nepodarila vygenerovať (neovplyvňuje objednávku)
-            </Typography>
-            <Typography variant="caption" sx={{ display: "block", mt: 0.5, opacity: 0.8 }}>
-              {pdfError}
-            </Typography>
-          </Alert>
-        )}
 
         <Box
           sx={{
