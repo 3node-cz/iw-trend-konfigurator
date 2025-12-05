@@ -26,6 +26,9 @@ export const searchMaterials = async (
     searchParams.append("warehouse", params.warehouse);
   }
 
+  // DEBUG: Temporarily search without collection filter to diagnose issue
+  searchParams.append("debug_no_filter", "true");
+
   try {
     // Call our Remix API route via app proxy (use relative path like update-metafield)
     const response = await fetch(
