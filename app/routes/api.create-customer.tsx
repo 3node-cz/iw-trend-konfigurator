@@ -61,6 +61,12 @@ function mapShopifyFieldToFormField(shopifyField: string[]): string {
     'phone': 'phone',
     'first_name': 'firstName',
     'last_name': 'lastName',
+    'address1': 'address1',
+    'address2': 'address2',
+    'city': 'city',
+    'zip': 'zip',
+    'countryCode': 'country',
+    'country': 'country',
   };
 
   return fieldMap[field] || 'general';
@@ -325,6 +331,22 @@ export async function action({ request }: ActionFunctionArgs) {
               marketingOptInLevel
               consentUpdatedAt
             }
+            addresses {
+              id
+              address1
+              address2
+              city
+              zip
+              countryCode
+              phone
+            }
+            defaultAddress {
+              id
+              address1
+              city
+              zip
+              countryCode
+            }
             metafields(first: 10) {
               edges {
                 node {
@@ -343,6 +365,22 @@ export async function action({ request }: ActionFunctionArgs) {
       }
     `;
 
+    // Prepare addresses array if provided
+    const addresses = [];
+    if (address && address.address1 && address.city && address.zip && address.country) {
+      addresses.push({
+        address1: address.address1,
+        address2: address.address2 || null,
+        city: address.city,
+        zip: address.zip,
+        countryCode: address.country, // Note: countryCode not country
+        firstName: firstName,
+        lastName: lastName,
+        ...(normalizedPhone && { phone: normalizedPhone })
+      });
+      console.log('📍 Adding address to customer input:', addresses[0]);
+    }
+
     // Prepare customer input
     const customerInput: any = {
       firstName,
@@ -351,6 +389,7 @@ export async function action({ request }: ActionFunctionArgs) {
       ...(normalizedPhone && { phone: normalizedPhone }),
       ...(note && { note }),
       ...(metafields.length > 0 && { metafields }),
+      ...(addresses.length > 0 && { addresses }),
     };
 
     // Add email marketing consent if provided
@@ -430,87 +469,12 @@ export async function action({ request }: ActionFunctionArgs) {
     const customer = result.data.customerCreate.customer;
     console.log('✅ Customer created successfully:', customer.id);
 
-    // Create customer address if provided
-    if (address && address.address1 && address.city && address.zip && address.country) {
-      console.log('📍 Creating customer address...');
-
-      const addressMutation = `
-        mutation customerAddressCreate($customerId: ID!, $address: MailingAddressInput!) {
-          customerAddressCreate(customerId: $customerId, address: $address) {
-            customerAddress {
-              id
-              address1
-              address2
-              city
-              zip
-              country
-            }
-            userErrors {
-              field
-              message
-            }
-          }
-        }
-      `;
-
-      const addressVariables = {
-        customerId: customer.id,
-        address: {
-          address1: address.address1,
-          address2: address.address2 || null,
-          city: address.city,
-          zip: address.zip,
-          country: address.country,
-          firstName: firstName,
-          lastName: lastName,
-          ...(phone && { phone: normalizedPhone })
-        }
-      };
-
-      try {
-        const addressResponse = await admin.graphql(addressMutation, { variables: addressVariables });
-        const addressResult = await addressResponse.json();
-
-        if (addressResult.data?.customerAddressCreate?.userErrors?.length > 0) {
-          console.error('⚠️ Address creation errors:', addressResult.data.customerAddressCreate.userErrors);
-        } else {
-          console.log('✅ Customer address created successfully');
-
-          // Set as default address
-          const createdAddressId = addressResult.data?.customerAddressCreate?.customerAddress?.id;
-          if (createdAddressId) {
-            const setDefaultMutation = `
-              mutation customerDefaultAddressUpdate($customerId: ID!, $addressId: ID!) {
-                customerDefaultAddressUpdate(customerId: $customerId, addressId: $addressId) {
-                  customer {
-                    id
-                  }
-                  userErrors {
-                    field
-                    message
-                  }
-                }
-              }
-            `;
-
-            const setDefaultVariables = {
-              customerId: customer.id,
-              addressId: createdAddressId
-            };
-
-            const defaultResponse = await admin.graphql(setDefaultMutation, { variables: setDefaultVariables });
-            const defaultResult = await defaultResponse.json();
-
-            if (defaultResult.data?.customerDefaultAddressUpdate?.userErrors?.length > 0) {
-              console.error('⚠️ Set default address errors:', defaultResult.data.customerDefaultAddressUpdate.userErrors);
-            } else {
-              console.log('✅ Default address set successfully');
-            }
-          }
-        }
-      } catch (addressError) {
-        console.error('⚠️ Failed to create address (non-critical):', addressError);
-      }
+    // Log created addresses
+    if (customer.addresses && customer.addresses.length > 0) {
+      console.log('✅ Customer addresses created:', customer.addresses);
+      console.log('✅ Default address:', customer.defaultAddress);
+    } else {
+      console.log('ℹ️ No addresses were created');
     }
 
     // Send account activation email
@@ -557,6 +521,8 @@ export async function action({ request }: ActionFunctionArgs) {
         phone: customer.phone,
         note: customer.note,
         emailMarketingConsent: customer.emailMarketingConsent,
+        addresses: customer.addresses || [],
+        defaultAddress: customer.defaultAddress || null,
         metafields: customer.metafields?.edges?.map((edge: any) => ({
           namespace: edge.node.namespace,
           key: edge.node.key,
