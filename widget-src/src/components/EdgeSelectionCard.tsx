@@ -119,7 +119,8 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
               title: '',
               sku: selectedEdge.code,
               price: selectedEdge.price?.amount?.toString() || '0',
-              inventoryQuantity: 0,
+              // Preserve availability: convert 'available' status to inventory > 0
+              inventoryQuantity: selectedEdge.availability === 'available' ? 1 : 0,
             }
           : undefined,
         warehouse: selectedEdge.warehouse,
