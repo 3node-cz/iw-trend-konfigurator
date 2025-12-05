@@ -84,7 +84,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
 }) => {
   // Version marker for debugging
   useEffect(() => {
-    console.log('🎯 [v4] OrderRecapitulationPage mounted - CODE VERSION 4 (Plain DIV wrapper)');
+    console.log('🎯 [v6] OrderRecapitulationPage mounted - CODE VERSION 6 (Pass element to PDF generator)');
   }, []);
 
   const { customer } = useCustomer();
@@ -94,6 +94,9 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     title: string;
     globalPieceTypes?: string[];
   } | null>(null);
+
+  // Ref for PDF generation - direct access to container element
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll when component mounts (step change)
   useScrollOnStepChange();
@@ -177,7 +180,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
 
   // Watch for successful submission and redirect to success page with PDF
   useEffect(() => {
-    console.log('🔄 [v4] Navigation useEffect triggered:', {
+    console.log('🔄 [v6] Navigation useEffect triggered:', {
       submissionSuccess,
       hasCheckoutUrl: !!checkoutUrl,
       hasCartId: !!cartId,
@@ -187,15 +190,15 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     });
 
     if (submissionSuccess && checkoutUrl && cartId && onOrderSuccess) {
-      console.log('✈️ [v4] Navigating to success page with PDF blob:', !!generatedPdfBlob);
+      console.log('✈️ [v6] Navigating to success page with PDF blob:', !!generatedPdfBlob);
       // Navigate with the pre-generated PDF blob
       onOrderSuccess(checkoutUrl, order.orderName, cartId, generatedPdfBlob || undefined);
     }
   }, [submissionSuccess, checkoutUrl, cartId, onOrderSuccess, order.orderName, generatedPdfBlob]);
 
   const handleSubmitOrder = async () => {
-    console.log('🚀 [v4] handleSubmitOrder called - NEW CODE RUNNING');
-    console.log('🔍 [v4] Component state:', {
+    console.log('🚀 [v6] handleSubmitOrder called - NEW CODE RUNNING');
+    console.log('🔍 [v6] Component state:', {
       submitSuccess,
       submissionSuccess,
       viewMode,
@@ -210,54 +213,59 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
 
     try {
       // STEP 1: Generate PDF while the container is still visible
-      console.log('📄 [v4] STEP 1: Generating PDF before order submission...');
-      console.log('🔍 [v4] Disabling submit button, showing loading state...');
+      console.log('📄 [v6] STEP 1: Generating PDF before order submission...');
+      console.log('🔍 [v6] Disabling submit button, showing loading state...');
 
       // Wait for React to finish any pending renders
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      console.log('🔍 [v4] Checking if container exists after delay...');
+      console.log('🔍 [v6] Checking if container ref exists after delay...');
 
-      // Try multiple methods to find the container
-      let container = document.getElementById('order-recapitulation-container');
-      console.log('🔍 [v4] Container found via getElementById:', !!container);
-
-      // Try querySelector as fallback
-      if (!container) {
-        container = document.querySelector('#order-recapitulation-container') as HTMLElement | null;
-        console.log('🔍 [v4] Container found via querySelector:', !!container);
-      }
-
-      // Check if we're in the right document
-      console.log('🔍 [v4] Document title:', document.title);
-      console.log('🔍 [v4] Current location:', window.location.href);
+      // Use React ref instead of DOM queries - more reliable
+      const container = containerRef.current;
+      console.log('🔍 [v6] Container ref.current:', !!container);
 
       if (!container) {
-        console.error('❌ [v4] Container NOT found in DOM before PDF generation!');
-        console.log('🔍 [v4] Available IDs in document:',
+        console.error('❌ [v6] Container ref is NULL!');
+        console.log('🔍 [v6] This means React has not mounted the element yet or ref is not attached');
+        console.log('🔍 [v6] Component render state:', { submitSuccess, submissionSuccess, viewMode });
+
+        // Try fallback to DOM query for debugging
+        const fallbackContainer = document.getElementById('order-recapitulation-container');
+        console.log('🔍 [v6] Fallback getElementById result:', !!fallbackContainer);
+
+        const querySelectorResult = document.querySelector('#order-recapitulation-container');
+        console.log('🔍 [v6] Fallback querySelector result:', !!querySelectorResult);
+
+        console.log('🔍 [v6] Available IDs in document:',
           Array.from(document.querySelectorAll('[id]')).map(el => el.id).slice(0, 20));
-        console.log('🔍 [v4] Searching for any Container elements:',
-          Array.from(document.querySelectorAll('[class*="Container"]')).slice(0, 5));
       } else {
-        console.log('✅ [v4] Container EXISTS, dimensions:', {
+        console.log('✅ [v6] Container ref EXISTS:', {
+          id: container.id,
+          tagName: container.tagName,
           width: container.offsetWidth,
           height: container.offsetHeight,
-          visible: container.offsetParent !== null
+          visible: container.offsetParent !== null,
+          children: container.children.length
         });
       }
 
       try {
-        const pdfBlob = await generateOrderPDF(order.orderName);
-        console.log('✅ [v4] PDF generated successfully, size:', (pdfBlob.size / 1024).toFixed(2), 'KB');
+        if (!container) {
+          throw new Error('Container element not available via ref - PDF generation impossible');
+        }
+        // Pass the element from ref directly to PDF generator (v5 fix)
+        const pdfBlob = await generateOrderPDF(order.orderName, container);
+        console.log('✅ [v6] PDF generated successfully, size:', (pdfBlob.size / 1024).toFixed(2), 'KB');
         setGeneratedPdfBlob(pdfBlob);
       } catch (pdfError) {
-        console.error('❌ [v4] PDF generation failed (non-blocking):', pdfError);
+        console.error('❌ [v6] PDF generation failed (non-blocking):', pdfError);
         // Continue with order submission even if PDF fails
         setGeneratedPdfBlob(null);
       }
 
       // STEP 2: Submit order to Shopify
-      console.log('📤 [v4] STEP 2: Submitting order to Shopify...');
+      console.log('📤 [v6] STEP 2: Submitting order to Shopify...');
       const completeOrder: CompleteOrder = {
         order,
         specifications,
@@ -267,9 +275,9 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
       };
 
       await submitOrder(completeOrder);
-      console.log('✅ [v4] Order submitted successfully');
+      console.log('✅ [v6] Order submitted successfully');
     } catch (error) {
-      console.error("❌ [v4] Order submission failed:", error);
+      console.error("❌ [v6] Order submission failed:", error);
       // Error is handled by the useOrderSubmission hook
     }
   };
@@ -368,7 +376,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
   }
 
   return (
-    <div id="order-recapitulation-container">
+    <div id="order-recapitulation-container" ref={containerRef}>
       <Container
         maxWidth={false}
         sx={{ maxWidth: "1920px", mx: "auto", py: 3 }}
