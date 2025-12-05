@@ -167,32 +167,16 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     resetSuccess,
   } = useOrderSubmission();
 
-  // Watch for successful submission, generate PDF, then redirect to success page
-  const handledSuccessRef = useRef(false);
+  // Store generated PDF blob before navigation
+  const [generatedPdfBlob, setGeneratedPdfBlob] = useState<Blob | null>(null);
 
+  // Watch for successful submission and redirect to success page with PDF
   useEffect(() => {
-    const handleSuccess = async () => {
-      if (submissionSuccess && checkoutUrl && cartId && onOrderSuccess && !handledSuccessRef.current) {
-        handledSuccessRef.current = true;
-
-        // Small delay to ensure DOM is fully rendered before PDF generation
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        try {
-          console.log('📄 Generating PDF before navigation...');
-          const pdfBlob = await generateOrderPDF(order.orderName);
-          console.log('✅ PDF generated successfully, navigating to success page');
-          onOrderSuccess(checkoutUrl, order.orderName, cartId, pdfBlob);
-        } catch (error) {
-          console.error('❌ PDF generation failed:', error);
-          // Still navigate even if PDF fails, but without the blob
-          onOrderSuccess(checkoutUrl, order.orderName, cartId);
-        }
-      }
-    };
-
-    handleSuccess();
-  }, [submissionSuccess, checkoutUrl, cartId, order.orderName]);
+    if (submissionSuccess && checkoutUrl && cartId && onOrderSuccess) {
+      // Navigate with the pre-generated PDF blob
+      onOrderSuccess(checkoutUrl, order.orderName, cartId, generatedPdfBlob || undefined);
+    }
+  }, [submissionSuccess, checkoutUrl, cartId, onOrderSuccess, order.orderName, generatedPdfBlob]);
 
   const handleSubmitOrder = async () => {
     // Clear any previous errors
@@ -201,6 +185,19 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     }
 
     try {
+      // STEP 1: Generate PDF while the container is still visible
+      console.log('📄 Generating PDF before order submission...');
+      try {
+        const pdfBlob = await generateOrderPDF(order.orderName);
+        console.log('✅ PDF generated successfully');
+        setGeneratedPdfBlob(pdfBlob);
+      } catch (pdfError) {
+        console.error('❌ PDF generation failed (non-blocking):', pdfError);
+        // Continue with order submission even if PDF fails
+        setGeneratedPdfBlob(null);
+      }
+
+      // STEP 2: Submit order to Shopify
       const completeOrder: CompleteOrder = {
         order,
         specifications,
@@ -209,7 +206,6 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
         submittedAt: new Date(),
       };
 
-      // Submit to Shopify cart
       await submitOrder(completeOrder);
     } catch (error) {
       console.error("Order submission failed:", error);
