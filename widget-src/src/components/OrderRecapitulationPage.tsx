@@ -175,6 +175,9 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
       if (submissionSuccess && checkoutUrl && cartId && onOrderSuccess && !handledSuccessRef.current) {
         handledSuccessRef.current = true;
 
+        // Small delay to ensure DOM is fully rendered before PDF generation
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         try {
           console.log('📄 Generating PDF before navigation...');
           const pdfBlob = await generateOrderPDF(order.orderName);
