@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { calculateTotalPieces } from "../utils/data-transformation";
 import { formatPriceNumber } from "../utils/formatting";
 import { generateOrderPDF, downloadPDFBlob } from "../services/pdfGenerator";
@@ -61,7 +61,7 @@ interface OrderRecapitulationPageProps {
   cuttingConfig: CuttingConfig;
   onBack?: () => void;
   onSubmitOrder?: (completeOrder: CompleteOrder) => void;
-  onOrderSuccess?: (checkoutUrl: string, orderName: string, draftOrderId: string) => void;
+  onOrderSuccess?: (checkoutUrl: string, orderName: string, draftOrderId: string, pdfBlob?: Blob) => void;
   viewMode?: 'create' | 'view';
   viewingOrderId?: string | null;
   savedCuttingLayouts?: CuttingLayout[] | null;
@@ -167,12 +167,29 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     resetSuccess,
   } = useOrderSubmission();
 
-  // Watch for successful submission and redirect to success page
+  // Watch for successful submission, generate PDF, then redirect to success page
+  const handledSuccessRef = useRef(false);
+
   useEffect(() => {
-    if (submissionSuccess && checkoutUrl && cartId && onOrderSuccess) {
-      onOrderSuccess(checkoutUrl, order.orderName, cartId);
-    }
-  }, [submissionSuccess, checkoutUrl, cartId, onOrderSuccess, order.orderName]);
+    const handleSuccess = async () => {
+      if (submissionSuccess && checkoutUrl && cartId && onOrderSuccess && !handledSuccessRef.current) {
+        handledSuccessRef.current = true;
+
+        try {
+          console.log('📄 Generating PDF before navigation...');
+          const pdfBlob = await generateOrderPDF(order.orderName);
+          console.log('✅ PDF generated successfully, navigating to success page');
+          onOrderSuccess(checkoutUrl, order.orderName, cartId, pdfBlob);
+        } catch (error) {
+          console.error('❌ PDF generation failed:', error);
+          // Still navigate even if PDF fails, but without the blob
+          onOrderSuccess(checkoutUrl, order.orderName, cartId);
+        }
+      }
+    };
+
+    handleSuccess();
+  }, [submissionSuccess, checkoutUrl, cartId, order.orderName]);
 
   const handleSubmitOrder = async () => {
     // Clear any previous errors

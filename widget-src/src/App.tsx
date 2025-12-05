@@ -495,10 +495,12 @@ function App() {
   };
 
   const [draftOrderId, setDraftOrderId] = useState<string>("");
+  const [orderPdfBlob, setOrderPdfBlob] = useState<Blob | null>(null);
 
-  const handleOrderSuccess = (url: string, orderName: string, draftOrderId: string) => {
+  const handleOrderSuccess = (url: string, orderName: string, draftOrderId: string, pdfBlob?: Blob) => {
     setCheckoutUrl(url);
     setDraftOrderId(draftOrderId);
+    setOrderPdfBlob(pdfBlob || null);
     setCurrentView("success");
   };
 
@@ -642,6 +644,7 @@ function App() {
             checkoutUrl={checkoutUrl}
             orderName={currentOrder.orderName}
             draftOrderId={draftOrderId}
+            pdfBlob={orderPdfBlob}
             orderInfo={currentOrder}
             materials={selectedMaterials}
             specifications={cuttingSpecifications}

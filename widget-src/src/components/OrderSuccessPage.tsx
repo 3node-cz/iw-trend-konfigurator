@@ -26,13 +26,13 @@ import type { CuttingSpecification } from "../types/shopify";
 import { formatPriceNumber } from "../utils/formatting";
 import { createConfigurationService } from "../services/configurationService";
 import { useCustomer } from "../hooks/useCustomer";
-import { generateOrderPDF } from "../services/pdfGenerator";
-import { generateAndUploadOrderPDF } from "../services/pdfUploadService";
+import { uploadOrderPDF } from "../services/pdfUploadService";
 
 interface OrderSuccessPageProps {
   checkoutUrl: string;
   orderName: string;
   draftOrderId: string;
+  pdfBlob?: Blob | null;
   orderInfo?: OrderFormData;
   materials?: Array<{
     id: string;
@@ -49,6 +49,7 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
   checkoutUrl,
   orderName,
   draftOrderId,
+  pdfBlob,
   orderInfo,
   materials,
   specifications,
@@ -68,11 +69,17 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
   const [pdfSuccess, setPdfSuccess] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
-  // Automatically generate and upload PDF after order success
+  // Automatically upload pre-generated PDF after order success
   useEffect(() => {
-    const generatePDF = async () => {
+    const uploadPDF = async () => {
       if (!draftOrderId || !orderName) {
-        console.log('⚠️ Skipping PDF generation: Missing draftOrderId or orderName');
+        console.log('⚠️ Skipping PDF upload: Missing draftOrderId or orderName');
+        return;
+      }
+
+      if (!pdfBlob) {
+        console.log('⚠️ No PDF blob provided - PDF was not generated');
+        setPdfError('PDF was not generated on the previous page');
         return;
       }
 
@@ -80,32 +87,32 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
       setPdfError(null);
 
       try {
-        console.log('📄 Generating PDF for order:', orderName);
+        console.log('📤 Uploading pre-generated PDF for order:', orderName);
 
-        const result = await generateAndUploadOrderPDF(
+        const result = await uploadOrderPDF({
           draftOrderId,
           orderName,
-          () => generateOrderPDF(orderName)
-        );
+          pdfBlob,
+        });
 
         if (result.success) {
-          console.log('✅ PDF generated and uploaded successfully:', result);
+          console.log('✅ PDF uploaded successfully:', result);
           setPdfSuccess(true);
         } else {
           console.warn('⚠️ PDF upload failed (non-critical):', result.error);
-          setPdfError(result.error || 'PDF generation failed');
+          setPdfError(result.error || 'PDF upload failed');
         }
       } catch (error) {
-        console.error('❌ PDF generation error:', error);
+        console.error('❌ PDF upload error:', error);
         setPdfError(error instanceof Error ? error.message : 'Unknown error');
       } finally {
         setPdfGenerating(false);
       }
     };
 
-    // Trigger PDF generation automatically
-    generatePDF();
-  }, [draftOrderId, orderName]); // Only run when these values are available
+    // Trigger PDF upload automatically
+    uploadPDF();
+  }, [draftOrderId, orderName, pdfBlob]); // Only run when these values are available
 
   const canSaveConfiguration =
     isLoggedIn && customer && orderInfo && materials && specifications;
