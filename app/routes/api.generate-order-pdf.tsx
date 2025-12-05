@@ -43,8 +43,28 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   try {
-    // Authenticate with admin API
-    const { admin } = await authenticate.admin(request);
+    // Authenticate with app proxy (storefront widget calls this endpoint)
+    const { session, admin } = await authenticate.public.appProxy(request);
+
+    if (!session?.shop) {
+      return json({
+        success: false,
+        error: "No shop session found"
+      }, {
+        status: 401,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      });
+    }
+
+    if (!admin) {
+      return json({
+        success: false,
+        error: "Admin API not available"
+      }, {
+        status: 401,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      });
+    }
 
     console.log('📄 PDF upload endpoint hit');
 
