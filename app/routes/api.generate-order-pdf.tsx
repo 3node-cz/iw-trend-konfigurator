@@ -114,7 +114,14 @@ export async function action({ request }: ActionFunctionArgs) {
 
     // Convert File to Buffer (needed for Shopify upload)
     const pdfBuffer = Buffer.from(await pdfFile.arrayBuffer());
-    const filename = `${orderName}-configuration.pdf`;
+
+    // Generate structured filename: CONFIGURATION-{DraftOrderNumber}-{Timestamp}.pdf
+    // Extract draft order number from GID (e.g., "gid://shopify/DraftOrder/123456" -> "D123456")
+    const draftOrderNumber = draftOrderId.split('/').pop() || 'UNKNOWN';
+    const timestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0].replace('T', '-');
+    const filename = `CONFIGURATION-D${draftOrderNumber}-${timestamp}.pdf`;
+
+    console.log('📝 Generated filename:', filename);
 
     // === STEP 1: Create staged upload target ===
     console.log('🎯 Step 1: Creating staged upload target...');
@@ -230,7 +237,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const fileResponse = await admin.graphql(fileCreateMutation, {
       variables: {
         files: [{
-          alt: `Order ${orderName} Configuration PDF`,
+          alt: `Order Configuration PDF - ${orderName}`,
           contentType: 'FILE',
           originalSource: stagedTarget.resourceUrl,
         }]

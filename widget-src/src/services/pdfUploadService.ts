@@ -37,9 +37,17 @@ export async function uploadOrderPDF(
   });
 
   try {
+    // Generate structured filename: CONFIGURATION-{DraftOrderNumber}-{Timestamp}.pdf
+    // Extract draft order number from GID (e.g., "gid://shopify/DraftOrder/123456" -> "D123456")
+    const draftOrderNumber = draftOrderId.split('/').pop() || 'UNKNOWN';
+    const timestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0].replace('T', '-');
+    const filename = `CONFIGURATION-D${draftOrderNumber}-${timestamp}.pdf`;
+
+    console.log('📝 Upload filename:', filename);
+
     // Prepare FormData
     const formData = new FormData();
-    formData.append('pdf', pdfBlob, `${orderName}-configuration.pdf`);
+    formData.append('pdf', pdfBlob, filename);
     formData.append('draftOrderId', draftOrderId);
     formData.append('orderName', orderName);
 
