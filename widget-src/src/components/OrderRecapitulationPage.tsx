@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { calculateTotalPieces } from "../utils/data-transformation";
 import { formatPriceNumber } from "../utils/formatting";
+import { generateOrderPDF, downloadPDFBlob } from "../services/pdfGenerator";
 import {
   Box,
   Container,
@@ -60,7 +61,12 @@ interface OrderRecapitulationPageProps {
   cuttingConfig: CuttingConfig;
   onBack?: () => void;
   onSubmitOrder?: (completeOrder: CompleteOrder) => void;
-  onOrderSuccess?: (checkoutUrl: string, orderName: string) => void;
+  onOrderSuccess?: (checkoutUrl: string, orderName: string, draftOrderId: string) => void;
+  viewMode?: 'create' | 'view';
+  viewingOrderId?: string | null;
+  savedCuttingLayouts?: CuttingLayout[] | null;
+  savedOrderCalculations?: OrderCalculations | null;
+  orderCreatedDate?: string | null;
 }
 
 const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
@@ -70,6 +76,11 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
   onBack,
   onSubmitOrder,
   onOrderSuccess,
+  viewMode = 'create',
+  viewingOrderId = null,
+  savedCuttingLayouts = null,
+  savedOrderCalculations = null,
+  orderCreatedDate = null,
 }) => {
   const { customer } = useCustomer();
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -83,16 +94,35 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
   useScrollOnStepChange();
 
   // Use custom hooks for cutting layouts and order calculations
-  const { cuttingLayouts, overallStats } = useCuttingLayouts(specifications, cuttingConfig);
-  const orderCalculations = useOrderCalculations(
+  // In view mode, use saved data if available (original order prices/layouts)
+  // In create mode, recalculate (current prices/layouts)
+  const { cuttingLayouts: calculatedLayouts, overallStats: calculatedStats } = useCuttingLayouts(specifications, cuttingConfig);
+  const calculatedOrderCalculations = useOrderCalculations(
     specifications,
-    cuttingLayouts,
+    calculatedLayouts,
     undefined,
     cuttingConfig.edgeBuffer,
   );
 
+  // Decide which data to use based on mode
+  // IMPORTANT: We only save simplified layout data (no placedPieces or wasteArea)
+  // So we always recalculate layouts for visualization
+  // But we use saved orderCalculations for prices/totals in view mode
+  const cuttingLayouts = calculatedLayouts; // Always recalculate for full visualization
+  const overallStats = calculatedStats; // Always recalculate for accurate stats
+
+  const orderCalculations = (viewMode === 'view' && savedOrderCalculations)
+    ? savedOrderCalculations
+    : calculatedOrderCalculations;
+
   // Auto-save draft order when reaching recapitulation page
   useEffect(() => {
+    // Skip auto-save in view mode
+    if (viewMode === 'view') {
+      console.log('⚠️ Skipping auto-save: View mode active');
+      return;
+    }
+
     const autoSaveDraft = async () => {
       if (!customer) {
         console.log('⚠️ Skipping auto-save: No customer logged in');
@@ -123,7 +153,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     };
 
     autoSaveDraft();
-  }, []); // Only run once when component mounts
+  }, [viewMode]); // Only run once when component mounts or viewMode changes
 
   // Use order submission hook
   const {
@@ -131,6 +161,7 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     error: submissionError,
     success: submissionSuccess,
     checkoutUrl,
+    cartId,
     submitOrder,
     clearError,
     resetSuccess,
@@ -138,10 +169,10 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
 
   // Watch for successful submission and redirect to success page
   useEffect(() => {
-    if (submissionSuccess && checkoutUrl && onOrderSuccess) {
-      onOrderSuccess(checkoutUrl, order.orderName);
+    if (submissionSuccess && checkoutUrl && cartId && onOrderSuccess) {
+      onOrderSuccess(checkoutUrl, order.orderName, cartId);
     }
-  }, [submissionSuccess, checkoutUrl, onOrderSuccess, order.orderName]);
+  }, [submissionSuccess, checkoutUrl, cartId, onOrderSuccess, order.orderName]);
 
   const handleSubmitOrder = async () => {
     // Clear any previous errors
@@ -171,6 +202,25 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
   // Print handler
   const handlePrint = () => {
     window.print();
+  };
+
+  // TEST: PDF Generation (temporary for testing)
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  const handleTestPDFGeneration = async () => {
+    setIsGeneratingPDF(true);
+    try {
+      console.log('🧪 TEST: Generating PDF...');
+      const pdfBlob = await generateOrderPDF(order.orderName);
+      downloadPDFBlob(pdfBlob, `${order.orderName}-configuration.pdf`);
+      console.log('✅ TEST: PDF downloaded successfully');
+      alert('✅ PDF generated successfully! Check your downloads folder.');
+    } catch (error) {
+      console.error('❌ TEST: PDF generation failed:', error);
+      alert(`❌ PDF generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   // CSV Export handlers
@@ -241,7 +291,11 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
   }
 
   return (
-    <Container maxWidth={false} sx={{ maxWidth: "1920px", mx: "auto", py: 3 }}>
+    <Container
+      id="order-recapitulation-container"
+      maxWidth={false}
+      sx={{ maxWidth: "1920px", mx: "auto", py: 3 }}
+    >
       {/* Print-only title */}
       <Box className="print-only" sx={{ mb: 3, textAlign: "center" }}>
         <Typography variant="h4" sx={{ fontWeight: 600, color: "primary.main" }}>
@@ -251,6 +305,27 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
           Vytvorené: {new Date().toLocaleDateString("sk-SK")}
         </Typography>
       </Box>
+
+      {/* View Mode Info Banner */}
+      {viewMode === 'view' && viewingOrderId && (
+        <Alert severity="info" sx={{ mb: 3 }} className="no-print">
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
+            📋 Prezeranie existujúcej objednávky
+          </Typography>
+          <Typography variant="body2">
+            Prezeráte konfiguráciu objednávky ID: {viewingOrderId}. Môžete exportovať CSV alebo vytlačiť PDF.
+          </Typography>
+          {orderCreatedDate && savedOrderCalculations && (
+            <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic', color: 'text.secondary' }}>
+              💰 Ceny a celkové sumy zodpovedajú pôvodnej objednávke z {new Date(orderCreatedDate).toLocaleDateString('sk-SK', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}.
+            </Typography>
+          )}
+        </Alert>
+      )}
 
       {/* Header */}
       <Box
@@ -263,14 +338,16 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
         className="no-print"
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBackIcon />}
-            onClick={onBack}
-            disabled={isSubmitting}
-          >
-            Späť
-          </Button>
+          {viewMode === 'create' && (
+            <Button
+              variant="outlined"
+              startIcon={<ArrowBackIcon />}
+              onClick={onBack}
+              disabled={isSubmitting}
+            >
+              Späť
+            </Button>
+          )}
           <Typography
             variant="h2"
             component="h1"
@@ -313,7 +390,17 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
           >
             CSV BICORN
           </Button>
-          {customer && (
+          {/* TEST: Temporary PDF generation button */}
+          <Button
+            variant="contained"
+            color="secondary"
+            startIcon={isGeneratingPDF ? <CircularProgress size={20} color="inherit" /> : <DownloadIcon />}
+            onClick={handleTestPDFGeneration}
+            disabled={isGeneratingPDF || isSubmitting}
+          >
+            {isGeneratingPDF ? 'Generating PDF...' : 'TEST PDF'}
+          </Button>
+          {viewMode === 'create' && customer && (
             <SaveOrderButton
               currentStep="recapitulation"
               orderData={order}
@@ -695,38 +782,40 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
       )}
 
       {/* Action Buttons */}
-      <Paper
-        className="no-print"
-        sx={{
-          p: 3,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Alert severity="info" sx={{ flex: 1, mr: 3 }}>
-          Skontrolujte všetky údaje pred odoslaním zákazky.
-        </Alert>
-
-        <Button
-          variant="contained"
-          size="large"
-          startIcon={
-            isSubmitting ? (
-              <CircularProgress size={20} color="inherit" />
-            ) : (
-              <SendIcon />
-            )
-          }
-          onClick={handleSubmitOrder}
-          disabled={isSubmitting || overallStats.totalUnplacedPieces > 0}
+      {viewMode === 'create' && (
+        <Paper
+          className="no-print"
           sx={{
-            minWidth: 200,
+            p: 3,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
-          {isSubmitting ? "Odosielam..." : "Odoslať zákazku"}
-        </Button>
-      </Paper>
+          <Alert severity="info" sx={{ flex: 1, mr: 3 }}>
+            Skontrolujte všetky údaje pred odoslaním zákazky.
+          </Alert>
+
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={
+              isSubmitting ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <SendIcon />
+              )
+            }
+            onClick={handleSubmitOrder}
+            disabled={isSubmitting || overallStats.totalUnplacedPieces > 0}
+            sx={{
+              minWidth: 200,
+            }}
+          >
+            {isSubmitting ? "Odosielam..." : "Odoslať zákazku"}
+          </Button>
+        </Paper>
+      )}
     </Container>
   );
 };
