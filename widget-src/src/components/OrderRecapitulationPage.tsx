@@ -195,6 +195,13 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
 
   const handleSubmitOrder = async () => {
     console.log('🚀 [v3] handleSubmitOrder called - NEW CODE RUNNING');
+    console.log('🔍 [v3] Component state:', {
+      submitSuccess,
+      submissionSuccess,
+      viewMode,
+      hasCheckoutUrl: !!checkoutUrl,
+      hasCartId: !!cartId
+    });
 
     // Clear any previous errors
     if (submissionError) {
@@ -204,15 +211,33 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     try {
       // STEP 1: Generate PDF while the container is still visible
       console.log('📄 [v3] STEP 1: Generating PDF before order submission...');
-      console.log('🔍 [v3] Checking if container exists before PDF generation...');
+      console.log('🔍 [v3] Disabling submit button, showing loading state...');
 
-      const container = document.getElementById('order-recapitulation-container');
-      console.log('🔍 [v3] Container found:', !!container);
+      // Wait for React to finish any pending renders
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      console.log('🔍 [v3] Checking if container exists after delay...');
+
+      // Try multiple methods to find the container
+      let container = document.getElementById('order-recapitulation-container');
+      console.log('🔍 [v3] Container found via getElementById:', !!container);
+
+      // Try querySelector as fallback
+      if (!container) {
+        container = document.querySelector('#order-recapitulation-container') as HTMLElement | null;
+        console.log('🔍 [v3] Container found via querySelector:', !!container);
+      }
+
+      // Check if we're in the right document
+      console.log('🔍 [v3] Document title:', document.title);
+      console.log('🔍 [v3] Current location:', window.location.href);
 
       if (!container) {
         console.error('❌ [v3] Container NOT found in DOM before PDF generation!');
         console.log('🔍 [v3] Available IDs in document:',
           Array.from(document.querySelectorAll('[id]')).map(el => el.id).slice(0, 20));
+        console.log('🔍 [v3] Searching for any Container elements:',
+          Array.from(document.querySelectorAll('[class*="Container"]')).slice(0, 5));
       } else {
         console.log('✅ [v3] Container EXISTS, dimensions:', {
           width: container.offsetWidth,
