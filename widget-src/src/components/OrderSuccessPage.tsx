@@ -55,6 +55,18 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
   specifications,
   onCreateNewOrder,
 }) => {
+  // Version marker for debugging
+  useEffect(() => {
+    console.log('🎯 [v3] OrderSuccessPage mounted - CODE VERSION 3');
+    console.log('📦 [v3] Props received:', {
+      hasCheckoutUrl: !!checkoutUrl,
+      orderName,
+      draftOrderId,
+      hasPdfBlob: !!pdfBlob,
+      pdfBlobSize: pdfBlob ? (pdfBlob.size / 1024).toFixed(2) + ' KB' : 'none'
+    });
+  }, []);
+
   const { customer, isLoggedIn } = useCustomer();
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [configurationName, setConfigurationName] = useState("");
@@ -72,22 +84,28 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
   // Automatically upload pre-generated PDF after order success
   useEffect(() => {
     const uploadPDF = async () => {
+      console.log('📤 [v3] PDF upload useEffect triggered');
+
       if (!draftOrderId || !orderName) {
-        console.log('⚠️ Skipping PDF upload: Missing draftOrderId or orderName');
+        console.log('⚠️ [v3] Skipping PDF upload: Missing draftOrderId or orderName');
         return;
       }
 
       if (!pdfBlob) {
-        console.log('⚠️ No PDF blob provided - PDF was not generated');
+        console.log('⚠️ [v3] No PDF blob provided - PDF was not generated');
+        console.log('❌ [v3] This means PDF generation failed on recapitulation page');
         setPdfError('PDF was not generated on the previous page');
         return;
       }
+
+      console.log('✅ [v3] PDF blob received, starting upload...');
+      console.log('📊 [v3] PDF size:', (pdfBlob.size / 1024).toFixed(2), 'KB');
 
       setPdfGenerating(true);
       setPdfError(null);
 
       try {
-        console.log('📤 Uploading pre-generated PDF for order:', orderName);
+        console.log('📤 [v3] Uploading pre-generated PDF for order:', orderName);
 
         const result = await uploadOrderPDF({
           draftOrderId,
@@ -96,14 +114,14 @@ const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
         });
 
         if (result.success) {
-          console.log('✅ PDF uploaded successfully:', result);
+          console.log('✅ [v3] PDF uploaded successfully:', result);
           setPdfSuccess(true);
         } else {
-          console.warn('⚠️ PDF upload failed (non-critical):', result.error);
+          console.warn('⚠️ [v3] PDF upload failed (non-critical):', result.error);
           setPdfError(result.error || 'PDF upload failed');
         }
       } catch (error) {
-        console.error('❌ PDF upload error:', error);
+        console.error('❌ [v3] PDF upload error:', error);
         setPdfError(error instanceof Error ? error.message : 'Unknown error');
       } finally {
         setPdfGenerating(false);

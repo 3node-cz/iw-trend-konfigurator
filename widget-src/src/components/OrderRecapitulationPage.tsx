@@ -82,6 +82,11 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
   savedOrderCalculations = null,
   orderCreatedDate = null,
 }) => {
+  // Version marker for debugging
+  useEffect(() => {
+    console.log('🎯 [v3] OrderRecapitulationPage mounted - CODE VERSION 3');
+  }, []);
+
   const { customer } = useCustomer();
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [selectedDiagram, setSelectedDiagram] = useState<{
@@ -172,13 +177,25 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
 
   // Watch for successful submission and redirect to success page with PDF
   useEffect(() => {
+    console.log('🔄 [v3] Navigation useEffect triggered:', {
+      submissionSuccess,
+      hasCheckoutUrl: !!checkoutUrl,
+      hasCartId: !!cartId,
+      hasCallback: !!onOrderSuccess,
+      hasPdfBlob: !!generatedPdfBlob,
+      pdfSize: generatedPdfBlob ? (generatedPdfBlob.size / 1024).toFixed(2) + ' KB' : 'none'
+    });
+
     if (submissionSuccess && checkoutUrl && cartId && onOrderSuccess) {
+      console.log('✈️ [v3] Navigating to success page with PDF blob:', !!generatedPdfBlob);
       // Navigate with the pre-generated PDF blob
       onOrderSuccess(checkoutUrl, order.orderName, cartId, generatedPdfBlob || undefined);
     }
   }, [submissionSuccess, checkoutUrl, cartId, onOrderSuccess, order.orderName, generatedPdfBlob]);
 
   const handleSubmitOrder = async () => {
+    console.log('🚀 [v3] handleSubmitOrder called - NEW CODE RUNNING');
+
     // Clear any previous errors
     if (submissionError) {
       clearError();
@@ -186,18 +203,36 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
 
     try {
       // STEP 1: Generate PDF while the container is still visible
-      console.log('📄 Generating PDF before order submission...');
+      console.log('📄 [v3] STEP 1: Generating PDF before order submission...');
+      console.log('🔍 [v3] Checking if container exists before PDF generation...');
+
+      const container = document.getElementById('order-recapitulation-container');
+      console.log('🔍 [v3] Container found:', !!container);
+
+      if (!container) {
+        console.error('❌ [v3] Container NOT found in DOM before PDF generation!');
+        console.log('🔍 [v3] Available IDs in document:',
+          Array.from(document.querySelectorAll('[id]')).map(el => el.id).slice(0, 20));
+      } else {
+        console.log('✅ [v3] Container EXISTS, dimensions:', {
+          width: container.offsetWidth,
+          height: container.offsetHeight,
+          visible: container.offsetParent !== null
+        });
+      }
+
       try {
         const pdfBlob = await generateOrderPDF(order.orderName);
-        console.log('✅ PDF generated successfully');
+        console.log('✅ [v3] PDF generated successfully, size:', (pdfBlob.size / 1024).toFixed(2), 'KB');
         setGeneratedPdfBlob(pdfBlob);
       } catch (pdfError) {
-        console.error('❌ PDF generation failed (non-blocking):', pdfError);
+        console.error('❌ [v3] PDF generation failed (non-blocking):', pdfError);
         // Continue with order submission even if PDF fails
         setGeneratedPdfBlob(null);
       }
 
       // STEP 2: Submit order to Shopify
+      console.log('📤 [v3] STEP 2: Submitting order to Shopify...');
       const completeOrder: CompleteOrder = {
         order,
         specifications,
@@ -207,8 +242,9 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
       };
 
       await submitOrder(completeOrder);
+      console.log('✅ [v3] Order submitted successfully');
     } catch (error) {
-      console.error("Order submission failed:", error);
+      console.error("❌ [v3] Order submission failed:", error);
       // Error is handled by the useOrderSubmission hook
     }
   };
