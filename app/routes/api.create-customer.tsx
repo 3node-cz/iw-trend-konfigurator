@@ -130,10 +130,11 @@ export async function action({ request }: ActionFunctionArgs) {
       ico,
       dic,
       marketingConsent,
-      shopDomain
+      shopDomain,
+      address
     } = await request.json();
 
-    console.log('📝 Received:', { firstName, lastName, email, shopDomain });
+    console.log('📝 Received:', { firstName, lastName, email, shopDomain, address });
 
     // Get shop domain from body
     const shop = shopDomain || "iw-trend.myshopify.com";
@@ -214,6 +215,22 @@ export async function action({ request }: ActionFunctionArgs) {
     const phoneError = validatePhone(phone);
     if (phoneError) {
       fieldErrors.push({ field: 'phone', message: phoneError });
+    }
+
+    // Validate address fields
+    if (address) {
+      if (!address.address1 || !address.address1.trim()) {
+        fieldErrors.push({ field: 'address1', message: 'Ulica a číslo je povinné' });
+      }
+      if (!address.city || !address.city.trim()) {
+        fieldErrors.push({ field: 'city', message: 'Mesto je povinné' });
+      }
+      if (!address.zip || !address.zip.trim()) {
+        fieldErrors.push({ field: 'zip', message: 'PSČ je povinné' });
+      }
+      if (!address.country || !address.country.trim()) {
+        fieldErrors.push({ field: 'country', message: 'Krajina je povinná' });
+      }
     }
 
     // Return validation errors if any
@@ -412,6 +429,89 @@ export async function action({ request }: ActionFunctionArgs) {
 
     const customer = result.data.customerCreate.customer;
     console.log('✅ Customer created successfully:', customer.id);
+
+    // Create customer address if provided
+    if (address && address.address1 && address.city && address.zip && address.country) {
+      console.log('📍 Creating customer address...');
+
+      const addressMutation = `
+        mutation customerAddressCreate($customerId: ID!, $address: MailingAddressInput!) {
+          customerAddressCreate(customerId: $customerId, address: $address) {
+            customerAddress {
+              id
+              address1
+              address2
+              city
+              zip
+              country
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      const addressVariables = {
+        customerId: customer.id,
+        address: {
+          address1: address.address1,
+          address2: address.address2 || null,
+          city: address.city,
+          zip: address.zip,
+          country: address.country,
+          firstName: firstName,
+          lastName: lastName,
+          ...(phone && { phone: normalizedPhone })
+        }
+      };
+
+      try {
+        const addressResponse = await admin.graphql(addressMutation, { variables: addressVariables });
+        const addressResult = await addressResponse.json();
+
+        if (addressResult.data?.customerAddressCreate?.userErrors?.length > 0) {
+          console.error('⚠️ Address creation errors:', addressResult.data.customerAddressCreate.userErrors);
+        } else {
+          console.log('✅ Customer address created successfully');
+
+          // Set as default address
+          const createdAddressId = addressResult.data?.customerAddressCreate?.customerAddress?.id;
+          if (createdAddressId) {
+            const setDefaultMutation = `
+              mutation customerDefaultAddressUpdate($customerId: ID!, $addressId: ID!) {
+                customerDefaultAddressUpdate(customerId: $customerId, addressId: $addressId) {
+                  customer {
+                    id
+                  }
+                  userErrors {
+                    field
+                    message
+                  }
+                }
+              }
+            `;
+
+            const setDefaultVariables = {
+              customerId: customer.id,
+              addressId: createdAddressId
+            };
+
+            const defaultResponse = await admin.graphql(setDefaultMutation, { variables: setDefaultVariables });
+            const defaultResult = await defaultResponse.json();
+
+            if (defaultResult.data?.customerDefaultAddressUpdate?.userErrors?.length > 0) {
+              console.error('⚠️ Set default address errors:', defaultResult.data.customerDefaultAddressUpdate.userErrors);
+            } else {
+              console.log('✅ Default address set successfully');
+            }
+          }
+        }
+      } catch (addressError) {
+        console.error('⚠️ Failed to create address (non-critical):', addressError);
+      }
+    }
 
     // Send account activation email
     console.log('📧 Sending account activation email...');
