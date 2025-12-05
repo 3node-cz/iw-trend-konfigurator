@@ -1,0 +1,175 @@
+/**
+ * PDF Generation Service using jsPDF and html2canvas
+ * Generates high-quality PDF from HTML order recapitulation
+ */
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
+export interface PDFGenerationOptions {
+  filename?: string;
+  scale?: number; // Higher = better quality (default: 2)
+  compression?: 'NONE' | 'FAST' | 'SLOW'; // PDF compression
+}
+
+/**
+ * Generate PDF from HTML element
+ * @param elementId ID of element to convert (without #)
+ * @param options PDF generation options
+ * @returns PDF as Blob
+ */
+export async function generatePDFFromElement(
+  elementId: string,
+  options: PDFGenerationOptions = {}
+): Promise<Blob> {
+  const {
+    scale = 2,
+    compression = 'FAST',
+    filename = 'order-configuration.pdf'
+  } = options;
+
+  console.log('📄 Starting PDF generation for element:', elementId);
+
+  // Get the element
+  const element = document.getElementById(elementId);
+  if (!element) {
+    throw new Error(`Element with ID "${elementId}" not found`);
+  }
+
+  // Temporarily show print-only elements for PDF
+  const printOnlyElements = element.querySelectorAll('.print-only');
+  const originalPrintOnlyDisplay: string[] = [];
+  printOnlyElements.forEach((el, index) => {
+    originalPrintOnlyDisplay[index] = (el as HTMLElement).style.display;
+    (el as HTMLElement).style.display = 'block';
+  });
+
+  // Temporarily hide no-print elements
+  const noPrintElements = element.querySelectorAll('.no-print');
+  const originalNoPrintDisplay: string[] = [];
+  noPrintElements.forEach((el, index) => {
+    originalNoPrintDisplay[index] = (el as HTMLElement).style.display;
+    (el as HTMLElement).style.display = 'none';
+  });
+
+  try {
+    console.log('📸 Capturing HTML as canvas...');
+
+    // Capture HTML as canvas
+    const canvas = await html2canvas(element, {
+      scale,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight,
+      onclone: (clonedDoc) => {
+        // Additional cleanup in cloned document if needed
+        const clonedElement = clonedDoc.getElementById(elementId);
+        if (clonedElement) {
+          // Remove any interactive elements from clone
+          const buttons = clonedElement.querySelectorAll('button');
+          buttons.forEach(btn => btn.style.display = 'none');
+        }
+      }
+    });
+
+    console.log('✅ Canvas generated:', canvas.width, 'x', canvas.height, 'pixels');
+
+    // A4 dimensions in mm
+    const a4Width = 210;
+    const a4Height = 297;
+
+    // Calculate dimensions to fit canvas on A4
+    const imgData = canvas.toDataURL('image/png', 1.0);
+    const imgWidth = a4Width;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    console.log('📄 Creating PDF document...');
+
+    // Create PDF
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+      compress: compression !== 'NONE',
+    });
+
+    let heightLeft = imgHeight;
+    let position = 0;
+    let pageNumber = 1;
+
+    // Add first page
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    heightLeft -= a4Height;
+
+    // Add additional pages if content overflows
+    while (heightLeft > 0) {
+      pageNumber++;
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= a4Height;
+    }
+
+    console.log(`✅ PDF generated successfully (${pageNumber} page${pageNumber > 1 ? 's' : ''})`);
+
+    // Return as Blob
+    const blob = pdf.output('blob');
+    console.log('📦 PDF blob size:', (blob.size / 1024).toFixed(2), 'KB');
+
+    return blob;
+
+  } catch (error) {
+    console.error('❌ PDF generation failed:', error);
+    throw error;
+  } finally {
+    // Restore visibility of print-only elements
+    printOnlyElements.forEach((el, index) => {
+      (el as HTMLElement).style.display = originalPrintOnlyDisplay[index];
+    });
+
+    // Restore visibility of no-print elements
+    noPrintElements.forEach((el, index) => {
+      (el as HTMLElement).style.display = originalNoPrintDisplay[index];
+    });
+
+    console.log('🔄 Restored original element visibility');
+  }
+}
+
+/**
+ * Generate PDF for order configuration
+ * Convenience function with preset options for order recapitulation
+ * @param orderName Order name for filename
+ * @returns PDF Blob
+ */
+export async function generateOrderPDF(orderName: string): Promise<Blob> {
+  // Use container element that wraps the entire recapitulation
+  // This ID must be set in OrderRecapitulationPage.tsx
+  const elementId = 'order-recapitulation-container';
+
+  console.log('📋 Generating order PDF for:', orderName);
+
+  return generatePDFFromElement(elementId, {
+    filename: `${orderName}-configuration.pdf`,
+    scale: 2, // High quality (2x resolution)
+    compression: 'FAST',
+  });
+}
+
+/**
+ * Download PDF file directly in browser (for testing)
+ * @param blob PDF Blob to download
+ * @param filename Filename for download
+ */
+export function downloadPDFBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  console.log('💾 PDF download triggered:', link.download);
+}
