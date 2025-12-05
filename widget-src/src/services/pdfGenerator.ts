@@ -172,13 +172,28 @@ export async function generatePDFFromElementDirect(
   });
 
   try {
+    // DEBUG: Log element state before capture
+    console.log('📸 Pre-capture element state:', {
+      id: element.id,
+      tagName: element.tagName,
+      width: element.offsetWidth,
+      height: element.offsetHeight,
+      scrollWidth: element.scrollWidth,
+      scrollHeight: element.scrollHeight,
+      childCount: element.children.length,
+      hasContent: element.textContent && element.textContent.length > 0,
+      computedDisplay: window.getComputedStyle(element).display,
+      computedVisibility: window.getComputedStyle(element).visibility,
+    });
+
     console.log('📸 Capturing HTML as canvas...');
 
     // Capture HTML as canvas
     const canvas = await html2canvas(element, {
       scale,
       useCORS: true,
-      logging: false,
+      allowTaint: false,
+      logging: true, // Enable logging for debugging
       backgroundColor: '#ffffff',
       windowWidth: element.scrollWidth,
       windowHeight: element.scrollHeight,
@@ -186,6 +201,11 @@ export async function generatePDFFromElementDirect(
         // Additional cleanup in cloned document if needed
         const clonedElement = clonedDoc.getElementById(element.id);
         if (clonedElement) {
+          console.log('🔍 Cloned element state:', {
+            width: clonedElement.offsetWidth,
+            height: clonedElement.offsetHeight,
+            childCount: clonedElement.children.length,
+          });
           // Remove any interactive elements from clone
           const buttons = clonedElement.querySelectorAll('button');
           buttons.forEach(btn => btn.style.display = 'none');
@@ -194,6 +214,18 @@ export async function generatePDFFromElementDirect(
     });
 
     console.log('✅ Canvas generated:', canvas.width, 'x', canvas.height, 'pixels');
+
+    // DEBUG: Check if canvas has content
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const hasNonWhitePixels = imageData.data.some((value, index) => {
+        // Check RGB values (skip alpha channel)
+        if (index % 4 === 3) return false;
+        return value !== 255; // Not white
+      });
+      console.log('🎨 Canvas has non-white content:', hasNonWhitePixels);
+    }
 
     // A4 dimensions in mm
     const a4Width = 210;

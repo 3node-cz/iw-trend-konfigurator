@@ -288,8 +288,8 @@ export async function action({ request }: ActionFunctionArgs) {
       variables: {
         metafields: [{
           ownerId: draftOrderId,
-          namespace: 'custom',
-          key: 'configuration_pdf',
+          namespace: 'iw_trend_configurator',
+          key: 'order_configuration_pdf',
           type: 'file_reference',
           value: file.id, // GID of the file
         }]

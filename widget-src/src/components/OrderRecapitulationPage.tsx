@@ -254,7 +254,12 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
         if (!container) {
           throw new Error('Container element not available via ref - PDF generation impossible');
         }
-        // Pass the element from ref directly to PDF generator (v5 fix)
+
+        // Wait a moment to ensure all content is fully rendered
+        console.log('⏳ [v6] Waiting for content to render before PDF capture...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Pass the element from ref directly to PDF generator (v6 fix)
         const pdfBlob = await generateOrderPDF(order.orderName, container);
         console.log('✅ [v6] PDF generated successfully, size:', (pdfBlob.size / 1024).toFixed(2), 'KB');
         setGeneratedPdfBlob(pdfBlob);
@@ -296,7 +301,17 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     setIsGeneratingPDF(true);
     try {
       console.log('🧪 TEST: Generating PDF...');
-      const pdfBlob = await generateOrderPDF(order.orderName);
+
+      const container = containerRef.current;
+      if (!container) {
+        throw new Error('Container ref not available');
+      }
+
+      console.log('🧪 TEST: Container element found, waiting for render...');
+      // Wait a bit to ensure all content is rendered
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const pdfBlob = await generateOrderPDF(order.orderName, container);
       downloadPDFBlob(pdfBlob, `${order.orderName}-configuration.pdf`);
       console.log('✅ TEST: PDF downloaded successfully');
       alert('✅ PDF generated successfully! Check your downloads folder.');
