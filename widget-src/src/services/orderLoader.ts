@@ -5,6 +5,8 @@ import type {
   MaterialSearchResult,
   EdgeMaterial,
 } from '../types/shopify'
+import { applyCustomerPricing } from './customerPricingService'
+import type { CustomerOrderData } from './customerApi'
 
 // Cache for already fetched materials and edges to avoid duplicate API calls
 const materialCache = new Map<string, MaterialSearchResult>()
@@ -12,9 +14,13 @@ const edgeCache = new Map<string, EdgeMaterial>()
 
 /**
  * Loads a saved order configuration and fetches fresh material data from Shopify API
+ *
+ * @param savedOrder - The saved configuration to load
+ * @param customer - Optional customer data for applying customer-specific pricing
  */
 export const loadOrderConfiguration = async (
   savedOrder: SavedConfiguration,
+  customer?: CustomerOrderData | null
 ): Promise<{
   orderInfo: typeof savedOrder.orderInfo
   specifications: CuttingSpecification[]
@@ -60,6 +66,20 @@ export const loadOrderConfiguration = async (
       }
     }),
   )
+
+  // Apply customer-specific pricing to loaded materials
+  if (customer && materialCache.size > 0) {
+    console.log('💰 Applying customer pricing to', materialCache.size, 'materials')
+    const materialsArray = Array.from(materialCache.values())
+    const pricedMaterials = applyCustomerPricing(materialsArray, customer)
+
+    // Update cache with priced materials
+    materialCache.clear()
+    pricedMaterials.forEach(material => {
+      materialCache.set(material.id, material)
+    })
+    console.log('✅ Customer pricing applied')
+  }
 
   await Promise.all(
     uniqueEdgeIds.map(async (edgeId) => {

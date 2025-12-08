@@ -1,11 +1,14 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { searchMaterials } from '../services/shopifyApi'
 import type { MaterialSearchResult } from '../types/shopify'
 import { COLLECTIONS } from '../constants'
+import { applyCustomerPricing } from '../services/customerPricingService'
+import type { CustomerOrderData } from '../services/customerApi'
 
 interface UseMaterialSearchOptions {
   collection?: string
   defaultAvailableOnly?: boolean
+  customer?: CustomerOrderData | null
 }
 
 interface UseMaterialSearchResult {
@@ -27,19 +30,30 @@ export const useMaterialSearch = (
 ): UseMaterialSearchResult => {
   const {
     collection = COLLECTIONS.BOARDS,
-    defaultAvailableOnly = true
+    defaultAvailableOnly = true,
+    customer
   } = options
 
   const [searchResults, setSearchResults] = useState<MaterialSearchResult[]>([])
+  const [baseResults, setBaseResults] = useState<MaterialSearchResult[]>([])
   const [isLoadingSearch, setIsLoadingSearch] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showingAvailableOnly, setShowingAvailableOnly] = useState(defaultAvailableOnly)
+
+  // Apply customer pricing when customer or base results change
+  useEffect(() => {
+    if (baseResults.length > 0) {
+      const pricedResults = applyCustomerPricing(baseResults, customer)
+      setSearchResults(pricedResults)
+    }
+  }, [customer?.id, baseResults])
 
   const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query)
 
     if (query.length < 2) {
       setSearchResults([])
+      setBaseResults([])
       return
     }
 
@@ -52,10 +66,12 @@ export const useMaterialSearch = (
         collection
       })
 
-      setSearchResults(results)
+      // Store base results (pricing will be applied in useEffect)
+      setBaseResults(results)
     } catch (error) {
       console.error('Search error:', error)
       setSearchResults([])
+      setBaseResults([])
     } finally {
       setIsLoadingSearch(false)
     }
@@ -72,10 +88,13 @@ export const useMaterialSearch = (
           limit: undefined,
           collection
         })
-        setSearchResults(results)
+
+        // Store base results (pricing will be applied in useEffect)
+        setBaseResults(results)
       } catch (error) {
         console.error('Show all search error:', error)
         setSearchResults([])
+        setBaseResults([])
       } finally {
         setIsLoadingSearch(false)
       }
@@ -84,6 +103,7 @@ export const useMaterialSearch = (
 
   const clearResults = useCallback(() => {
     setSearchResults([])
+    setBaseResults([])
     setSearchQuery('')
   }, [])
 

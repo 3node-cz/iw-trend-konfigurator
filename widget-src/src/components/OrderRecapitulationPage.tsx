@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { calculateTotalPieces } from "../utils/data-transformation";
 import { formatPriceNumber } from "../utils/formatting";
-import { generateOrderPDF, downloadPDFBlob } from "../services/pdfGenerator";
+import { generateOrderPDF } from "../services/pdfGenerator";
 import {
   Box,
   Container,
@@ -294,35 +294,6 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     window.print();
   };
 
-  // TEST: PDF Generation (temporary for testing)
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-
-  const handleTestPDFGeneration = async () => {
-    setIsGeneratingPDF(true);
-    try {
-      console.log('🧪 TEST: Generating PDF...');
-
-      const container = containerRef.current;
-      if (!container) {
-        throw new Error('Container ref not available');
-      }
-
-      console.log('🧪 TEST: Container element found, waiting for render...');
-      // Wait a bit to ensure all content is rendered
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const pdfBlob = await generateOrderPDF(order.orderName, container);
-      downloadPDFBlob(pdfBlob, `${order.orderName}-configuration.pdf`);
-      console.log('✅ TEST: PDF downloaded successfully');
-      alert('✅ PDF generated successfully! Check your downloads folder.');
-    } catch (error) {
-      console.error('❌ TEST: PDF generation failed:', error);
-      alert(`❌ PDF generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setIsGeneratingPDF(false);
-    }
-  };
-
   // CSV Export handlers
   const handleExportMens = () => {
     const completeOrder: CompleteOrder = {
@@ -489,16 +460,6 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
             disabled={isSubmitting}
           >
             CSV BICORN
-          </Button>
-          {/* TEST: Temporary PDF generation button */}
-          <Button
-            variant="contained"
-            color="secondary"
-            startIcon={isGeneratingPDF ? <CircularProgress size={20} color="inherit" /> : <DownloadIcon />}
-            onClick={handleTestPDFGeneration}
-            disabled={isGeneratingPDF || isSubmitting}
-          >
-            {isGeneratingPDF ? 'Generating PDF...' : 'TEST PDF'}
           </Button>
           {viewMode === 'create' && customer && (
             <SaveOrderButton

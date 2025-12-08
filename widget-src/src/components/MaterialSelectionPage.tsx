@@ -46,7 +46,7 @@ const MaterialSelectionPage: React.FC<MaterialSelectionPageProps> = ({
     handleSearch,
     handleShowAll,
     clearResults,
-  } = useMaterialSearch();
+  } = useMaterialSearch({ customer });
 
   const handleAddMaterial = (material: MaterialSearchResult) => {
     // Check if material is already selected

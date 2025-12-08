@@ -223,9 +223,9 @@ function App() {
   const handleLoadConfiguration = async (savedOrder: SavedConfiguration) => {
     setLoadingConfiguration(true);
     try {
-      // Load configuration and fetch fresh material data
+      // Load configuration and fetch fresh material data (with customer pricing)
       const { orderInfo, specifications } =
-        await loadOrderConfiguration(savedOrder);
+        await loadOrderConfiguration(savedOrder, customer);
 
       // Check if we have any valid specifications
       if (specifications.length === 0) {
@@ -326,6 +326,21 @@ function App() {
           }
         })
       );
+
+      // Apply customer-specific pricing to loaded materials
+      if (customer && materialCache.size > 0) {
+        const { applyCustomerPricing } = await import('./services/customerPricingService');
+        console.log('💰 Applying customer pricing to', materialCache.size, 'materials');
+        const materialsArray = Array.from(materialCache.values());
+        const pricedMaterials = applyCustomerPricing(materialsArray, customer);
+
+        // Update cache with priced materials
+        materialCache.clear();
+        pricedMaterials.forEach((material: any) => {
+          materialCache.set(material.id, material);
+        });
+        console.log('✅ Customer pricing applied');
+      }
 
       // Re-fetch all edge materials
       const edgeCache = new Map();

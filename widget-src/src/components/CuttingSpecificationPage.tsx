@@ -179,7 +179,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
     handleSearch,
     handleShowAll,
     clearResults,
-  } = useMaterialSearch();
+  } = useMaterialSearch({ customer });
 
   // Use custom hook for material specs management
   const {

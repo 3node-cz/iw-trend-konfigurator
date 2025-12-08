@@ -7,9 +7,11 @@ interface ShopifyCustomerData {
   firstName: string
   lastName: string
   email: string
+  tags?: string[]  // Customer tags (e.g., ["discount_group:20_ZAK"])
   metafields: {
     saved_configurations?: string
     discount_percentage?: string
+    prices?: string  // JSON string with SKU-specific pricing
   }
 }
 
@@ -26,6 +28,33 @@ interface UseCustomerReturn {
  * Convert Shopify widget customer data to CustomerOrderData format
  */
 const convertShopifyCustomerToOrderData = (shopifyCustomer: ShopifyCustomerData): CustomerOrderData => {
+  // Parse prices metafield if it exists
+  let pricesMetafield = undefined
+  if (shopifyCustomer.metafields.prices) {
+    try {
+      const parsed = JSON.parse(shopifyCustomer.metafields.prices)
+      // Validate structure - should be an object (not array, not null)
+      if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+        // Basic validation: check if it has the expected SKU -> {p, d, b} structure
+        const isValid = Object.values(parsed).every((value: any) =>
+          typeof value === 'object' &&
+          typeof value.p === 'number' &&
+          typeof value.d === 'number' &&
+          typeof value.b === 'number'
+        )
+        if (isValid) {
+          pricesMetafield = parsed
+        } else {
+          console.error('❌ Invalid prices metafield structure: expected {sku: {p, d, b}}')
+        }
+      } else {
+        console.error('❌ Invalid prices metafield structure: expected object, got', typeof parsed)
+      }
+    } catch (error) {
+      console.error('❌ Failed to parse customer prices metafield:', error)
+    }
+  }
+
   return {
     id: shopifyCustomer.id,
     email: shopifyCustomer.email,
@@ -44,7 +73,11 @@ const convertShopifyCustomerToOrderData = (shopifyCustomer: ShopifyCustomerData)
     // Use discount percentage from Shopify metafield
     discountPercentage: shopifyCustomer.metafields.discount_percentage
       ? parseFloat(shopifyCustomer.metafields.discount_percentage)
-      : 0
+      : 0,
+
+    // Pricing data
+    tags: shopifyCustomer.tags || [],
+    pricesMetafield
   }
 }
 
@@ -55,27 +88,26 @@ export const useCustomer = (): UseCustomerReturn => {
   const [customer, setCustomer] = useState<CustomerOrderData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const loadCustomerFromShopify = () => {
+  const loadCustomerFromShopify = async () => {
     setIsLoading(true)
     try {
-      // Get customer data from Shopify widget configuration
-      const widgetConfigs = (window as any).ConfiguratorConfig
-      if (widgetConfigs) {
-        // Get the first available widget config (or you could pass blockId as parameter)
-        const firstBlockId = Object.keys(widgetConfigs)[0]
-        const config = widgetConfigs[firstBlockId]
+      // Fetch customer data from backend API
+      const response = await fetch('/apps/configurator/api/customer-data')
+      const result = await response.json()
 
-        if (config?.customer) {
-          const customerData = convertShopifyCustomerToOrderData(config.customer)
-          setCustomer(customerData)
-        } else {
-          setCustomer(null)
-        }
+      if (result.success && result.customer) {
+        const customerData = convertShopifyCustomerToOrderData(result.customer)
+        setCustomer(customerData)
+        console.log('✅ Customer loaded from API:', {
+          id: customerData.id,
+          tagsCount: customerData.tags?.length || 0,
+          hasPrices: !!customerData.pricesMetafield
+        })
       } else {
         setCustomer(null)
       }
     } catch (error) {
-      console.error('Error loading customer from Shopify:', error)
+      console.error('Error loading customer from API:', error)
       setCustomer(null)
     } finally {
       setIsLoading(false)

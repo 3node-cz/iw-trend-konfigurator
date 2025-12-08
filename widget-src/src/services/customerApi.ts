@@ -18,6 +18,18 @@ export interface CustomerMetafield {
   type: string
 }
 
+// Customer SKU-specific pricing
+export interface CustomerSkuPricing {
+  p: number  // Discounted price
+  d: number  // Discount percentage
+  b: number  // Base price
+}
+
+// Customer pricing data from metafield
+export interface CustomerPricingData {
+  [sku: string]: CustomerSkuPricing
+}
+
 // Specific customer data we need for orders
 export interface CustomerOrderData {
   id: string
@@ -34,6 +46,10 @@ export interface CustomerOrderData {
   defaultDeliveryMethod?: string
   defaultProcessingType?: string
   discountPercentage?: number
+
+  // Pricing data (from tags and metafields)
+  tags?: string[]  // Customer tags (e.g., "discount_group:20_ZAK")
+  pricesMetafield?: CustomerPricingData  // SKU-specific pricing
 }
 
 /**
