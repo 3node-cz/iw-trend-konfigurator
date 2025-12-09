@@ -50,7 +50,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             value
             type
           }
-          pdfMetafield: metafield(namespace: "custom", key: "configuration_pdf") {
+          pdfMetafield: metafield(namespace: "iw_trend_configurator", key: "order_configuration_pdf") {
             id
             namespace
             key

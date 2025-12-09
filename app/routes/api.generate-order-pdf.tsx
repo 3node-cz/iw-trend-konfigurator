@@ -297,8 +297,8 @@ export async function action({ request }: ActionFunctionArgs) {
           ownerId: draftOrderId,
           namespace: 'iw_trend_configurator',
           key: 'order_configuration_pdf',
-          type: 'file_reference',
-          value: file.id, // GID of the file
+          type: 'single_line_text_field',
+          value: file.url, // Download URL for the PDF
         }]
       }
     });
