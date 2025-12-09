@@ -34,11 +34,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
       });
     }
 
-    // Get customer ID from session
-    const customerId = session.customerId;
+    // Get customer ID from URL parameters (app proxy passes it as logged_in_customer_id)
+    const url = new URL(request.url);
+    let customerId = url.searchParams.get('logged_in_customer_id');
+
+    // If not in URL params, try session (fallback for other auth methods)
+    if (!customerId) {
+      customerId = session.customerId || null;
+    }
+
+    console.log('🔍 [API] Customer ID extraction:', {
+      fromUrlParams: url.searchParams.get('logged_in_customer_id'),
+      fromSession: session.customerId,
+      finalCustomerId: customerId
+    });
 
     if (!customerId) {
       // Not logged in - return null customer data
+      console.log('⚠️ [API] No customer ID found - customer not logged in');
       return json({
         success: true,
         customer: null
@@ -47,7 +60,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
       });
     }
 
-    console.log('📊 Fetching customer data for:', customerId);
+    // Convert to GID format if needed (GraphQL expects gid://shopify/Customer/ID)
+    const customerGid = customerId.startsWith('gid://shopify/Customer/')
+      ? customerId
+      : `gid://shopify/Customer/${customerId}`;
+
+    console.log('📊 Fetching customer data for:', customerGid);
 
     // Fetch customer with tags and prices metafield
     const customerQuery = `
@@ -67,7 +85,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     const response = await admin.graphql(customerQuery, {
       variables: {
-        id: customerId
+        id: customerGid
       }
     });
 
