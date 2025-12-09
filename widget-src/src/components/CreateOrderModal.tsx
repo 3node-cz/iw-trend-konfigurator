@@ -59,9 +59,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
       customerName: "",
       company: "",
       transferLocation: "",
-      costCenter: "",
+      costCenter: shopConfig.transferLocations[0]?.split(" - ")[0] || "", // Set first branch as default
       cuttingCenter: "",
-      deliveryMethod: "",
+      deliveryMethod: shopConfig.deliveryMethods[0] || "", // Set first delivery method as default
       processingType: shopConfig.processingTypes[0] || "Zlikvidovať",
       discountPercentage: 0, // Always initialize to prevent undefined.toString() crash
       ...customerDefaults,
@@ -69,6 +69,38 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Reset form data when dialog opens with fresh customer data
+  React.useEffect(() => {
+    if (open) {
+      const defaultDeliveryDate = new Date();
+      defaultDeliveryDate.setDate(defaultDeliveryDate.getDate() + ORDER_CONFIG.DEFAULT_DELIVERY_DAYS);
+
+      const customerDefaults = createOrderWithCustomerDefaults(customer);
+
+      // Validate processingType - ensure it's in available options before spreading
+      if (customerDefaults.processingType && !shopConfig.processingTypes.includes(customerDefaults.processingType)) {
+        console.warn(`⚠️ Customer's processingType "${customerDefaults.processingType}" not in available options, using default`);
+        customerDefaults.processingType = shopConfig.processingTypes[0] || "Zlikvidovať";
+      }
+
+      setFormData({
+        orderName: "",
+        deliveryDate: defaultDeliveryDate,
+        notes: "",
+        customerName: "",
+        company: "",
+        transferLocation: "",
+        costCenter: shopConfig.transferLocations[0]?.split(" - ")[0] || "", // Set first branch as default
+        cuttingCenter: "",
+        deliveryMethod: shopConfig.deliveryMethods[0] || "", // Set first delivery method as default
+        processingType: shopConfig.processingTypes[0] || "Zlikvidovať",
+        discountPercentage: 0,
+        ...customerDefaults,
+      });
+      setErrors({});
+    }
+  }, [open, customer, shopConfig]);
 
   // Use dynamic options from shop config
   const locations = shopConfig.transferLocations;

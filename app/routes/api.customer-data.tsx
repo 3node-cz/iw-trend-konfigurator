@@ -114,6 +114,36 @@ export async function loader({ request }: LoaderFunctionArgs) {
       hasPrices: !!customerData.metafields.prices
     });
 
+    // 🧪 TESTING: Detailed customer pricing data
+    console.log('🧪 [CUSTOMER-DATA] Full customer info:', {
+      customerId: customerData.id,
+      email: customerData.email,
+      name: `${customerData.firstName} ${customerData.lastName}`,
+    });
+
+    console.log('🧪 [CUSTOMER-TAGS] Tags array:', customerData.tags);
+
+    if (customerData.metafields.prices) {
+      try {
+        const pricesJson = JSON.parse(customerData.metafields.prices);
+        const skuCount = Object.keys(pricesJson).length;
+        console.log('🧪 [CUSTOMER-PRICES] Metafield found:', {
+          skuCount,
+          firstFewSKUs: Object.keys(pricesJson).slice(0, 5),
+          samplePricing: Object.entries(pricesJson).slice(0, 2).map(([sku, data]: [string, any]) => ({
+            sku,
+            price: data.p,
+            discount: data.d,
+            base: data.b
+          }))
+        });
+      } catch (e) {
+        console.error('🧪 [CUSTOMER-PRICES] Failed to parse prices metafield:', e);
+      }
+    } else {
+      console.log('🧪 [CUSTOMER-PRICES] No prices metafield found');
+    }
+
     return json({
       success: true,
       customer: customerData

@@ -117,7 +117,25 @@ const CustomEdgeDialog: React.FC<CustomEdgeDialogProps> = ({
       // Apply customer pricing to search results
       if (customer && results.length > 0) {
         const edgeMaterials = results.map(convertToEdgeMaterial)
+
+        // 🧪 TESTING: Log edge search results before pricing
+        console.log(`🧪 [EDGE-SEARCH-${position.toUpperCase()}] Before pricing:`, edgeMaterials.map(e => ({
+          name: e.name,
+          code: e.code,
+          basePrice: e.price?.amount
+        })));
+
         const pricedEdges = applyCustomerPricingToEdges(edgeMaterials, customer)
+
+        // 🧪 TESTING: Log edge search results after pricing
+        console.log(`🧪 [EDGE-SEARCH-${position.toUpperCase()}] After pricing:`, pricedEdges.map(e => ({
+          name: e.name,
+          code: e.code,
+          basePrice: (e.price as any)?._basePrice,
+          customerPrice: e.price?.amount,
+          discount: (e.price as any)?._customerDiscount,
+          source: (e.price as any)?._pricingSource
+        })));
 
         // Convert back to MaterialSearchResult for display
         const pricedResults = results.map((result, index) => ({
@@ -182,6 +200,17 @@ const CustomEdgeDialog: React.FC<CustomEdgeDialogProps> = ({
     const pricedEdge = customer
       ? applyCustomerPricingToEdges([edge], customer)[0]
       : edge
+
+    // 🧪 TESTING: Log selected edge pricing
+    console.log(`🧪 [EDGE-SELECT-${position.toUpperCase()}] Selected edge:`, {
+      name: pricedEdge.name,
+      code: pricedEdge.code,
+      basePrice: (pricedEdge.price as any)?._basePrice || pricedEdge.price?.amount,
+      customerPrice: pricedEdge.price?.amount,
+      discount: (pricedEdge.price as any)?._customerDiscount || 0,
+      source: (pricedEdge.price as any)?._pricingSource || 'base_price',
+      hasCustomer: !!customer
+    });
 
     switch (position) {
       case 'top':

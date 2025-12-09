@@ -86,6 +86,13 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
   const edgeOffset = isLargePreview ? 6 : 4 // Smaller offset for thumbnails
   const edgeStrokeWidth = isLargePreview ? 3 : 4 // Thicker stroke for thumbnails
 
+  // Add padding to viewBox for small previews to show edge indicators
+  const viewBoxPadding = isLargePreview ? 0 : edgeOffset + edgeStrokeWidth
+  const viewBoxWidth = finalWidth + (viewBoxPadding * 2)
+  const viewBoxHeight = finalHeight + (viewBoxPadding * 2)
+  const viewBoxOffsetX = -viewBoxPadding
+  const viewBoxOffsetY = -viewBoxPadding
+
   return (
     <Box
       sx={{
@@ -154,14 +161,14 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
       <svg
         width={finalWidth}
         height={finalHeight}
-        viewBox={`0 0 ${finalWidth} ${finalHeight}`}
+        viewBox={`${viewBoxOffsetX} ${viewBoxOffsetY} ${viewBoxWidth} ${viewBoxHeight}`}
         style={{
           position: 'absolute',
           top: 0,
           left: 0,
         }}
       >
-        <g transform={`translate(${offsetX}, ${offsetY})`}>
+        <g transform={`translate(${offsetX + viewBoxPadding}, ${offsetY + viewBoxPadding})`}>
           {/* Main piece shape outline */}
           <path
             d={piecePath}

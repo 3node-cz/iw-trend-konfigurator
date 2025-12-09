@@ -89,6 +89,21 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
     const customerUnitPrice = parseFloat(spec.material.variant?.price || "0")
     const baseUnitPrice = parseFloat((spec.material.variant as any)?._basePrice || spec.material.variant?.price || "0")
     const customerDiscount = (spec.material.variant as any)?._customerDiscount || 0
+    const pricingSource = (spec.material.variant as any)?._pricingSource || 'unknown'
+
+    // 🧪 TESTING: Log material pricing in invoice
+    console.log(`🧪 [INVOICE-MATERIAL] Material ${specIndex + 1}:`, {
+      name: spec.material.title,
+      sku: spec.material.variant?.sku,
+      basePrice: `€${baseUnitPrice}`,
+      customerPrice: `€${customerUnitPrice}`,
+      discount: `${customerDiscount}%`,
+      pricingSource,
+      quantity: boardsNeeded,
+      totalBase: `€${(baseUnitPrice * boardsNeeded).toFixed(2)}`,
+      totalCustomer: `€${(customerUnitPrice * boardsNeeded).toFixed(2)}`,
+      savings: customerDiscount > 0 ? `€${((baseUnitPrice - customerUnitPrice) * boardsNeeded).toFixed(2)}` : 'none'
+    });
 
     // Add material board
     orderItems.push({
@@ -156,9 +171,24 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
         const customerEdgeUnitPrice = edgeMaterialObj?.price?.amount || 0;
         const baseEdgeUnitPrice = (edgeMaterialObj?.price as any)?._basePrice || customerEdgeUnitPrice;
         const edgeCustomerDiscount = (edgeMaterialObj?.price as any)?._customerDiscount || 0;
+        const edgePricingSource = (edgeMaterialObj?.price as any)?._pricingSource || 'unknown';
 
         // Keep full precision - don't round to whole meters
         const edgeQuantity = edgeConsumption.totalEdgeLengthMeters;
+
+        // 🧪 TESTING: Log edge pricing in invoice
+        console.log(`🧪 [INVOICE-EDGE] Edge for Material ${relatedSpecIndex + 1}:`, {
+          name: edgeConsumption.edgeMaterialName,
+          code: edgeMaterialObj?.code,
+          basePrice: `€${baseEdgeUnitPrice}/m`,
+          customerPrice: `€${customerEdgeUnitPrice}/m`,
+          discount: `${edgeCustomerDiscount}%`,
+          pricingSource: edgePricingSource,
+          quantity: `${edgeQuantity.toFixed(3)}m`,
+          totalBase: `€${(baseEdgeUnitPrice * edgeQuantity).toFixed(2)}`,
+          totalCustomer: `€${(customerEdgeUnitPrice * edgeQuantity).toFixed(2)}`,
+          savings: edgeCustomerDiscount > 0 ? `€${((baseEdgeUnitPrice - customerEdgeUnitPrice) * edgeQuantity).toFixed(2)}` : 'none'
+        });
 
         orderItems.push({
           id: `edge-${relatedSpecIndex}-${edgeIndex}`,

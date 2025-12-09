@@ -71,7 +71,27 @@ export const loadOrderConfiguration = async (
   if (customer && materialCache.size > 0) {
     console.log('💰 Applying customer pricing to', materialCache.size, 'materials')
     const materialsArray = Array.from(materialCache.values())
+
+    // 🧪 TESTING: Log materials before pricing
+    console.log('🧪 [ORDER-LOADER-MATERIALS] Before pricing:', materialsArray.map(m => ({
+      id: m.id,
+      title: m.title,
+      sku: m.variant?.sku,
+      basePrice: m.variant?.price
+    })));
+
     const pricedMaterials = applyCustomerPricing(materialsArray, customer)
+
+    // 🧪 TESTING: Log materials after pricing
+    console.log('🧪 [ORDER-LOADER-MATERIALS] After pricing:', pricedMaterials.map(m => ({
+      id: m.id,
+      title: m.title,
+      sku: m.variant?.sku,
+      basePrice: (m.variant as any)?._basePrice,
+      customerPrice: m.variant?.price,
+      discount: (m.variant as any)?._customerDiscount,
+      source: (m.variant as any)?._pricingSource
+    })));
 
     // Update cache with priced materials
     materialCache.clear()
@@ -94,7 +114,27 @@ export const loadOrderConfiguration = async (
   if (customer && edgeCache.size > 0) {
     console.log('💰 Applying customer pricing to', edgeCache.size, 'edge materials')
     const edgesArray = Array.from(edgeCache.values())
+
+    // 🧪 TESTING: Log edges before pricing
+    console.log('🧪 [ORDER-LOADER-EDGES] Before pricing:', edgesArray.map(e => ({
+      id: e.id,
+      name: e.name,
+      code: e.code,
+      basePrice: e.price?.amount
+    })));
+
     const pricedEdges = applyCustomerPricingToEdges(edgesArray, customer)
+
+    // 🧪 TESTING: Log edges after pricing
+    console.log('🧪 [ORDER-LOADER-EDGES] After pricing:', pricedEdges.map(e => ({
+      id: e.id,
+      name: e.name,
+      code: e.code,
+      basePrice: (e.price as any)?._basePrice,
+      customerPrice: e.price?.amount,
+      discount: (e.price as any)?._customerDiscount,
+      source: (e.price as any)?._pricingSource
+    })));
 
     // Update cache with priced edges
     edgeCache.clear()

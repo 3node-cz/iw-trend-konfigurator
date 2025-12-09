@@ -24,8 +24,12 @@ export interface PricingResult {
  * Supports flexible variations (spaces, case-insensitive)
  */
 export function getDiscountFromTags(tags?: string[]): number {
-  if (!tags || tags.length === 0) return 0
+  if (!tags || tags.length === 0) {
+    console.log('🧪 [TAG-DISCOUNT] No tags provided');
+    return 0;
+  }
 
+  console.log('🧪 [TAG-DISCOUNT] Analyzing tags:', tags);
   const discounts: number[] = []
 
   for (const tag of tags) {
@@ -34,6 +38,7 @@ export function getDiscountFromTags(tags?: string[]): number {
     const match = tag.match(/discount[_\s]?group[:\s]+(\d+)[_\s]?ZAK/i)
     if (match) {
       const discount = parseInt(match[1], 10)
+      console.log(`🧪 [TAG-DISCOUNT] Matched tag "${tag}" → ${discount}%`);
       // Validate discount is reasonable (0-100%)
       if (!isNaN(discount) && discount > 0 && discount <= 100) {
         discounts.push(discount)
@@ -48,7 +53,9 @@ export function getDiscountFromTags(tags?: string[]): number {
     console.warn(`⚠️ Multiple discount tags found, using highest:`, discounts)
   }
 
-  return discounts.length > 0 ? Math.max(...discounts) : 0
+  const finalDiscount = discounts.length > 0 ? Math.max(...discounts) : 0;
+  console.log(`🧪 [TAG-DISCOUNT] Final discount: ${finalDiscount}%`);
+  return finalDiscount;
 }
 
 /**
@@ -64,8 +71,11 @@ export function calculateCustomerPrice(
   basePrice: number,
   customer?: CustomerOrderData
 ): PricingResult {
+  console.log(`🧪 [PRICING] Calculating price for SKU: ${sku}, Base: €${basePrice}`);
+
   // No customer = use base price
   if (!customer) {
+    console.log(`🧪 [PRICING] → No customer, using base price`);
     return {
       price: basePrice,
       discountPercentage: 0,
@@ -77,6 +87,13 @@ export function calculateCustomerPrice(
   // Priority 1: Check SKU-specific pricing from metafield
   if (customer.pricesMetafield && customer.pricesMetafield[sku]) {
     const skuPricing = customer.pricesMetafield[sku]
+    console.log(`🧪 [PRICING] ✅ PRIORITY 1: SKU-specific pricing found!`, {
+      sku,
+      customerPrice: skuPricing.p,
+      discount: `${skuPricing.d}%`,
+      basePrice: skuPricing.b,
+      source: 'sku_metafield'
+    });
     return {
       price: skuPricing.p,
       discountPercentage: skuPricing.d,
@@ -85,10 +102,20 @@ export function calculateCustomerPrice(
     }
   }
 
+  console.log(`🧪 [PRICING] Priority 1 (SKU metafield): Not found for SKU ${sku}`);
+
   // Priority 2: Check tag-based discount
   const tagDiscount = getDiscountFromTags(customer.tags)
   if (tagDiscount > 0) {
     const discountedPrice = basePrice * (1 - tagDiscount / 100)
+    console.log(`🧪 [PRICING] ✅ PRIORITY 2: Tag-based discount applied!`, {
+      sku,
+      basePrice,
+      discount: `${tagDiscount}%`,
+      customerPrice: discountedPrice.toFixed(2),
+      calculation: `${basePrice} × (1 - ${tagDiscount}/100) = ${discountedPrice.toFixed(2)}`,
+      source: 'tag_discount'
+    });
     return {
       price: discountedPrice,
       discountPercentage: tagDiscount,
@@ -97,7 +124,14 @@ export function calculateCustomerPrice(
     }
   }
 
+  console.log(`🧪 [PRICING] Priority 2 (Tag discount): No discount tags found`);
+
   // Priority 3: Base price (no customer discount)
+  console.log(`🧪 [PRICING] ✅ PRIORITY 3: Using base price (no discount)`, {
+    sku,
+    price: basePrice,
+    source: 'base_price'
+  });
   return {
     price: basePrice,
     discountPercentage: 0,
