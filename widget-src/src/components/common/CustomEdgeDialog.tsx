@@ -161,6 +161,17 @@ const CustomEdgeDialog: React.FC<CustomEdgeDialogProps> = ({
   const convertToEdgeMaterial = (
     result: MaterialSearchResult
   ): EdgeMaterial => {
+    // Extract edge width from metafields (param.sirka_hrany)
+    const edgeWidthStr = result.metafields?.['param.sirka_hrany']
+    const edgeWidth = edgeWidthStr ? parseFloat(edgeWidthStr) : 0.8
+
+    console.log('🔄 [CustomEdgeDialog] Extracting edge width:', {
+      title: result.title,
+      rawMetafield: edgeWidthStr,
+      parsedWidth: edgeWidth,
+      allMetafields: result.metafields
+    })
+
     const edgeMaterial = {
       id: result.id,
       variantId: result.variant?.id,
@@ -168,8 +179,8 @@ const CustomEdgeDialog: React.FC<CustomEdgeDialogProps> = ({
       name: result.title,
       productCode: result.variant?.sku || result.handle,
       availability: calculateAvailability(result),
-      thickness: 0.8,
-      availableThicknesses: [0.4, 0.8, 2],
+      thickness: edgeWidth, // Use extracted width instead of hardcoded
+      availableThicknesses: [0.4, 0.8, 1, 2], // Keep hardcoded for now
       warehouse: result.vendor || 'Default',
       price: result.variant?.price
         ? {
@@ -185,6 +196,7 @@ const CustomEdgeDialog: React.FC<CustomEdgeDialogProps> = ({
       resultImage: result.image,
       edgeMaterialImage: edgeMaterial.image,
       name: edgeMaterial.name,
+      extractedWidth: edgeWidth,
     })
 
     return edgeMaterial

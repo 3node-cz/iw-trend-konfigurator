@@ -66,6 +66,12 @@ export const VARIANT_METAFIELDS_FRAGMENT = `
   materialThickness: metafield(namespace: "material", key: "thickness") {
     value
   }
+  edgeWidth: metafield(namespace: "param", key: "sirka_hrany") {
+    value
+  }
+  boardThickness: metafield(namespace: "param", key: "hrubka_hrany") {
+    value
+  }
   alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
     value
     references(first: 10) {

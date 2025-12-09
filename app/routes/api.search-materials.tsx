@@ -156,6 +156,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
         metafields['material.thickness'] = source.materialThickness.value;
       }
 
+      // Extract edge-specific metafields
+      if (source.edgeWidth?.value) {
+        metafields['param.sirka_hrany'] = source.edgeWidth.value;
+      }
+      if (source.boardThickness?.value) {
+        metafields['param.hrubka_hrany'] = source.boardThickness.value;
+      }
+
       return metafields;
     };
 
