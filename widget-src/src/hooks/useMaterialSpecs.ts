@@ -79,13 +79,17 @@ const fetchAllEdges = async (material: MaterialSearchResult): Promise<EdgeMateri
     const alternativeProducts = material.metafields?.['custom.alternative_products']
 
     console.log('🔍 [fetchAllEdges] Material:', material.title)
-    console.log('🔍 [fetchAllEdges] Raw metafield value:', alternativeProducts)
+    console.log('🔍 [fetchAllEdges] Material ID:', material.id)
+    console.log('🔍 [fetchAllEdges] ALL metafields on material:', material.metafields)
+    console.log('🔍 [fetchAllEdges] custom.alternative_products value:', alternativeProducts)
+    console.log('🔍 [fetchAllEdges] custom.alternative_products type:', typeof alternativeProducts)
 
     if (!alternativeProducts) {
-      console.log('⚠️ [fetchAllEdges] No alternative_products metafield found')
+      console.warn('⚠️ [fetchAllEdges] No alternative_products metafield found - will use placeholders only')
+      console.warn('⚠️ [fetchAllEdges] This means the edge material product needs the "custom.alternative_products" metafield configured in Shopify admin')
       // Return placeholders only
       const placeholders = generatePlaceholderEdges([], material.title)
-      console.log(`📦 [fetchAllEdges] Generated ${placeholders.length} placeholder edges`)
+      console.log(`📦 [fetchAllEdges] Generated ${placeholders.length} placeholder edges (all will show as ⚠️)`)
       return placeholders
     }
 
@@ -103,12 +107,13 @@ const fetchAllEdges = async (material: MaterialSearchResult): Promise<EdgeMateri
     }
 
     if (productIds.length === 0) {
-      console.log('⚠️ [fetchAllEdges] No product IDs extracted from metafield')
+      console.warn('⚠️ [fetchAllEdges] No product IDs extracted from metafield (empty or invalid format)')
+      console.warn('⚠️ [fetchAllEdges] Metafield value was:', alternativeProducts)
       const placeholders = generatePlaceholderEdges([], material.title)
       return placeholders
     }
 
-    console.log(`🔎 [fetchAllEdges] Fetching ${productIds.length} edge products`)
+    console.log(`🔎 [fetchAllEdges] Fetching ${productIds.length} edge products:`, productIds)
 
     // Fetch ALL edge products (not just first one)
     const edgePromises = productIds.map(async (productId) => {
@@ -195,19 +200,29 @@ const fetchAllEdges = async (material: MaterialSearchResult): Promise<EdgeMateri
 
     const fetchedEdges = (await Promise.all(edgePromises)).filter((e): e is EdgeMaterial => e !== null)
 
-    console.log(`📦 [fetchAllEdges] Fetched ${fetchedEdges.length} valid edges`)
+    console.log(`📦 [fetchAllEdges] Fetched ${fetchedEdges.length} REAL edge products from Shopify`)
+    if (fetchedEdges.length > 0) {
+      console.log('✅ [fetchAllEdges] Real edges found:', fetchedEdges.map(e => `${e.edgeWidth}mm × ${e.boardThickness}mm`))
+    } else {
+      console.warn('⚠️ [fetchAllEdges] NO real edge products were found!')
+      console.warn('⚠️ [fetchAllEdges] Possible reasons:')
+      console.warn('   1. The linked products don\'t have param.sirka_hrany metafield (edge width)')
+      console.warn('   2. The linked products don\'t have param.hrubka_hrany metafield (board thickness)')
+      console.warn('   3. The product IDs in custom.alternative_products are invalid')
+    }
 
     // Generate placeholders for missing combinations
     const placeholders = generatePlaceholderEdges(fetchedEdges, material.title)
     const allEdges = [...fetchedEdges, ...placeholders]
 
-    console.log(`📦 [fetchAllEdges] Total edges (including ${placeholders.length} placeholders): ${allEdges.length}`)
+    console.log(`📦 [fetchAllEdges] Generated ${placeholders.length} placeholder edges for missing combinations`)
+    console.log(`📦 [fetchAllEdges] TOTAL: ${allEdges.length} edges (${fetchedEdges.length} real + ${placeholders.length} placeholders)`)
 
     // Log complete edge matrix for testing
     console.log(`📊 [Edge Matrix] Complete edge combinations for ${material.title}:`)
     allEdges.forEach(edge => {
-      const icon = edge.isPlaceholder ? '⚠️' : '✅'
-      console.log(`   ${icon} ${edge.edgeWidth}mm × ${edge.boardThickness}mm - ${edge.name}`)
+      const icon = edge.isPlaceholder ? '⚠️ PLACEHOLDER' : '✅ REAL'
+      console.log(`   ${icon} | ${edge.edgeWidth}mm × ${edge.boardThickness}mm | ${edge.name}`)
     })
 
     return allEdges

@@ -86,8 +86,8 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
   const edgeOffset = isLargePreview ? 6 : 4 // Smaller offset for thumbnails
   const edgeStrokeWidth = isLargePreview ? 3 : 4 // Thicker stroke for thumbnails
 
-  // Add padding to viewBox for small previews to show edge indicators
-  const viewBoxPadding = isLargePreview ? 0 : edgeOffset + edgeStrokeWidth
+  // Add padding to viewBox for ALL previews to show edge indicators
+  const viewBoxPadding = isLargePreview ? 10 : edgeOffset + edgeStrokeWidth
   const viewBoxWidth = finalWidth + (viewBoxPadding * 2)
   const viewBoxHeight = finalHeight + (viewBoxPadding * 2)
   const viewBoxOffsetX = -viewBoxPadding
@@ -100,9 +100,8 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
         height: finalHeight,
         position: 'relative',
         mx: 'auto',
-        // Allow overflow for small thumbnails so edge indicators are visible
-        // For large previews, keep hidden to clip the background image
-        overflow: isLargePreview ? 'hidden' : 'visible',
+        // Allow overflow so edge indicators are visible (background is clipped via mask)
+        overflow: 'visible',
       }}
     >
       {/* Material background image - rotated 90deg, masked by SVG shape */}
@@ -118,7 +117,7 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
             overflow: 'hidden',
             // Apply mask to outer container
             maskImage: `url("data:image/svg+xml,${encodeURIComponent(`
-              <svg width="${finalWidth}" height="${finalHeight}" viewBox="0 0 ${finalWidth} ${finalHeight}" xmlns="http://www.w3.org/2000/svg">
+              <svg width="${finalWidth}" height="${finalHeight}" viewBox="${viewBoxOffsetX} ${viewBoxOffsetY} ${viewBoxWidth} ${viewBoxHeight}" xmlns="http://www.w3.org/2000/svg">
                 <g transform="translate(${offsetX}, ${offsetY})">
                   <path d="${piecePath}" fill="white"/>
                 </g>
@@ -128,7 +127,7 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
             maskPosition: 'center',
             maskRepeat: 'no-repeat',
             WebkitMaskImage: `url("data:image/svg+xml,${encodeURIComponent(`
-              <svg width="${finalWidth}" height="${finalHeight}" viewBox="0 0 ${finalWidth} ${finalHeight}" xmlns="http://www.w3.org/2000/svg">
+              <svg width="${finalWidth}" height="${finalHeight}" viewBox="${viewBoxOffsetX} ${viewBoxOffsetY} ${viewBoxWidth} ${viewBoxHeight}" xmlns="http://www.w3.org/2000/svg">
                 <g transform="translate(${offsetX}, ${offsetY})">
                   <path d="${piecePath}" fill="white"/>
                 </g>
@@ -168,7 +167,7 @@ const PieceShapePreview: React.FC<PieceShapePreviewProps> = ({
           left: 0,
         }}
       >
-        <g transform={`translate(${offsetX + viewBoxPadding}, ${offsetY + viewBoxPadding})`}>
+        <g transform={`translate(${offsetX}, ${offsetY})`}>
           {/* Main piece shape outline */}
           <path
             d={piecePath}

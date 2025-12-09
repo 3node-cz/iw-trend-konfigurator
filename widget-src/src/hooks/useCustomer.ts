@@ -34,19 +34,44 @@ const convertShopifyCustomerToOrderData = (shopifyCustomer: ShopifyCustomerData)
     try {
       const parsed = JSON.parse(shopifyCustomer.metafields.prices)
       console.log('🔍 [convertShopifyCustomerToOrderData] Parsed prices:', parsed)
+
       // Validate structure - should be an object (not array, not null)
       if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-        // Basic validation: check if it has the expected SKU -> {p, d, b} structure
-        const isValid = Object.values(parsed).every((value: any) =>
+        // Check for {p, d, b} format (internal format)
+        const isInternalFormat = Object.values(parsed).every((value: any) =>
           typeof value === 'object' &&
           typeof value.p === 'number' &&
           typeof value.d === 'number' &&
           typeof value.b === 'number'
         )
-        if (isValid) {
+
+        // Check for {unitPrice, discountPercent, baseUnitPrice} format (Shopify format)
+        const isShopifyFormat = Object.values(parsed).every((value: any) =>
+          typeof value === 'object' &&
+          typeof value.unitPrice === 'number' &&
+          typeof value.discountPercent === 'number' &&
+          typeof value.baseUnitPrice === 'number'
+        )
+
+        if (isInternalFormat) {
+          console.log('✅ Prices in internal {p, d, b} format')
           pricesMetafield = parsed
+        } else if (isShopifyFormat) {
+          console.log('✅ Prices in Shopify format, converting to internal format...')
+          // Convert Shopify format to internal format
+          pricesMetafield = Object.fromEntries(
+            Object.entries(parsed).map(([sku, data]: [string, any]) => [
+              sku,
+              {
+                p: data.unitPrice,
+                d: data.discountPercent,
+                b: data.baseUnitPrice
+              }
+            ])
+          )
+          console.log('✅ Converted first entry:', Object.entries(pricesMetafield)[0])
         } else {
-          console.error('❌ Invalid prices metafield structure: expected {sku: {p, d, b}}')
+          console.error('❌ Invalid prices metafield structure: expected {sku: {p, d, b}} or {sku: {unitPrice, discountPercent, baseUnitPrice}}')
           console.error('❌ First entry example:', Object.entries(parsed)[0])
         }
       } else {
