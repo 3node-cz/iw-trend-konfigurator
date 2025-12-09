@@ -83,28 +83,37 @@ export const useCustomer = (): UseCustomerReturn => {
   const [isLoading, setIsLoading] = useState(true)
 
   const loadCustomerFromShopify = async () => {
+    console.log('🔍 [useCustomer] loadCustomerFromShopify called')
     setIsLoading(true)
     try {
       // Fetch customer data from backend API
+      console.log('🔍 [useCustomer] Fetching from: /apps/configurator/api/customer-data')
       const response = await fetch('/apps/configurator/api/customer-data')
+      console.log('🔍 [useCustomer] Response status:', response.status)
+
       const result = await response.json()
+      console.log('🔍 [useCustomer] Response body:', result)
 
       if (result.success && result.customer) {
         const customerData = convertShopifyCustomerToOrderData(result.customer)
+        console.log('🔍 [useCustomer] Converted customer data:', customerData)
         setCustomer(customerData)
         console.log('✅ Customer loaded from API:', {
           id: customerData.id,
+          name: `${customerData.firstName} ${customerData.lastName}`,
           tagsCount: customerData.tags?.length || 0,
           hasPrices: !!customerData.pricesMetafield
         })
       } else {
+        console.log('⚠️ [useCustomer] No customer in response or success=false')
         setCustomer(null)
       }
     } catch (error) {
-      console.error('Error loading customer from API:', error)
+      console.error('❌ [useCustomer] Error loading customer from API:', error)
       setCustomer(null)
     } finally {
       setIsLoading(false)
+      console.log('🔍 [useCustomer] Loading complete')
     }
   }
 

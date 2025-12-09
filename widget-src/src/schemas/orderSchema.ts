@@ -63,12 +63,15 @@ export const getFieldErrors = (error: z.ZodError): Record<string, string> => {
 
 // Helper function to create order data with customer defaults
 export const createOrderWithCustomerDefaults = (customer: CustomerOrderData | null): Partial<OrderFormData> => {
+  console.log('🔍 [createOrderWithCustomerDefaults] Input customer:', customer);
+
   if (!customer) {
     // For non-logged-in users, return empty defaults
+    console.log('🔍 [createOrderWithCustomerDefaults] No customer, returning empty defaults');
     return {}
   }
 
-  return {
+  const defaults = {
     company: customer.defaultCompany || 'IW TREND, s.r.o',
     customerName: `${customer.firstName} ${customer.lastName}`.trim(),
     transferLocation: customer.defaultTransferLocation,
@@ -76,5 +79,8 @@ export const createOrderWithCustomerDefaults = (customer: CustomerOrderData | nu
     cuttingCenter: customer.defaultCuttingCenter,
     deliveryMethod: customer.defaultDeliveryMethod,
     processingType: customer.defaultProcessingType || "Zlikvidovať"
-  }
+  };
+
+  console.log('🔍 [createOrderWithCustomerDefaults] Generated defaults:', defaults);
+  return defaults;
 }

@@ -73,10 +73,13 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   // Reset form data when dialog opens with fresh customer data
   React.useEffect(() => {
     if (open) {
+      console.log('🔍 [CreateOrderModal] Dialog opened, customer:', customer);
+
       const defaultDeliveryDate = new Date();
       defaultDeliveryDate.setDate(defaultDeliveryDate.getDate() + ORDER_CONFIG.DEFAULT_DELIVERY_DAYS);
 
       const customerDefaults = createOrderWithCustomerDefaults(customer);
+      console.log('🔍 [CreateOrderModal] Customer defaults generated:', customerDefaults);
 
       // Validate processingType - ensure it's in available options before spreading
       if (customerDefaults.processingType && !shopConfig.processingTypes.includes(customerDefaults.processingType)) {
@@ -84,7 +87,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
         customerDefaults.processingType = shopConfig.processingTypes[0] || "Zlikvidovať";
       }
 
-      setFormData({
+      const formDataToSet = {
         orderName: "",
         deliveryDate: defaultDeliveryDate,
         notes: "",
@@ -97,7 +100,10 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
         processingType: shopConfig.processingTypes[0] || "Zlikvidovať",
         discountPercentage: 0,
         ...customerDefaults,
-      });
+      };
+
+      console.log('🔍 [CreateOrderModal] Final form data:', formDataToSet);
+      setFormData(formDataToSet);
       setErrors({});
     }
   }, [open, customer, shopConfig]);
