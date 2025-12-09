@@ -67,7 +67,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     console.log('📊 Fetching customer data for:', customerGid);
 
-    // Fetch customer with tags and prices metafield
+    // Fetch customer with tags and metafields (prices, saved_configurations)
     const customerQuery = `
       query getCustomer($id: ID!) {
         customer(id: $id) {
@@ -76,7 +76,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
           firstName
           lastName
           tags
-          metafield(namespace: "custom", key: "prices") {
+          pricesMetafield: metafield(namespace: "custom", key: "prices") {
+            value
+          }
+          savedConfigsMetafield: metafield(namespace: "custom", key: "saved_configurations") {
             value
           }
         }
@@ -122,7 +125,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       lastName: customer.lastName,
       tags: customer.tags || [],
       metafields: {
-        prices: customer.metafield?.value || null
+        prices: customer.pricesMetafield?.value || null,
+        saved_configurations: customer.savedConfigsMetafield?.value || null
       }
     };
 
@@ -142,6 +146,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     console.log('🧪 [CUSTOMER-TAGS] Tags array:', customerData.tags);
 
     if (customerData.metafields.prices) {
+      console.log('🧪 [CUSTOMER-PRICES] Raw metafield value:', customerData.metafields.prices.substring(0, 200));
       try {
         const pricesJson = JSON.parse(customerData.metafields.prices);
         const skuCount = Object.keys(pricesJson).length;
@@ -160,6 +165,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
       }
     } else {
       console.log('🧪 [CUSTOMER-PRICES] No prices metafield found');
+    }
+
+    // Log saved_configurations metafield
+    if (customerData.metafields.saved_configurations) {
+      console.log('🧪 [CUSTOMER-CONFIGS] Saved configurations metafield found (length:', customerData.metafields.saved_configurations.length, 'chars)');
+    } else {
+      console.log('🧪 [CUSTOMER-CONFIGS] No saved_configurations metafield found');
     }
 
     return json({

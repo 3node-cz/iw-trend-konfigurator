@@ -30,8 +30,10 @@ const convertShopifyCustomerToOrderData = (shopifyCustomer: ShopifyCustomerData)
   // Parse prices metafield if it exists
   let pricesMetafield = undefined
   if (shopifyCustomer.metafields.prices) {
+    console.log('🔍 [convertShopifyCustomerToOrderData] Raw prices metafield:', shopifyCustomer.metafields.prices.substring(0, 200))
     try {
       const parsed = JSON.parse(shopifyCustomer.metafields.prices)
+      console.log('🔍 [convertShopifyCustomerToOrderData] Parsed prices:', parsed)
       // Validate structure - should be an object (not array, not null)
       if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
         // Basic validation: check if it has the expected SKU -> {p, d, b} structure
@@ -45,6 +47,7 @@ const convertShopifyCustomerToOrderData = (shopifyCustomer: ShopifyCustomerData)
           pricesMetafield = parsed
         } else {
           console.error('❌ Invalid prices metafield structure: expected {sku: {p, d, b}}')
+          console.error('❌ First entry example:', Object.entries(parsed)[0])
         }
       } else {
         console.error('❌ Invalid prices metafield structure: expected object, got', typeof parsed)
