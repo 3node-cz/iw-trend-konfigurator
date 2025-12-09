@@ -32,11 +32,7 @@ export const orderSchema = z.object({
   
   // Optional fields
   notes: z.string().optional().default(''),
-  discountPercentage: z.number()
-    .min(0, 'Zľava nemôže byť záporná')
-    .max(100, 'Zľava nemôže byť vyššia ako 100%')
-    .default(0),
-  
+
   // Company is always the same, make it optional with default
   company: z.string().default('IW TREND, s.r.o'),
 
@@ -68,10 +64,8 @@ export const getFieldErrors = (error: z.ZodError): Record<string, string> => {
 // Helper function to create order data with customer defaults
 export const createOrderWithCustomerDefaults = (customer: CustomerOrderData | null): Partial<OrderFormData> => {
   if (!customer) {
-    // For non-logged-in users, only provide discount default
-    return {
-      discountPercentage: 0
-    }
+    // For non-logged-in users, return empty defaults
+    return {}
   }
 
   return {
@@ -81,7 +75,6 @@ export const createOrderWithCustomerDefaults = (customer: CustomerOrderData | nu
     costCenter: customer.defaultCostCenter,
     cuttingCenter: customer.defaultCuttingCenter,
     deliveryMethod: customer.defaultDeliveryMethod,
-    processingType: customer.defaultProcessingType || "Zlikvidovať",
-    discountPercentage: customer.discountPercentage || 0
+    processingType: customer.defaultProcessingType || "Zlikvidovať"
   }
 }

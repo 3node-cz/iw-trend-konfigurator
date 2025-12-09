@@ -3,6 +3,8 @@ import { searchEdgeMaterials } from '../services/shopifyApi'
 import type { EdgeMaterial, MaterialSearchResult } from '../types/shopify'
 import { calculateAvailability } from '../utils/availability'
 import ProductSelectionCard from './ProductSelectionCard'
+import { useCustomer } from '../hooks/useCustomer'
+import { applyCustomerPricingToEdges } from '../services/customerPricingService'
 
 interface EdgeSelectionCardProps {
   selectedEdge: EdgeMaterial | null
@@ -17,6 +19,7 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
   onEdgeChange,
   onGlueTypeChange,
 }) => {
+  const { customer } = useCustomer()
   const [isSearching, setIsSearching] = useState(false)
   const [edgeSearchResults, setEdgeSearchResults] = useState<
     MaterialSearchResult[]
@@ -33,7 +36,21 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
           query: 'abs h1180',
           limit: 3,
         })
-        setQuickEdges(results)
+
+        // Convert MaterialSearchResult to EdgeMaterial for customer pricing
+        const edgeMaterials = results.map(convertToEdgeMaterial)
+        const pricedEdges = applyCustomerPricingToEdges(edgeMaterials, customer)
+
+        // Convert back to MaterialSearchResult for display
+        const pricedResults = results.map((result, index) => ({
+          ...result,
+          variant: result.variant ? {
+            ...result.variant,
+            price: pricedEdges[index].price?.amount.toString() || result.variant.price
+          } : result.variant
+        }))
+
+        setQuickEdges(pricedResults)
       } catch (error) {
         console.error('❌ Error loading popular edges:', error)
         // Fallback to mock data if API fails
@@ -44,7 +61,32 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
     }
 
     loadQuickEdges()
-  }, [])
+  }, [customer?.id])
+
+  // Helper function to convert MaterialSearchResult to EdgeMaterial
+  const convertToEdgeMaterial = (
+    result: MaterialSearchResult,
+  ): EdgeMaterial & { image?: string } => {
+    return {
+      id: result.id,
+      variantId: result.variant?.id,
+      code: result.variant?.sku || result.handle,
+      name: result.title,
+      productCode: result.variant?.sku || result.handle,
+      availability: calculateAvailability(result),
+      thickness: 0.8,
+      availableThicknesses: [0.4, 0.8, 2],
+      warehouse: result.warehouse,
+      price: result.variant?.price ? {
+        amount: parseFloat(result.variant.price),
+        currency: 'EUR',
+        perUnit: 'm'
+      } : undefined,
+      image: result.image,
+      edgeWidth: 0.8, // Default values for required fields
+      boardThickness: 18,
+    };
+  }
 
   // Handle search - called by ProductSelectionCard
   const handleSearch = async (query: string) => {
@@ -59,37 +101,27 @@ const EdgeSelectionCard: React.FC<EdgeSelectionCardProps> = ({
         query: query,
         limit: 10,
       })
-      setEdgeSearchResults(results)
+
+      // Apply customer pricing to search results
+      const edgeMaterials = results.map(convertToEdgeMaterial)
+      const pricedEdges = applyCustomerPricingToEdges(edgeMaterials, customer)
+
+      // Convert back to MaterialSearchResult for display
+      const pricedResults = results.map((result, index) => ({
+        ...result,
+        variant: result.variant ? {
+          ...result.variant,
+          price: pricedEdges[index].price?.amount.toString() || result.variant.price
+        } : result.variant
+      }))
+
+      setEdgeSearchResults(pricedResults)
     } catch (error) {
       console.error('❌ Edge search error:', error)
       setEdgeSearchResults([])
     } finally {
       setIsSearching(false)
     }
-  }
-
-
-  // Convert MaterialSearchResult to EdgeMaterial with image
-  const convertToEdgeMaterial = (
-    result: MaterialSearchResult,
-  ): EdgeMaterial & { image?: string } => {
-    return {
-      id: result.id,
-      variantId: result.variant?.id,
-      code: result.variant?.sku || result.handle,
-      name: result.title,
-      productCode: result.variant?.sku || result.handle,
-      availability: calculateAvailability(result),
-      thickness: 0.8, // Default thickness, could be extracted from dimensions
-      availableThicknesses: [0.4, 0.8, 2], // Common edge thickness variants
-      warehouse: result.warehouse,
-      price: result.variant?.price ? {
-        amount: parseFloat(result.variant.price),
-        currency: 'EUR',
-        perUnit: 'm'
-      } : undefined,
-      image: result.image, // Add image from search result
-    };
   }
 
   // Handle product selection - converts MaterialSearchResult to EdgeMaterial

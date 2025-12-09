@@ -234,7 +234,6 @@ export const useOrderSubmission = () => {
             customerName: completeOrder.order.customerName,
             company: completeOrder.order.company,
             notes: completeOrder.order.notes,
-            discountPercentage: completeOrder.order.discountPercentage?.toString(),
             totalPieces: completeOrder.specifications.reduce(
               (sum, spec) => sum + spec.pieces.reduce((ps, p) => ps + p.quantity, 0),
               0

@@ -22,6 +22,8 @@ import { searchEdgeMaterials } from '../../services/shopifyApi'
 import type { EdgeMaterial, MaterialSearchResult } from '../../types/shopify'
 import { AvailabilityChip } from './index'
 import { calculateAvailability } from '../../utils/availability'
+import { useCustomer } from '../../hooks/useCustomer'
+import { applyCustomerPricingToEdges } from '../../services/customerPricingService'
 
 interface CustomEdgeDialogProps {
   open: boolean
@@ -48,6 +50,9 @@ const CustomEdgeDialog: React.FC<CustomEdgeDialogProps> = ({
   onSave,
   initialEdges,
 }) => {
+  // Get customer for pricing
+  const { customer } = useCustomer()
+
   // Selected edges state
   const [customEdgeTop, setCustomEdgeTop] = useState<EdgeMaterial | null>(
     initialEdges.customEdgeTop || null
@@ -108,7 +113,25 @@ const CustomEdgeDialog: React.FC<CustomEdgeDialogProps> = ({
     setIsSearching((prev) => ({ ...prev, [position]: true }))
     try {
       const results = await searchEdgeMaterials({ query, limit: 5 })
-      setSearchResults((prev) => ({ ...prev, [position]: results }))
+
+      // Apply customer pricing to search results
+      if (customer && results.length > 0) {
+        const edgeMaterials = results.map(convertToEdgeMaterial)
+        const pricedEdges = applyCustomerPricingToEdges(edgeMaterials, customer)
+
+        // Convert back to MaterialSearchResult for display
+        const pricedResults = results.map((result, index) => ({
+          ...result,
+          variant: result.variant ? {
+            ...result.variant,
+            price: pricedEdges[index].price?.amount.toString() || result.variant.price
+          } : result.variant
+        }))
+
+        setSearchResults((prev) => ({ ...prev, [position]: pricedResults }))
+      } else {
+        setSearchResults((prev) => ({ ...prev, [position]: results }))
+      }
     } catch (error) {
       console.error(`Error searching ${position} edge:`, error)
       setSearchResults((prev) => ({ ...prev, [position]: [] }))
@@ -154,18 +177,24 @@ const CustomEdgeDialog: React.FC<CustomEdgeDialogProps> = ({
     result: MaterialSearchResult
   ) => {
     const edge = convertToEdgeMaterial(result)
+
+    // Apply customer pricing to the selected edge
+    const pricedEdge = customer
+      ? applyCustomerPricingToEdges([edge], customer)[0]
+      : edge
+
     switch (position) {
       case 'top':
-        setCustomEdgeTop(edge)
+        setCustomEdgeTop(pricedEdge)
         break
       case 'bottom':
-        setCustomEdgeBottom(edge)
+        setCustomEdgeBottom(pricedEdge)
         break
       case 'left':
-        setCustomEdgeLeft(edge)
+        setCustomEdgeLeft(pricedEdge)
         break
       case 'right':
-        setCustomEdgeRight(edge)
+        setCustomEdgeRight(pricedEdge)
         break
     }
     setSearchQueries((prev) => ({ ...prev, [position]: '' }))

@@ -9,6 +9,7 @@
  */
 
 import type { CustomerOrderData, CustomerPricingData } from './customerApi'
+import type { EdgeMaterial } from '../types/shopify'
 
 export interface PricingResult {
   price: number
@@ -129,12 +130,44 @@ export function applyCustomerPricing<T extends { variant?: { sku?: string; price
       variant: {
         ...material.variant,
         price: pricingResult.price.toString(),
-        // Store debug metadata only in development mode
-        ...(process.env.NODE_ENV === 'development' && {
-          _originalPrice: basePrice.toString(),
-          _customerDiscount: pricingResult.discountPercentage,
-          _pricingSource: pricingResult.source
-        })
+        // Store pricing metadata for display purposes (always available)
+        _basePrice: pricingResult.basePrice.toString(),
+        _customerDiscount: pricingResult.discountPercentage,
+        _pricingSource: pricingResult.source
+      }
+    }
+  })
+}
+
+/**
+ * Apply customer pricing to edge materials
+ * Updates price.amount and adds pricing metadata to each edge material
+ */
+export function applyCustomerPricingToEdges(
+  edges: EdgeMaterial[],
+  customer?: CustomerOrderData
+): EdgeMaterial[] {
+  return edges.map(edge => {
+    if (!edge.price) return edge
+
+    // Use code or productCode as SKU
+    const sku = edge.code || edge.productCode
+    const basePrice = edge.price.amount
+
+    if (!sku || isNaN(basePrice)) return edge
+
+    const pricingResult = calculateCustomerPrice(sku, basePrice, customer)
+
+    // Update edge price with customer-specific price
+    return {
+      ...edge,
+      price: {
+        ...edge.price,
+        amount: pricingResult.price,
+        // Store pricing metadata for display purposes
+        _basePrice: pricingResult.basePrice,
+        _customerDiscount: pricingResult.discountPercentage,
+        _pricingSource: pricingResult.source
       }
     }
   })

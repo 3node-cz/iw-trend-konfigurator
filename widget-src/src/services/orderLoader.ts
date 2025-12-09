@@ -5,7 +5,7 @@ import type {
   MaterialSearchResult,
   EdgeMaterial,
 } from '../types/shopify'
-import { applyCustomerPricing } from './customerPricingService'
+import { applyCustomerPricing, applyCustomerPricingToEdges } from './customerPricingService'
 import type { CustomerOrderData } from './customerApi'
 
 // Cache for already fetched materials and edges to avoid duplicate API calls
@@ -89,6 +89,20 @@ export const loadOrderConfiguration = async (
       }
     }),
   )
+
+  // Apply customer-specific pricing to loaded edges
+  if (customer && edgeCache.size > 0) {
+    console.log('💰 Applying customer pricing to', edgeCache.size, 'edge materials')
+    const edgesArray = Array.from(edgeCache.values())
+    const pricedEdges = applyCustomerPricingToEdges(edgesArray, customer)
+
+    // Update cache with priced edges
+    edgeCache.clear()
+    pricedEdges.forEach(edge => {
+      edgeCache.set(edge.id, edge)
+    })
+    console.log('✅ Customer pricing applied to edges')
+  }
 
   const specifications: CuttingSpecification[] = []
   for (const savedSpec of savedOrder.specifications) {

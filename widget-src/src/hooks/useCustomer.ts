@@ -10,7 +10,6 @@ interface ShopifyCustomerData {
   tags?: string[]  // Customer tags (e.g., ["discount_group:20_ZAK"])
   metafields: {
     saved_configurations?: string
-    discount_percentage?: string
     prices?: string  // JSON string with SKU-specific pricing
   }
 }
@@ -69,11 +68,6 @@ const convertShopifyCustomerToOrderData = (shopifyCustomer: ShopifyCustomerData)
     defaultCuttingCenter: 'Bratislava',
     defaultDeliveryMethod: 'Osobný odber',
     defaultProcessingType: 'Uskladniť',
-
-    // Use discount percentage from Shopify metafield
-    discountPercentage: shopifyCustomer.metafields.discount_percentage
-      ? parseFloat(shopifyCustomer.metafields.discount_percentage)
-      : 0,
 
     // Pricing data
     tags: shopifyCustomer.tags || [],
@@ -140,7 +134,7 @@ export const useCustomer = (): UseCustomerReturn => {
         defaultCuttingCenter: 'Bratislava',
         defaultDeliveryMethod: 'Osobný odber',
         defaultProcessingType: 'Uskladniť',
-        discountPercentage: 25
+        tags: ['discount_group:25_ZAK']  // Use tag-based discount instead
       }
       setCustomer(testCustomerData)
     } catch (error) {

@@ -49,7 +49,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     console.log('📊 Fetching customer data for:', customerId);
 
-    // Fetch customer with tags and metafields
+    // Fetch customer with tags and prices metafield
     const customerQuery = `
       query getCustomer($id: ID!) {
         customer(id: $id) {
@@ -59,9 +59,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
           lastName
           tags
           metafield(namespace: "custom", key: "prices") {
-            value
-          }
-          discountPercentageMetafield: metafield(namespace: "custom", key: "discount_percentage") {
             value
           }
         }
@@ -107,8 +104,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       lastName: customer.lastName,
       tags: customer.tags || [],
       metafields: {
-        prices: customer.metafield?.value || null,
-        discount_percentage: customer.discountPercentageMetafield?.value || null
+        prices: customer.metafield?.value || null
       }
     };
 

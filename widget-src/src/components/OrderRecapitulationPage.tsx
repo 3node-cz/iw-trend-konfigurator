@@ -325,12 +325,8 @@ const OrderRecapitulationPage: React.FC<OrderRecapitulationPageProps> = ({
     exportOrderToCsv(completeOrder, 'BICORN');
   };
 
-  // Calculate discounted cutting cost
-  const rawCuttingCost = orderCalculations.totals.totalCuttingCost;
-  const discountedCuttingCost =
-    order.discountPercentage > 0
-      ? rawCuttingCost * (1 - order.discountPercentage / 100)
-      : rawCuttingCost;
+  // Cutting cost (no customer discount applied)
+  const cuttingCost = orderCalculations.totals.totalCuttingCost;
 
   // Check for unavailable products
   const unavailableProducts = specifications.reduce((acc, spec) => {

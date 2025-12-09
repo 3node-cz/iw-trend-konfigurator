@@ -45,7 +45,6 @@ export interface CustomerOrderData {
   defaultCuttingCenter?: string
   defaultDeliveryMethod?: string
   defaultProcessingType?: string
-  discountPercentage?: number
 
   // Pricing data (from tags and metafields)
   tags?: string[]  // Customer tags (e.g., "discount_group:20_ZAK")
@@ -72,8 +71,7 @@ export const getCurrentCustomer = async (customerAccessToken: string): Promise<S
           {namespace: "custom", key: "default_cost_center"},
           {namespace: "custom", key: "default_cutting_center"},
           {namespace: "custom", key: "default_delivery_method"},
-          {namespace: "custom", key: "default_processing_type"},
-          {namespace: "custom", key: "discount_percentage"}
+          {namespace: "custom", key: "default_processing_type"}
         ]) {
           namespace
           key
@@ -132,10 +130,7 @@ export const convertToCustomerOrderData = (customer: ShopifyCustomer): CustomerO
     defaultCostCenter: getMetafieldValue('custom', 'default_cost_center'),
     defaultCuttingCenter: getMetafieldValue('custom', 'default_cutting_center'),
     defaultDeliveryMethod: getMetafieldValue('custom', 'default_delivery_method'),
-    defaultProcessingType: getMetafieldValue('custom', 'default_processing_type'),
-    discountPercentage: getMetafieldValue('custom', 'discount_percentage')
-      ? parseFloat(getMetafieldValue('custom', 'discount_percentage')!)
-      : 0
+    defaultProcessingType: getMetafieldValue('custom', 'default_processing_type')
   }
 }
 
@@ -220,8 +215,7 @@ export const getCustomerById = async (customerId: string): Promise<CustomerOrder
         { namespace: 'custom', key: 'default_cost_center', value: 'Bratislava', type: 'single_line_text_field' },
         { namespace: 'custom', key: 'default_cutting_center', value: 'Bratislava', type: 'single_line_text_field' },
         { namespace: 'custom', key: 'default_delivery_method', value: 'Osobný odber', type: 'single_line_text_field' },
-        { namespace: 'custom', key: 'default_processing_type', value: 'Uskladniť', type: 'single_line_text_field' },
-        { namespace: 'custom', key: 'discount_percentage', value: '25', type: 'number_decimal' }
+        { namespace: 'custom', key: 'default_processing_type', value: 'Uskladniť', type: 'single_line_text_field' }
       ]
     }
 

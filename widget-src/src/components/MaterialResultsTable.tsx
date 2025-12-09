@@ -11,6 +11,7 @@ import {
   Box,
   IconButton,
   Avatar,
+  Chip,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -30,7 +31,6 @@ interface MaterialResultsTableProps {
   showViewAllButton?: boolean;
   isSelectedMaterials?: boolean;
   selectedMaterialIds?: string[];
-  customerDiscount?: number; // Customer discount percentage, only show discount columns if > 0
 }
 
 const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
@@ -40,12 +40,8 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
   showViewAllButton = false,
   isSelectedMaterials = false,
   selectedMaterialIds = [],
-  customerDiscount = 0,
 }) => {
   const [showAllModal, setShowAllModal] = useState(false);
-
-  // Only show discount columns if customer has a discount
-  const showDiscountColumns = customerDiscount > 0;
 
   return (
     <>
@@ -74,18 +70,11 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
               // Calculate availability using unified function
               const availability = calculateAvailability(material);
 
-              // Extract pricing info
-              const basePrice = material.variant?.price || "0";
-              const discount =
-                material.metafields?.["custom.discount"] ||
-                material.variant?.metafields?.["custom.discount"] ||
-                "0";
-              const discountPercentage = parseFloat(discount);
-              const basePriceNum = parseFloat(basePrice);
-              const finalPrice =
-                discountPercentage > 0
-                  ? basePriceNum * (1 - discountPercentage / 100)
-                  : basePriceNum;
+              // Extract pricing info from customer pricing service metadata
+              const customerPrice = parseFloat(material.variant?.price || "0");
+              const basePrice = parseFloat((material.variant as any)?._basePrice || material.variant?.price || "0");
+              const customerDiscount = (material.variant as any)?._customerDiscount || 0;
+              const hasCustomerDiscount = customerDiscount > 0;
 
               // Extract package info
               const packageSize =
@@ -144,11 +133,42 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
                     />
                   </TableCell>
 
-                  {/* Base price */}
+                  {/* Price with customer discount indicator */}
                   <TableCell sx={{ textAlign: "right" }}>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {formatPrice(basePrice)}
-                    </Typography>
+                    {hasCustomerDiscount ? (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            textDecoration: 'line-through',
+                            color: 'text.secondary'
+                          }}
+                        >
+                          {formatPrice(basePrice.toString())}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 600,
+                              color: 'success.main'
+                            }}
+                          >
+                            {formatPrice(customerPrice.toString())}
+                          </Typography>
+                          <Chip
+                            label={`-${customerDiscount}%`}
+                            size="small"
+                            color="success"
+                            sx={{ height: 20, fontSize: '11px' }}
+                          />
+                        </Box>
+                      </Box>
+                    ) : (
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {formatPrice(customerPrice.toString())}
+                      </Typography>
+                    )}
                   </TableCell>
 
                   {/* Action button */}
@@ -210,7 +230,6 @@ const MaterialResultsTable: React.FC<MaterialResultsTableProps> = ({
         results={results}
         onAddMaterial={onAddMaterial}
         selectedMaterialIds={selectedMaterialIds}
-        customerDiscount={customerDiscount}
       />
     </>
   );

@@ -30,6 +30,8 @@ interface OrderItem {
   materialIndex?: number // For grouping and legend
   isEdgeForMaterial?: boolean // To identify edge items
   materialLayouts?: CuttingLayoutData[] // Store layouts for plan numbering
+  originalUnitPrice?: number // Original base price (before customer discount)
+  hasCustomerDiscount?: boolean // Whether customer-specific pricing is applied
 }
 
 interface OrderInvoiceTableProps {
@@ -66,16 +68,8 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
   order,
 }) => {
 
-  // Only use discount if it's explicitly set and greater than 0
-  const effectiveDiscountPercentage = order.discountPercentage && order.discountPercentage > 0 ? order.discountPercentage : 0
-
-  // Helper function to apply customer discount
-  const applyDiscount = (price: number): number => {
-    if (effectiveDiscountPercentage > 0) {
-      return price * (1 - effectiveDiscountPercentage / 100)
-    }
-    return price
-  }
+  // Note: All pricing (materials, edges) comes from the 3-tier customer pricing system
+  // Cutting services do NOT get customer discounts
 
   // Generate order items from specifications and calculations
   const orderItems: OrderItem[] = []
@@ -88,8 +82,13 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
     )
     const boardsNeeded = materialLayouts.length || 1
 
-    const originalUnitPrice = parseFloat(spec.material.variant?.price || "0")
-    const discountedUnitPrice = applyDiscount(originalUnitPrice)
+    // Material prices are already customer-specific from 3-tier pricing system
+    // variant.price = customer price (already discounted)
+    // variant._basePrice = original base price (for display only)
+    // variant._customerDiscount = discount percentage applied
+    const customerUnitPrice = parseFloat(spec.material.variant?.price || "0")
+    const baseUnitPrice = parseFloat((spec.material.variant as any)?._basePrice || spec.material.variant?.price || "0")
+    const customerDiscount = (spec.material.variant as any)?._customerDiscount || 0
 
     // Add material board
     orderItems.push({
@@ -98,11 +97,14 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
       code: spec.material.variant?.sku || spec.material.handle || '',
       quantity: boardsNeeded,
       unit: 'ks',
-      unitPrice: discountedUnitPrice,
-      totalPrice: discountedUnitPrice * boardsNeeded,
+      unitPrice: customerUnitPrice,
+      totalPrice: customerUnitPrice * boardsNeeded,
       type: 'material',
       materialIndex: specIndex + 1,
       materialLayouts: materialLayouts, // Store layouts for plan numbering
+      // Store pricing metadata for display
+      originalUnitPrice: baseUnitPrice,
+      hasCustomerDiscount: customerDiscount > 0,
     })
 
   })
@@ -147,8 +149,14 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
           }
         }
 
-        const originalEdgeUnitPrice = edgeMaterialObj?.price?.amount || 0;
-        const discountedEdgeUnitPrice = applyDiscount(originalEdgeUnitPrice);
+        // Edge materials already have customer pricing applied from 3-tier system
+        // price.amount = customer price (already discounted)
+        // price._basePrice = original base price (for display only)
+        // price._customerDiscount = discount percentage applied
+        const customerEdgeUnitPrice = edgeMaterialObj?.price?.amount || 0;
+        const baseEdgeUnitPrice = (edgeMaterialObj?.price as any)?._basePrice || customerEdgeUnitPrice;
+        const edgeCustomerDiscount = (edgeMaterialObj?.price as any)?._customerDiscount || 0;
+
         // Keep full precision - don't round to whole meters
         const edgeQuantity = edgeConsumption.totalEdgeLengthMeters;
 
@@ -158,17 +166,20 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
           code: edgeMaterialObj?.code || '',
           quantity: edgeQuantity,
           unit: 'm',
-          unitPrice: discountedEdgeUnitPrice,
-          totalPrice: edgeQuantity * discountedEdgeUnitPrice,
+          unitPrice: customerEdgeUnitPrice,
+          totalPrice: edgeQuantity * customerEdgeUnitPrice,
           type: 'edge',
           materialIndex: relatedSpecIndex + 1,
           isEdgeForMaterial: true,
+          // Store pricing metadata for display
+          originalUnitPrice: baseEdgeUnitPrice,
+          hasCustomerDiscount: edgeCustomerDiscount > 0,
         });
       }
     });
   }
 
-  // Add cutting services
+  // Add cutting services (NO customer discount applied)
   const totalCuttingCost = orderCalculations.totals?.totalCuttingCost || 0
   if (totalCuttingCost > 0) {
     const totalPieces = specifications.reduce(
@@ -179,30 +190,34 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
     )
     const actualCuts = orderCalculations.totals?.totalCuts || totalPieces // Use actual cuts or fallback to pieces
 
-    const discountedCuttingCost = applyDiscount(totalCuttingCost)
-
     orderItems.push({
       id: 'cutting-service',
       name: 'Rezanie materiálov',
       code: 'CUTTING',
       quantity: actualCuts,
       unit: 'rezov',
-      unitPrice: discountedCuttingCost / actualCuts,
-      totalPrice: discountedCuttingCost,
+      unitPrice: totalCuttingCost / actualCuts,
+      totalPrice: totalCuttingCost,
       type: 'cutting',
+      // Cutting services do not have customer discount
+      hasCustomerDiscount: false,
     })
   }
 
   const grandTotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0)
   const totalWithoutDiscount = orderItems.reduce((sum, item) => {
-    // Calculate what the price would be without discount
-    const originalPrice =
-      effectiveDiscountPercentage > 0
-        ? item.totalPrice / (1 - effectiveDiscountPercentage / 100)
-        : item.totalPrice
+    // Calculate original price based on whether item has customer discount
+    const originalPrice = item.hasCustomerDiscount && item.originalUnitPrice
+      ? item.originalUnitPrice * item.quantity
+      : item.totalPrice
     return sum + originalPrice
   }, 0)
   const totalDiscountAmount = totalWithoutDiscount - grandTotal
+
+  // Calculate effective discount percentage for display (based on actual savings)
+  const effectiveDiscountPercent = totalWithoutDiscount > 0
+    ? ((totalDiscountAmount / totalWithoutDiscount) * 100).toFixed(1)
+    : '0'
 
   return (
     <Paper sx={{ mt: 3 }}>
@@ -214,7 +229,7 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
           Položky objednávky
         </Typography>
 
-        {effectiveDiscountPercentage > 0 && (
+        {totalDiscountAmount > 0 && (
           <Box
             sx={{
               mb: 2,
@@ -230,7 +245,7 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
               variant="body2"
               sx={{ color: 'success.dark', fontWeight: 500 }}
             >
-              ✓ Aplikovaná zľava zákazníka: {effectiveDiscountPercentage}% (úspora:{' '}
+              ✓ Aplikovaná zákaznícka cena: {effectiveDiscountPercent}% zľava (úspora:{' '}
               {formatPriceNumber(totalDiscountAmount)} €)
             </Typography>
           </Box>
@@ -251,9 +266,9 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
               </TableCell>
               <TableCell sx={{ fontWeight: 600 }}>
                 Cena za jednotku
-                {effectiveDiscountPercentage > 0 && (
+                {totalDiscountAmount > 0 && (
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                    Pôvodná / Po zľave
+                    Pôvodná / Zákaznícka
                   </Typography>
                 )}
               </TableCell>
@@ -262,9 +277,9 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
                 sx={{ fontWeight: 600 }}
               >
                 Celková cena
-                {effectiveDiscountPercentage > 0 && (
+                {totalDiscountAmount > 0 && (
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                    Po zľave
+                    Zákaznícka cena
                   </Typography>
                 )}
               </TableCell>
@@ -358,10 +373,10 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    {effectiveDiscountPercentage > 0 ? (
+                    {item.hasCustomerDiscount && item.originalUnitPrice ? (
                       <Box>
                         <Typography variant="body2" sx={strikethroughStyle}>
-                          {formatPriceNumber(item.unitPrice / (1 - effectiveDiscountPercentage / 100))} €
+                          {formatPriceNumber(item.originalUnitPrice)} €
                         </Typography>
                         <Typography variant="body2" sx={successStyle}>
                           {formatPriceNumber(item.unitPrice)} €
@@ -374,10 +389,10 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
                     )}
                   </TableCell>
                   <TableCell align="right">
-                    {effectiveDiscountPercentage > 0 ? (
+                    {item.hasCustomerDiscount && item.originalUnitPrice ? (
                       <Box sx={rightAlignStyle}>
                         <Typography variant="caption" sx={blockStyle}>
-                          {formatPriceNumber(item.totalPrice / (1 - effectiveDiscountPercentage / 100))} €
+                          {formatPriceNumber(item.originalUnitPrice * item.quantity)} €
                         </Typography>
                         <Typography variant="body2" sx={successStyle}>
                           {formatPriceNumber(item.totalPrice)} €
@@ -404,15 +419,15 @@ const OrderInvoiceTable: React.FC<OrderInvoiceTableProps> = ({
                   sx={{ fontWeight: 600 }}
                 >
                   Celkom
-                  {effectiveDiscountPercentage > 0 && (
+                  {totalDiscountAmount > 0 && (
                     <Typography variant="body2" color="success.main" sx={{ fontWeight: 400 }}>
-                      (Ušetrené: {formatPriceNumber(totalDiscountAmount)} € - {effectiveDiscountPercentage}% zľava)
+                      (Ušetrené: {formatPriceNumber(totalDiscountAmount)} € - {effectiveDiscountPercent}% zľava)
                     </Typography>
                   )}
                 </Typography>
               </TableCell>
               <TableCell align="right">
-                {effectiveDiscountPercentage > 0 ? (
+                {totalDiscountAmount > 0 ? (
                   <Box sx={rightAlignStyle}>
                     <Typography variant="body2" sx={strikethroughStyle}>
                       {formatPriceNumber(totalWithoutDiscount)} €

@@ -545,10 +545,13 @@ function App() {
               👤 Customer: {customer.firstName} {customer.lastName} ({customer.email})
             </Typography>
             <Typography variant="caption" sx={{ display: 'block', mt: 1 }}>
-              🔧 Debug Metafields:
+              🔧 Debug Pricing Data:
             </Typography>
             <Typography variant="caption" sx={{ display: 'block', ml: 2 }}>
-              • discount_percentage: {String(customer.discountPercentage || 'not set')}
+              • tags: {customer.tags?.join(', ') || 'none'}
+            </Typography>
+            <Typography variant="caption" sx={{ display: 'block', ml: 2 }}>
+              • prices metafield: {customer.pricesMetafield ? `${Object.keys(customer.pricesMetafield).length} SKUs configured` : 'not set'}
             </Typography>
             <Typography variant="caption" sx={{ display: 'block', ml: 2, fontFamily: 'monospace' }}>
               • saved_configurations: {(() => {

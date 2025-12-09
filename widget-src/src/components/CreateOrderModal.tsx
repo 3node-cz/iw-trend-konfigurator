@@ -280,40 +280,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             />
           </Grid>
 
-          {/* Customer Discount - Read-only, comes from customer data - Only show if customer is logged in and has discount defined */}
-          {(() => {
-            // Show if customer is logged in and has discountPercentage property (even if it's 0)
-            const shouldShow = customer && customer.discountPercentage !== undefined;
-
-            if (!shouldShow) {
-              return null;
-            }
-
-            return (
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  label="Zľava zákazníka (%)"
-                  type="number"
-                  value={(formData.discountPercentage ?? 0).toString()}
-                  onChange={handleFieldChange("discountPercentage")}
-                  error={!!errors.discountPercentage}
-                  helperText={errors.discountPercentage}
-                  size="small"
-                  fullWidth
-                  InputProps={{
-                    readOnly: true,
-                  }}
-                  sx={{
-                    "& .MuiInputBase-input": {
-                      backgroundColor: "#f5f5f5",
-                      color: "text.secondary",
-                    },
-                  }}
-                />
-              </Grid>
-            );
-          })()}
-
           {/* Notes */}
           <Grid size={{ xs: 12 }}>
             <FormTextField

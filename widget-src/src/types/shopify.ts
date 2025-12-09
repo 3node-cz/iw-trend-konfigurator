@@ -129,6 +129,10 @@ export interface EdgeMaterial {
     amount: number
     currency: string
     perUnit: string
+    // Customer pricing metadata (added by customerPricingService)
+    _basePrice?: number
+    _customerDiscount?: number
+    _pricingSource?: 'sku_metafield' | 'tag_discount' | 'base_price'
   }
   image?: string // Optional edge material image
 
