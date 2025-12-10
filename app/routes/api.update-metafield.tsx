@@ -68,9 +68,17 @@ export async function action({ request }: ActionFunctionArgs) {
       }
     `;
 
+    // Handle both numeric IDs and GID format
+    // If customer_id is already a GID, use it directly; otherwise wrap it
+    const customerId = customer_id.startsWith('gid://shopify/Customer/')
+      ? customer_id
+      : `gid://shopify/Customer/${customer_id}`;
+
+    console.log('🆔 Using customer ID:', customerId);
+
     const variables = {
       input: {
-        id: `gid://shopify/Customer/${customer_id}`,
+        id: customerId,
         metafields: [
           {
             namespace,
