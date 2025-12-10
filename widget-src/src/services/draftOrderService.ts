@@ -59,7 +59,18 @@ export const createDraftOrderService = (): DraftOrderService => {
         return []
       }
 
-      const drafts = JSON.parse(metafieldValue) as SavedOrder[]
+      console.log('🧪 [DRAFT-ORDERS] Raw metafield value:', metafieldValue)
+      console.log('🧪 [DRAFT-ORDERS] Value type:', typeof metafieldValue)
+      console.log('🧪 [DRAFT-ORDERS] First 100 chars:', typeof metafieldValue === 'string' ? metafieldValue.substring(0, 100) : JSON.stringify(metafieldValue).substring(0, 100))
+
+      // If the value is already an object (already parsed), use it directly
+      let drafts: SavedOrder[]
+      if (typeof metafieldValue === 'string') {
+        drafts = JSON.parse(metafieldValue) as SavedOrder[]
+      } else {
+        // Already parsed (happens when reading from window.ConfiguratorConfig cache)
+        drafts = metafieldValue as SavedOrder[]
+      }
 
       // Convert date strings back to Date objects
       const parsedDrafts = drafts.map(draft => ({
