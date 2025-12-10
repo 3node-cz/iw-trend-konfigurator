@@ -27,6 +27,10 @@ export const loadOrderConfiguration = async (
 }> => {
 
   console.log('🔄 Loading order configuration:', savedOrder.id)
+  console.log('🧪 [ORDER-LOADER] Full savedOrder object:', JSON.stringify(savedOrder, null, 2))
+  console.log('🧪 [ORDER-LOADER] Specifications array length:', savedOrder.specifications?.length || 0)
+  console.log('🧪 [ORDER-LOADER] First specification:', savedOrder.specifications?.[0])
+
   materialCache.clear()
   edgeCache.clear()
 

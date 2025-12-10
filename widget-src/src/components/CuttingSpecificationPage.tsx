@@ -320,7 +320,7 @@ const CuttingSpecificationPage: React.FC<CuttingSpecificationPageProps> = ({
             selectedMaterials={materials.map((m) =>
               transformToSelectedMaterial(m),
             )}
-            cuttingSpecifications={Object.values(materialSpecs)}
+            cuttingSpecifications={generateSpecifications()}
             customerId={customer.id}
             onSaveSuccess={() => {
               // Could show a success message

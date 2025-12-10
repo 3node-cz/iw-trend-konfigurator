@@ -85,7 +85,11 @@ export const createMinimalSavedConfig = (
   specifications: CuttingSpecification[],
   savedFromStep: AppView = 'recapitulation'
 ): SavedConfiguration => {
-  return {
+  console.log('🧪 [SAVE-CONFIG] Creating minimal saved config')
+  console.log('🧪 [SAVE-CONFIG] Input specifications count:', specifications?.length || 0)
+  console.log('🧪 [SAVE-CONFIG] First specification:', specifications?.[0])
+
+  const savedConfig = {
     id: `config_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     name,
     savedAt: new Date().toISOString(),
@@ -124,6 +128,11 @@ export const createMinimalSavedConfig = (
       }))
     }))
   }
+
+  console.log('🧪 [SAVE-CONFIG] Output specifications count:', savedConfig.specifications?.length || 0)
+  console.log('🧪 [SAVE-CONFIG] First output specification:', savedConfig.specifications?.[0])
+
+  return savedConfig
 }
 
 /**
