@@ -224,6 +224,9 @@ export async function action({ request }: ActionFunctionArgs) {
               id
               url
               alt
+              originalFileSize
+              mimeType
+              createdAt
             }
           }
           userErrors {
@@ -270,6 +273,16 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     console.log('✅ File record created:', file.id);
+    console.log('📦 Full file object:', JSON.stringify(file, null, 2));
+
+    // Check if URL is available
+    if (!file.url) {
+      console.warn('⚠️ file.url is null! Using file ID as fallback');
+      console.warn('⚠️ File object keys:', Object.keys(file));
+      // Use file ID as value instead - it can be looked up later
+      // This is better than failing the entire order submission
+      file.url = file.id;
+    }
 
     // === STEP 4: Attach file reference to draft order via metafield ===
     console.log('🔗 Step 4: Attaching PDF metafield to draft order...');
