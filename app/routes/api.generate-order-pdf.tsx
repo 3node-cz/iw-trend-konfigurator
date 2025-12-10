@@ -275,13 +275,21 @@ export async function action({ request }: ActionFunctionArgs) {
     console.log('✅ File record created:', file.id);
     console.log('📦 Full file object:', JSON.stringify(file, null, 2));
 
-    // Check if URL is available
-    if (!file.url) {
-      console.warn('⚠️ file.url is null! Using file ID as fallback');
-      console.warn('⚠️ File object keys:', Object.keys(file));
-      // Use file ID as value instead - it can be looked up later
-      // This is better than failing the entire order submission
-      file.url = file.id;
+    // Use the resourceUrl from staged upload as the download URL
+    // This is the actual CDN URL where the file is stored
+    const downloadUrl = stagedTarget.resourceUrl;
+
+    console.log('📎 Using download URL from staged upload:', downloadUrl);
+
+    if (!downloadUrl) {
+      console.error('❌ No download URL available from staged upload!');
+      return json({
+        success: false,
+        error: 'Failed to get file download URL'
+      }, {
+        status: 500,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      });
     }
 
     // === STEP 4: Attach file reference to draft order via metafield ===
@@ -311,7 +319,7 @@ export async function action({ request }: ActionFunctionArgs) {
           namespace: 'iw_trend_configurator',
           key: 'order_configuration_pdf',
           type: 'single_line_text_field',
-          value: file.url, // Download URL for the PDF
+          value: downloadUrl, // Download URL for the PDF from CDN
         }]
       }
     });
@@ -333,7 +341,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return json({
       success: true,
       fileId: file.id,
-      fileUrl: file.url,
+      fileUrl: downloadUrl,
       message: 'PDF uploaded and attached to draft order successfully',
     }, {
       headers: {
